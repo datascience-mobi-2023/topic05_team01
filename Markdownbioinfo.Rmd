@@ -1,0 +1,85 @@
+---
+title: "Bioinfo Project"
+output: html_document
+date: "2023-05-11"
+---
+
+```{r}
+
+```
+1. Dataframe gastric Cancer: Prism
+
+Step1: Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
+```{r}
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+View(gastric.cancer.celllines)
+
+
+```
+Step2: Creating a vector including the DepMap ID from the gastric cancer cell lines as elements of the vector
+```{r}
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+
+View(gastric.cancer.celllines.v)
+
+```
+Step3: Creating a new dataframe by extracting just the gastric cancer cell lines shown in the vector created in step 2
+
+```{r}
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+View (prism_gastric)
+
+
+
+```
+
+
+```{r}
+sum (is.na (prism_gastric)) 
+```
+Removing treatments with NA-values to clean the created data frame 
+```{r}
+prism_gastric_cleaned_treatments <- prism_gastric[, colSums(is.na(prism_gastric)) == 0]
+View (prism_gastric_cleaned_treatments)
+```
+
+
+
+```{r}
+#????????? why do we need scale and transposing?
+PRISM_gastric_scaled <- t(scale(t(prism_gastric_cleaned_treatments)))
+
+heatmap(PRISM_gastric_scaled)
+
+
+
+```
+
+```{r}
+?scale
+```
+2. Dataframe Gastric Cancer: Prism.exp
+
+```{r}
+#Step3
+prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines.v, ]
+View (prism.exp_gastric)
+
+```
+3. Dataframe Gastric Cancer: Prism.cnv
+```{r}
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+View (prism.cnv_gastric)
+```
+4. Dataframe Gastric Cancer: Prism.achilles
+```{r}
+prism.achilles_gastric <- prism.achilles[rownames(prism.achilles) %in% gastric.cancer.celllines.v, ]
+View (prism.achilles_gastric)
+```
+
+```{r}
+
+```
+
