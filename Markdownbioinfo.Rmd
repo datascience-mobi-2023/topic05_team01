@@ -7,9 +7,11 @@ date: "2023-05-11"
 ```{r}
 
 ```
-1. Dataframe gastric Cancer: Prism
 
-Step1: Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
+# **Dataframe gastric Cancer: Prism**
+
+**Step1:** Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
+
 ```{r}
 
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
@@ -18,14 +20,17 @@ View(gastric.cancer.celllines)
 
 
 ```
-Step2: Creating a vector including the DepMap ID from the gastric cancer cell lines as elements of the vector
+
+**Step2:** Creating a vector including the DepMap ID from the gastric cancer cell lines as elements of the vector
+
 ```{r}
 gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
 
 View(gastric.cancer.celllines.v)
 
 ```
-Step3: Creating a new dataframe by extracting just the gastric cancer cell lines shown in the vector created in step 2
+
+**Step3:** Creating a new dataframe by extracting just the gastric cancer cell lines shown in the vector created in step 2
 
 ```{r}
 prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
@@ -35,17 +40,21 @@ View (prism_gastric)
 
 ```
 
-
 ```{r}
 sum (is.na (prism_gastric)) 
 ```
-Removing treatments with NA-values to clean the created data frame 
+
+Removing treatments with NA-values to clean the created data frame
+
 ```{r}
 prism_gastric_cleaned_treatments <- prism_gastric[, colSums(is.na(prism_gastric)) == 0]
 View (prism_gastric_cleaned_treatments)
+
 ```
 
-
+```{r}
+pheatmap(prism_gastric_cleaned_treatments)
+```
 
 ```{r}
 #????????? why do we need scale and transposing?
@@ -60,7 +69,8 @@ heatmap(PRISM_gastric_scaled)
 ```{r}
 ?scale
 ```
-2. Dataframe Gastric Cancer: Prism.exp
+
+# Dataframe Gastric Cancer: Prism.exp
 
 ```{r}
 #Step3
@@ -68,18 +78,43 @@ prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines
 View (prism.exp_gastric)
 
 ```
-3. Dataframe Gastric Cancer: Prism.cnv
+
+# Dataframe Gastric Cancer: Prism.cnv
+
 ```{r}
 prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
 View (prism.cnv_gastric)
 ```
-4. Dataframe Gastric Cancer: Prism.achilles
+
+# Dataframe Gastric Cancer: Prism.achilles
+
 ```{r}
 prism.achilles_gastric <- prism.achilles[rownames(prism.achilles) %in% gastric.cancer.celllines.v, ]
 View (prism.achilles_gastric)
+pheatmap(prism.achilles_gastric)
+
 ```
+
+# Dataframe Gastric Cancer: Prism.snv
 
 ```{r}
+prism.snv_gastric <- prism.snv[prism.snv$DepMap_ID%in%gastric.cancer.celllines.v, ]
+prism.snv_gastric <- prism.snv_gastric[grepl("True", prism.snv_gastric$isDeleterious), ]
+View (prism.snv_gastric)
 
 ```
 
+# Reducing the gene data:
+
+```{r}
+#genes.snv_v is a vector holding all the Hugo_symbols of the damaging gene mutations found in gastric cancer celllines
+## now this vector is going to be used to select these genes from all the genes in the dataframe prism.exp, prism.cnv and prism.achilles because these are probably correlated to the drug response 
+genes.snv_v <- prism.snv_gastric$Hugo_Symbol
+
+View(genes.snv_v)
+r.prism.exp_g <- prism.exp_gastric[ ,colnames(prism.exp_gastric) %in% genes.snv_v]
+r.prism.cnv_g <- prism.cnv_gastric[ ,colnames(prism.cnv_gastric) %in% genes.snv_v]
+r.prism.achilles_g <- prism.achilles_gastric[ ,colnames(prism.achilles_gastric) %in% genes.snv_v]
+View (r.prism.achilles_g)
+
+```
