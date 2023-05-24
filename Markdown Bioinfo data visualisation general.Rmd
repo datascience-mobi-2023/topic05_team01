@@ -9,17 +9,13 @@ date: "2023-05-11"
 load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/cellline_datasets.rda")
 load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/prism_datasets.rda")
 ```
-1. Dataframe gastric Cancer: Prism
-
-
-Step1 : Remove the NA values from the columns for the data reduction
-
 
 
 ```{r}
 View(prism)
 ```
 
+Step1 : Remove the NA values from the columns for the data reduction
 ```{r}
 prism_cleaned <- prism
 prism_cleaned[is.na(prism_cleaned)] <- 0
@@ -33,7 +29,6 @@ View(prism_cleaned)
 ```
 
 Step 2: Visualize the data.frame for future data reduction
-
 
 ```{r}
 class(prism_cleaned)
@@ -65,12 +60,8 @@ positive_values <- colSums(prism_cleaned > 0) > 0
 dim(prism_cleaned)
 View(prism_cleaned)
 ```
-
-
 ```{r}
-prism_cleaned_drugs <- as.data.frame(sapply(prism_cleaned_drugs, as.numeric))
-non_numeric_cols <- sapply(prism_cleaned_drugs, function(x) !is.numeric(x))
-names(prism_cleaned_drugs)[which(non_numeric_cols)]
+heatmap(prism_cleaned)
 ```
 
 Step1: Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
