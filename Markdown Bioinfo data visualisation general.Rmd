@@ -10,8 +10,68 @@ load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/cellline_data
 load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/prism_datasets.rda")
 ```
 1. Dataframe gastric Cancer: Prism
-=======
->>>>>>> Stashed changes
+
+
+Step1 : Remove the NA values from the columns for the data reduction
+
+
+
+```{r}
+View(prism)
+```
+
+```{r}
+prism_cleaned <- prism
+prism_cleaned[is.na(prism_cleaned)] <- 0
+prism_cleaned <- prism_cleaned[complete.cases(prism_cleaned), ]
+sum(is.na(prism_cleaned))
+dim(prism_cleaned)
+```
+
+```{r}
+View(prism_cleaned)
+```
+
+Step 2: Visualize the data.frame for future data reduction
+
+
+```{r}
+class(prism_cleaned)
+typeof(prism_cleaned)
+prism_cleaned <- (
+  sapply(prism_cleaned, as.numeric)
+)
+is.numeric(prism_cleaned)
+```
+```{r}
+hist(prism_cleaned)
+```
+
+Step 3: We want to remove the drugs, which have positive effect on the cell growth. We want to create a vector which includes more than 200 positive values as column(200 celllines have a postive growth number)
+
+```{r}
+positive_cols <- colSums(prism_cleaned > 0) > 200
+num_positive_cols <- sum(positive_cols)
+num_positive_cols
+
+```
+Step 4: We want to remove those columns
+```{r}
+prism_cleaned <- prism_cleaned[, !positive_cols]
+positive_values <- colSums(prism_cleaned > 0) > 0
+```
+
+```{r}
+dim(prism_cleaned)
+View(prism_cleaned)
+```
+
+
+```{r}
+prism_cleaned_drugs <- as.data.frame(sapply(prism_cleaned_drugs, as.numeric))
+non_numeric_cols <- sapply(prism_cleaned_drugs, function(x) !is.numeric(x))
+names(prism_cleaned_drugs)[which(non_numeric_cols)]
+```
 
 Step1: Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
 ```{r}
@@ -83,11 +143,6 @@ prism.achilles_gastric <- prism.achilles[rownames(prism.achilles) %in% gastric.c
 View (prism.achilles_gastric)
 ```
 
-```{r}
-
-```
-
-<<<<<<< Updated upstream
 =======
 # Reducing the gene data:
 
@@ -165,10 +220,7 @@ hist(prism_gastric_cleaned_drugs)
 ```
 
 
-```{r}
-#make the data.frame numeric 
-class(prism_gastric_cleaned_drugs)
-typeof(prism_gastric_cleaned_drugs)
+
 
 ```{r}
 mean(prism_gastric_cleaned_drugs)
