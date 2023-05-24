@@ -6,7 +6,8 @@ date: "2023-05-11"
 
 <<<<<<< Updated upstream
 ```{r}
-
+load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/cellline_datasets.rda")
+load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/prism_datasets.rda")
 ```
 1. Dataframe gastric Cancer: Prism
 =======
