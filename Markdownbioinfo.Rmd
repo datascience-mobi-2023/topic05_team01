@@ -4,10 +4,13 @@ output: html_document
 date: "2023-05-11"
 ---
 
+<<<<<<< Updated upstream
 ```{r}
 
 ```
 1. Dataframe gastric Cancer: Prism
+=======
+>>>>>>> Stashed changes
 
 Step1: Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
 ```{r}
@@ -83,4 +86,397 @@ View (prism.achilles_gastric)
 
 ```
 
+<<<<<<< Updated upstream
+=======
+# Reducing the gene data:
 
+```{r}
+#genes.snv_v is a vector holding all the Hugo_symbols of the damaging gene mutations found in gastric cancer celllines
+## now this vector is going to be used to select these genes from all the genes in the dataframe prism.exp, prism.cnv and prism.achilles because these are probably correlated to the drug response 
+genes.snv_v <- prism.snv_gastric$Hugo_Symbol
+
+View(genes.snv_v)
+r.prism.exp_g <- prism.exp_gastric[ ,colnames(prism.exp_gastric) %in% genes.snv_v]
+r.prism.cnv_g <- prism.cnv_gastric[ ,colnames(prism.cnv_gastric) %in% genes.snv_v]
+r.prism.achilles_g <- prism.achilles_gastric[ ,colnames(prism.achilles_gastric) %in% genes.snv_v]
+View (r.prism.achilles_g)
+
+```
+
+
+```{r}
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+```
+
+```{r}
+breast.cancer.celllines <-subset(prism.cl, lineage == "breast")
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+
+prism_breast <- prism[rownames(prism) %in% breast.cancer.celllines.v, ]
+prism_breast_cleaned_drugs<- prism_breast[, colSums(is.na(prism_breast)) == 0]
+
+class(prism_gastric_cleaned_drugs)
+typeof(prism_gastric_cleaned_drugs)
+
+prism_gastric_cleaned_drugs <- (
+  sapply(prism_gastric_cleaned_drugs, as.numeric)
+)
+is.numeric(prism_gastric_cleaned_drugs)
+mean.breast = mean(prism_gastric_cleaned_drugs)
+```
+
+
+```{r}
+hist(prism_cleaned_drugs)
+mean(prism_cleaned_drugs)
+```
+```{r}
+View(gastric.cancer.celllines)
+```
+
+Step2: Creating a vector including the DepMap ID from the gastric cancer cell lines as elements of the vector
+
+```{r}
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+```
+
+```{r}
+View(gastric.cancer.celllines.v)
+```
+
+Step3: Creating a new dataframe by extracting just the gastric cancer cell lines shown in the vector created in step 2
+```{r}
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+View (prism_gastric)
+```
+
+
+```{r}
+prism_gastric_cleaned_drugs<- prism_gastric[, colSums(is.na(prism_gastric)) == 0]
+View (prism_gastric_cleaned_drugs)
+```
+
+```{r}
+#plot a histogram of all gastric cancer cell lines
+hist(prism_gastric_cleaned_drugs)
+```
+
+
+```{r}
+#make the data.frame numeric 
+class(prism_gastric_cleaned_drugs)
+typeof(prism_gastric_cleaned_drugs)
+
+```{r}
+mean(prism_gastric_cleaned_drugs)
+median(prism_gastric_cleaned_drugs)
+```
+
+```{r}
+negative_growth_cols <- which(prism_gastric_cleaned_treatments < -6.5, arr.ind = TRUE)[, "col"]
+drugs_with_negative_growth <- colnames(prism_gastric_cleaned_treatments)[negative_growth_cols]
+drugs_with_negative_growth
+```
+
+Create a new dat.frame with the rows as gastric cancer cell lines and the drugs with the drugs_with_negative_growth
+
+```{r}
+prism_gastric_selected_drugs <- prism_gastric_cleaned_treatments[, drugs_with_negative_growth]
+View (prism_gastric_selected_drugs)
+```
+
+```{r}
+install.packages("pheatmap")
+library(pheatmap)
+
+pheatmap(prism_gastric_selected_drugs,show_rownames = FALSE, show_colnames = FALSE)
+```
+
+```{r}
+heatmap(prism_gastric_selected_drugs, col = color_scale, main = "Heatmap")
+color_legend(max_value, min_value, color_scale)
+
+heatmap(prism_gastric_selected_drugs)
+```
+
+```{r}
+
+hist(prism_gastric_selected_drugs)
+
+
+```
+
+
+```{r}
+#????????? why do we need scale and transposing?
+PRISM_gastric_scaled <- t(scale(t(prism_gastric_cleaned_treatments)))
+
+heatmap(PRISM_gastric_scaled)
+
+
+
+```
+
+```{r}
+?scale
+```
+
+2.  Dataframe Gastric Cancer: Prism.exp
+
+```{r}
+#Step3
+prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines.v, ]
+```
+
+
+```{r}
+View (prism.exp_gastric)
+
+```
+
+```{r}
+sum (is.na (prism.exp_gastric))
+class(prism.exp_gastric)
+typeof(prism.exp_gastric)
+
+prism.exp_gastric <- (
+  sapply(prism.exp_gastric, as.numeric)
+)
+is.numeric(prism.exp_gastric)
+is.matrix(prism.exp_gastric)
+General visualization
+```{r}
+breast.cancer.celllines <-subset(prism.cl, lineage == "breast")
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+
+prism_breast <- prism[rownames(prism) %in% breast.cancer.celllines.v, ]
+prism_breast_cleaned_drugs<- prism_breast[, colSums(is.na(prism_breast)) == 0]
+
+class(prism_gastric_cleaned_drugs)
+typeof(prism_gastric_cleaned_drugs)
+
+prism_gastric_cleaned_drugs <- (
+  sapply(prism_gastric_cleaned_drugs, as.numeric)
+)
+is.numeric(prism_gastric_cleaned_drugs)
+mean.breast = mean(prism_gastric_cleaned_drugs)
+```
+```{r}
+prism_cleaned_drugs<- prism[, colSums(is.na(prism)) == 0]
+prism_cleaned_drugs <- ( sapply(prism, as.numeric)
+)
+is.numeric(prism_cleaned_drugs)
+
+```
+```{r}
+hist(prism_cleaned_drugs)
+mean(prism_cleaned_drugs)
+
+```
+
+```{r}
+View(gastric.cancer.celllines)
+```
+
+Step2: Creating a vector including the DepMap ID from the gastric cancer cell lines as elements of the vector
+
+```{r}
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+```
+
+```{r}
+View(gastric.cancer.celllines.v)
+```
+
+Step3: Creating a new dataframe by extracting just the gastric cancer cell lines shown in the vector created in step 2
+
+```{r}
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+View (prism_gastric)
+
+
+
+```
+
+```{r}
+sum (is.na (prism_gastric)) 
+```
+
+Removing treatments with NA-values to clean the created data frame
+
+```{r}
+prism_gastric_cleaned_drugs<- prism_gastric[, colSums(is.na(prism_gastric)) == 0]
+View (prism_gastric_cleaned_drugs)
+```
+
+```{r}
+#make the data.frame numeric 
+class(prism_gastric_cleaned_drugs)
+typeof(prism_gastric_cleaned_drugs)
+
+prism_gastric_cleaned_drugs <- (
+  sapply(prism_gastric_cleaned_drugs, as.numeric)
+)
+is.numeric(prism_gastric_cleaned_drugs)
+
+
+
+
+```
+
+```{r}
+#plot a histogram of all gastric cancer cell lines
+hist(prism_gastric_cleaned_drugs)
+```
+
+Selection of the drugs(columns), which contribute to the negative cell growth \<-6.5
+```{r}
+mean(prism_gastric_cleaned_drugs)
+median(prism_gastric_cleaned_drugs)
+```
+
+```{r}
+negative_growth_cols <- which(prism_gastric_cleaned_treatments < -6.5, arr.ind = TRUE)[, "col"]
+drugs_with_negative_growth <- colnames(prism_gastric_cleaned_treatments)[negative_growth_cols]
+drugs_with_negative_growth
+```
+
+Create a new dat.frame with the rows as gastric cancer cell lines and the drugs with the drugs_with_negative_growth
+
+```{r}
+prism_gastric_selected_drugs <- prism_gastric_cleaned_treatments[, drugs_with_negative_growth]
+View (prism_gastric_selected_drugs)
+```
+
+```{r}
+install.packages("pheatmap")
+library(pheatmap)
+
+pheatmap(prism_gastric_selected_drugs,show_rownames = FALSE, show_colnames = FALSE)
+```
+
+```{r}
+heatmap(prism_gastric_selected_drugs, col = color_scale, main = "Heatmap")
+color_legend(max_value, min_value, color_scale)
+
+heatmap(prism_gastric_selected_drugs)
+```
+
+```{r}
+
+hist(prism_gastric_selected_drugs)
+
+
+```
+
+
+```{r}
+#????????? why do we need scale and transposing?
+PRISM_gastric_scaled <- t(scale(t(prism_gastric_cleaned_treatments)))
+
+heatmap(PRISM_gastric_scaled)
+
+
+
+```
+
+```{r}
+?scale
+```
+
+2.  Dataframe Gastric Cancer: Prism.exp
+
+```{r}
+#Step3
+prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines.v, ]
+```
+
+
+```{r}
+View (prism.exp_gastric)
+
+```
+
+```{r}
+sum (is.na (prism.exp_gastric))
+class(prism.exp_gastric)
+typeof(prism.exp_gastric)
+
+prism.exp_gastric <- (
+  sapply(prism.exp_gastric, as.numeric)
+)
+is.numeric(prism.exp_gastric)
+is.matrix(prism.exp_gastric)
+```
+
+```{r}
+mean(prism.exp_gastric)
+median(prism.exp_gastric)
+hist(prism.exp_gastric)
+```
+```{r}
+head(prism.exp_gastric)
+```
+
+```{r}
+prism_exp_gastric_df <- data.frame(TSPAN6 = prism.exp_gastric)
+mean_value <- mean(prism.exp_gastric$TSPAN6)
+print(mean_value)
+
+```
+
+Create a new dat.frame with the rows as gastric cancer cell lines and the drugs with the drugs_with_negative_growth
+
+
+
+```{r}
+
+selected_genes_positive_cols <- which(prism.exp_gastric > 2.689977, arr.ind = TRUE)[, "col"]
+selected_genes <- colnames(prism.exp_gastric)[selected_genes_positive_cols]
+selected_genes
+```
+
+```{r}
+
+prism.exp_gastric_selected_genes <-prism.exp_gastric[ ,selected_genes]
+
+```
+
+
+```{r}
+install.packages("pheatmap")
+library(pheatmap)
+pheatmap(prism.exp_gastric_selected_genes)
+```
+
+3.  Dataframe Gastric Cancer: Prism.cnv
+
+```{r}
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+View (prism.cnv_gastric)
+```
+
+```{r}
+prism.cnv_gastric<-(sapply(prism.cnv_gastric, as.numeric))
+
+
+hist(prism.cnv_gastric,breaks=20)
+
+```
+
+
+4.  Dataframe Gastric Cancer: Prism.achilles
+
+```{r}
+prism.achilles_gastric <- prism.achilles[rownames(prism.achilles) %in% gastric.cancer.celllines.v, ]
+View (prism.achilles_gastric)
+```
+
+```{r}
+plot(prism.achilles_gastric, main = "Density Plot")
+```
+
+
+>>>>>>> Stashed changes
