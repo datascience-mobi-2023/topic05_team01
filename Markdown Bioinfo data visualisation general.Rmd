@@ -16,6 +16,7 @@ View(prism)
 ```
 
 Step1 : Remove the NA values from the columns for the data reduction
+median value impute 
 ```{r}
 prism_cleaned <- prism
 prism_cleaned[is.na(prism_cleaned)] <- 0
@@ -60,8 +61,141 @@ positive_values <- colSums(prism_cleaned > 0) > 0
 dim(prism_cleaned)
 View(prism_cleaned)
 ```
+
+
 ```{r}
 heatmap(prism_cleaned)
+```
+
+
+Step 1: Create 5 vectors for the 5 different cancer cell lines
+
+
+Vector of breast cancer cell lines: 
+```{r}
+breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
+
+View(breast.cancer.celllines)
+```
+
+Vector of gastric cancer cell lines:
+```{r}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+View(gastric.cancer.celllines)
+```
+
+Vector of kidney cancer cell lines:
+```{r}
+kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
+
+View(kidney.cancer.celllines)
+```
+
+Vector of liver cancer cell lines:
+```{r}
+liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
+
+View(liver.cancer.celllines)
+
+```
+
+Vector of bone cancer cell lines:
+```{r}
+bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
+
+View(bone.cancer.celllines)
+```
+
+
+Extract these IDs from prism
+```{r}
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+
+View(gastric.cancer.celllines.v)
+```
+
+```{r}
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+
+View(breast.cancer.celllines.v)
+```
+
+```{r}
+kidney.cancer.celllines.v <- kidney.cancer.celllines $DepMap_ID
+
+View(kidney.cancer.celllines.v)
+```
+
+```{r}
+bone.cancer.celllines.v <- bone.cancer.celllines $DepMap_ID
+
+View(bone.cancer.celllines.v)
+```
+
+```{r}
+liver.cancer.celllines.v <- liver.cancer.celllines $DepMap_ID
+
+View(liver.cancer.celllines.v)
+```
+
+```{r}
+cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.cancer.celllines.v,  breast.cancer.celllines.v,gastric.cancer.celllines.v)
+
+```
+
+
+```{r}
+prism_celllines <- prism[rownames(prism) %in% cancer.celllines.v, ]
+View (prism_celllines)
+
+```
+
+
+
+Step 2 NA values:
+
+```{r}
+typeof(prism_celllines)
+prism_celllines_numeric <- (
+  sapply(prism_celllines, as.numeric)
+)
+is.numeric(prism_celllines_numeric)
+
+prism_celllines_numeric[is.na(prism_celllines_numeric)] <-median(prism_celllines_numeric,na.rm =TRUE)
+
+sum(is.na(prism_celllines_numeric))
+View(prism_celllines_numeric)
+```
+
+
+PCA of this reduced data frame: 
+```{r}
+standardized_data.p <- scale(prism_cleaned)
+pca_result.p <- prcomp(standardized_data.p, scale. = FALSE)
+View(pca_result.p)
+pcs <- pca_result.p$x
+variance_explained <- pca_result.p$sdev^2 / sum(pca_result.p$sdev^2)
+
+loadings <- pca_result.p$rotation
+scree_plot <- plot(1:length(variance_explained), variance_explained, type = "b",
++                    xlab = "Principal Component", ylab = "Variance Explained")
+
+
+```
+
+
+
+Second Version: we want to impute the NA values with the mean values of each column : 
+
+```{r}
+install.packages("dplyr")
+library(dplyr)
+
+prism_cleaned <- prism %>%
+  mutate(across(everything(), ~if_else(is.na(.), mean(., na.rm = TRUE), .)))
+sum(is.na(prism_cleaned))
+dim(prism_cleaned)
 ```
 
 Step1: Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
