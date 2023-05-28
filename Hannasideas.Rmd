@@ -1,0 +1,395 @@
+---
+title: "Hanna_BioInfo"
+output: html_document
+date: "2023-05-14"
+---
+
+# Hanna's random ideas
+
+**Plotting a drug response against a gene that is overexpressed in prism.exp_gastric:**
+
+```{r}
+pheatmap(r.prism.exp_g)
+#heatmap shows that there are not many values bigger than ten-> very overexpressed genes in certain cellines -> these genes i wanna extract from the dataframe into a new one
+# Specify the threshold
+tthreshold <- 10
+
+# Extract columns that include values lower than the threshold
+overe.genes <- r.prism.exp_g[, apply(r.prism.exp_g, 2, function(col) any(col > tthreshold))]
+
+# Print the selected columns
+print(overe.genes)
+```
+
+Reduced dataframe:
+
+```{r}
+pheatmap(overe.genes)
+```
+
+```{r}
+# Calculate the mean of each column
+col_Means <- colMeans(selected_drugs)
+
+# Set a threshold for column mean
+mean_threshold <- -6.5
+
+# Select columns with mean greater than the threshold
+selected_columns <- selected_drugs[, col_means < mean_threshold]
+pheatmap(selected_columns,  cellwidth = 10, cellheight = 5)
+```
+
+```{r}
+dim(selected_columns)
+dim(overe.genes)
+print(overe.genes)
+print(selected_columns)
+```
+
+Creating new dataframe of selected_columns reducing for the cell line that is more in overe.genes:
+
+```{r}
+og.v<-rownames(overe.genes)
+selected_columns <- selected_columns[rownames(selected_columns) %in% og.v, ]
+View (selected_columns)
+```
+
+```{r}
+pheatmap(r.prism.cnv_g)
+```
+
+```{r}
+plot(prism_gastric$`BRD-A00077618-236-07-6::0.00061034::HTS002`, prism.cnv_gastric$DDX11L1, type = "p", pch = 16, col = "blue",
+     xlab = "BRD-A00077618-236-07-6::0.00061034::HTS002", ylab = "DDX11L1", main = "Scatter Plot")
+cor(prism_gastric$`BRD-A00077618-236-07-6::0.00061034::HTS002`,prism.cnv_gastric$DDX11L1, method = 'pearson')
+```
+
+```{r}
+# Select the row you want to create a histogram for (e.g., row 3)
+prism_g_1 <- prism_gastric_cleaned_treatments[1, ]
+
+# Convert the row values to a numeric vector
+prism_g_1 <- as.numeric(prism_g_1)
+
+# Create a histogram of the row values
+hist(prism_g_1)
+```
+
+```{r}
+
+# Specify the threshold
+threshold <- -7
+
+# Extract columns that include values lower than the threshold
+selected_drugs <- prism_gastric_cleaned_treatments[, apply(prism_gastric_cleaned_treatments, 2, function(col) any(col < threshold))]
+
+# Print the selected columns
+print(selected_drugs)
+```
+
+```{r}
+class(selected_drugs)
+heatmap_sd <- pheatmap(selected_drugs,cellwidth = 4, cellheight = 4, show_rownames = FALSE, show_colnames = FALSE)
+```
+
+```{r}
+# Perform k-means clustering
+kmeans_res <- kmeans(prism_gastric_cleaned_treatments, centers = 2)
+
+# Extract cluster assignments
+cluster_assignments <- kmeans_res$cluster
+
+# Select the desired cluster
+desired_cluster <- 2  # Adjust as needed
+
+# Extract columns belonging to the desired cluster
+clustered_columns <- prism_gastric_cleaned_treatments[, cluster_assignments == desired_cluster]
+
+# Create a new dataframe with clustered columns
+new_dataframe <- as.data.frame(clustered_columns)
+
+```
+
+```{r}
+# Perform hierarchical clustering
+hc <- hclust(dist(prism_gastric_cleaned_treatments))  # df is your dataframe
+
+# Set the desired number of clusters
+num_clusters <- 5  # Adjust as needed
+
+# Cut the tree to obtain cluster assignments
+clusters <- cutree(hc, k = num_clusters)
+
+# Select the desired cluster
+desired_cluster <- 1  # Adjust as needed
+
+# Extract columns belonging to the desired cluster
+clustered_columns <- prism_gastric_cleaned_treatments[, clusters == desired_cluster]
+
+# Create a new dataframe with clustered columns
+new_dataframe2 <- data.frame(clustered_columns)
+```
+
+```{r}
+heatmap <- pheatmap(clustered_columns, cellwidth = 2, cellheight = 2)
+```
+
+```{r}
+# Calculate the mean of each row
+col_means <- colMeans(selected_drugs)
+
+# Print the row means
+print(col_means)
+hist(col_means)
+```
+
+```{r}
+# Calculate the mean of each column
+col_Means <- colMeans(selected_drugs)
+
+# Set a threshold for column mean
+mean_threshold <- -6.5
+
+# Select columns with mean greater than the threshold
+selected_columns <- selected_drugs[, col_means < mean_threshold]
+pheatmap(selected_columns)
+```
+
+```{r}
+boxplot(selected_columns, pch=22)
+```
+
+```{r}
+selected_drugsv <- colnames(selected_drugs)
+
+View(selected_drugsv)
+
+prism_drugs <- prism[ ,colnames(prism) %in% selected_drugsv]
+View (prism_drugs)
+```
+
+# Distribution of prism_gastric
+
+```{r}
+#Apply hist() to each column using lapply() 
+lapply(prism_gastric_cleaned_treatments, hist, breaks = 20, col = "blue", main = "Distribution Diagram", xlab = "Values")
+```
+
+```{r}
+# Perform t-test
+t_test_result <- t.test(selected_drugs$BRD.A28970875.300.04.9..10..HTS002, selected_drugs$BRD.A54927599.001.16.9..10..HTS002)
+
+# View the t-test result
+print(t_test_result)
+
+```
+
+```{r}
+pheatmap(r.prism.exp_g,cellwidth = 2, cellheight = 2, show_rownames = FALSE, show_colnames = FALSE)
+```
+
+```{r}
+pheatmap(r.prism.exp_g,show_colnames = FALSE)
+```
+
+```{r}
+density_est<- density(r.prism.achilles_g)
+
+plot(density_est, main="Density plot of prism.achilles ")
+```
+
+```{r}
+r.prism.achilles_g<- (sapply(r.prism.achilles_g, as.numeric))
+is.numeric(r.prism.achilles_g)
+```
+
+General overview of the data
+
+```{r}
+prism_cleaned_drugs<- prism[,colSums(is.na(prism))==0]
+prism_cleaned_drugs<- (sapply(prism, as.numeric))
+is.numeric(prism_cleaned_drugs)
+```
+
+```{r}
+hist(prism_cleaned_drugs)
+
+```
+
+**PCA von prism.exp mit allen celllines:**
+
+```{r}
+prism_genes<- prism.snv[grepl("True", prism.snv$isDeleterious),]
+View(prism_genes)
+#reducing the genes to just the genes that are damaging to the gastric cancer cells
+r.prism.exp <- prism.exp[ ,colnames(prism.exp) %in% genes.snv_v]
+```
+
+```{r}
+pheatmap(r.prism.exp)
+```
+
+Step 1: Create 5 vectors for the 5 different cancer cell lines
+
+dataframe of breast cancer cell lines:
+
+```{r}
+breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
+
+View(breast.cancer.celllines)
+```
+
+Dataframe of gastric cancer cell lines:
+
+```{r}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+View(gastric.cancer.celllines)
+```
+
+Dataframe of kidney cancer cell lines:
+
+```{r}
+kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
+
+View(kidney.cancer.celllines)
+```
+
+Dataframe of liver cancer cell lines:
+
+```{r}
+liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
+
+View(liver.cancer.celllines)
+```
+
+Dataframe of bone cancer cell lines:
+
+```{r}
+bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
+
+View(bone.cancer.celllines)
+```
+
+**Extract these IDs from prism**
+
+```{r}
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+kidney.cancer.celllines.v <- kidney.cancer.celllines $DepMap_ID
+bone.cancer.celllines.v <- bone.cancer.celllines $DepMap_ID
+liver.cancer.celllines.v <- liver.cancer.celllines $DepMap_ID
+cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.cancer.celllines.v,  breast.cancer.celllines.v,gastric.cancer.celllines.v)
+
+
+View(gastric.cancer.celllines.v)
+```
+
+```{r}
+prism.exp_celllines <- prism.exp[rownames(prism.exp) %in% cancer.celllines.v, ]
+View (prism.exp_celllines)
+```
+
+Step 2 NA values:
+
+```{r}
+typeof(prism.exp_celllines)
+
+prism.exp_celllines_numeric <- (
+
+  sapply(prism.exp_celllines, as.numeric)
+
+)
+
+is.numeric(prism.exp_celllines_numeric)
+
+prism.exp_celllines_numeric[is.na(prism.exp_celllines_numeric)] <-median(prism.exp_celllines_numeric,na.rm =TRUE)
+
+sum(is.na(prism.exp_celllines_numeric))
+
+View(prism.exp_celllines_numeric)
+
+```
+
+Remove columns with zero from the dataframe:
+
+```{r}
+# Remove columns with 0 values
+prism.exp_celllines_numeric <- prism.exp_celllines_numeric[, colSums(prism.exp_celllines_numeric== 0) == 0]
+
+# Print the filtered dataframe
+print(prism.exp_celllines_numeric)
+```
+
+**PCA of this reduced data frame:**
+
+```{r}
+standardized_data.pe <- scale(prism.exp_celllines_numeric)
+
+pca_result.pe <- prcomp(standardized_data.pe, scale. = FALSE)
+
+View(pca_result.pe)
+
+pcs <- pca_result.pe$x
+
+variance_explained.pe <- pca_result.pe$sdev^2 / sum(pca_result.pe$sdev^2)
+
+loadings.pe <- pca_result.pe$rotation
+
+scree_plot <- plot(1:length(variance_explained.pe), variance_explained.pe, type = "b",
+
+                    xlab = "Principal Component", ylab = "Variance Explained")
+
+
+```
+
+```{r}
+# Extract the principal components
+pc1 <- pca_result.pe$x[, 1] # First principal component
+pc2 <- pca_result.pe$x[, 2] # Second principal component
+pc_to_color <- as.numeric(pca_result.pe$x[, 3])  # Convert to numeric
+# Create the scatter plot
+plot(pc1, pc2, xlab = "PC1", ylab = "PC2",main = "PCA Scatter Plot", )
+
+adjusted_color <- pc_to_color - min(pc_to_color) + 1
+
+# Create the scatter plot with color-coded third principal component
+plot(pc1, pc2, xlab = "PC1", ylab = "PC2", main = "PCA Scatter Plot",
+     col = adjusted_color, pch = 16)
+
+# Add a color legend
+legend("topright", legend = "PC3", col = unique(pc_to_color), pch = 16)
+```
+
+```{r}
+
+
+# Extract the principal components
+pcs <- pca_result.pe$x  # All principal components
+
+# Create the scatter plot with color-coded principal components
+plot(pcs[, 1], pcs[, 2], xlab = "PC1", ylab = "PC2", main = "PCA Scatter Plot",
+     col = 1:length(pcs), pch = 16)
+
+# Create a legend with colors for each principal component
+legend("topright", legend = paste0("PC", 1:ncol(pcs)),
+       col = 1:length(pcs), pch = 16)
+```
+
+```{r}
+# Extract the principal components
+pc4 <- pca_result.pe$x[, 4] # First principal component
+pc7 <- pca_result.pe$x[, 7] # Second principal component
+pc_to_color <- as.numeric(pca_result.pe$x[, 3])  # Convert to numeric
+# Create the scatter plot
+plot(pc1, pc2, xlab = "PC4", ylab = "PC7",main = "PCA Scatter Plot", )
+
+adjusted_color <- pc_to_color - min(pc_to_color) + 1
+
+# Create the scatter plot with color-coded third principal component
+plot(pc1, pc2, xlab = "PC4", ylab = "PC7", main = "PCA Scatter Plot",
+     col = adjusted_color, pch = 16)
+
+# Add a color legend
+legend("topright", legend = "PC3", col = unique(pc_to_color), pch = 16)
+```
