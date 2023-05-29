@@ -1,0 +1,70 @@
+---
+title: "Maria Paula Coding"
+output: html_document
+date: "2023-05-29"
+---
+
+# MY AIM: The overall objective is to investigate whether there's a relationship between genetic variations in different cancer cell lines and their response to various treatments.
+
+
+
+
+```{r}
+prism.cnv_celllines <- prism.cnv[rownames(prism.cnv) %in% cancer.celllines.v, ]
+```
+
+
+
+
+```{r}
+# Average CNV for each gene across all cell lines
+avg_cnv <- rowMeans(prism.cnv_celllines )
+
+View (avg_cnv)
+
+```
+
+
+
+
+```{r}
+# average drug response for each treatment across all cell lines
+avg_response <- rowMeans(prism_celllines_numeric)
+
+```
+
+
+
+
+```{r}
+# data frame with the averages
+avg.cnv_response.df <- data.frame (avg_cnv, avg_response)
+```
+
+
+
+```{r}
+# Create scatter plot
+
+plot(avg.cnv_response.df[["avg_cnv"]], avg.cnv_response.df[["avg_response"]], 
+     xlab = "Average Copy Number Variation", 
+     ylab = "Average Drug Response",
+     main = "Scatterplot of Average CNV vs. Average Drug Response",
+     pch = 20) 
+
+```
+
+
+
+```{r}
+correlation <- cor(avg.cnv_response.df[["avg_cnv"]], avg.cnv_response.df[["avg_response"]])
+print(correlation)
+
+# The correlation coefficient of 0.06630813 indicates a very weak positive correlation between the average CNV (Copy Number Variation) and the average drug response.
+
+# This means changes in average CNV are not associated with significant changes in the average drug response.
+
+```
+
+# To better understand the relationship between CNV and drug response, a more nuanced analysis would be needed, looking at individual genes and treatments
+
