@@ -283,6 +283,31 @@ plot(pca_values_t[, 1], pca_values_t[, 2], xlab = "PC1", ylab = "PC2")
 ###lets create a seurat object:
 seurat_object_prism_celllines_t <- CreateSeuratObject(counts = prism_celllines_matrix_transposed)
 ```
+PCA for drugs for our gastric cancer cellline:
+```{r}
+prism_gastric_cleaned_treatments_t<- t(prism_gastric_cleaned_treatments)
+sum(is.na(prism_gastric_cleaned_treatments_t))
+is.numeric(prism_gastric_cleaned_treatments_t)
+pca_result_gastric_cleaned_treatments_t<- prcomp(prism_gastric_cleaned_treatments_t)
+pca_values_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$x # Principal component scores (transformed data)
+pca_variances_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$sdev^2  # Variance explained by each principal component
+pca_proportions_gastric_cleaned_treatment_t <- pca_variances_gastric_cleaned_treatments_t / sum(pca_variances_gastric_cleaned_treatments_t)  # Proportion of variance explained by each principal component
+pca_loadings_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_gastric_cleaned_treatments_t), pca_variances_gastric_cleaned_treatments_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+```
+
+Examining the correlation between drug concentration and drug response
+```{r}
+treatment_names <- colnames(prism_gastric_cleaned_treatments)
+concentration <- sub(".*::(\\d+\\.\\d+)::.*", "\\1", treatment_names)
+concentration <- as.numeric(concentration)
+
+
+
+Just testing:
 3.Perform visualization and clustering steps
 ```{r}
 seurat_object_prism_celllines_t <- NormalizeData(seurat_object_prism_celllines_t)
