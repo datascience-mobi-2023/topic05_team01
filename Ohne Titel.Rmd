@@ -297,6 +297,7 @@ plot(1:length(pca_variances_gastric_cleaned_treatments_t), pca_variances_gastric
 plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2")
 
 
+
 ```
 
 Examining the correlation between drug concentration and drug response
@@ -320,6 +321,130 @@ cbmc <- FindClusters(cbmc, resolution = 0.8, verbose = FALSE)
 cbmc <- RunUMAP(cbmc, dims = 1:30)
 DimPlot(cbmc, label = TRUE)
 ```
+4.Calculating the variance:
+```{r}
+drug_variances <- apply(prism_celllines_matrix_transposed, 1, var)
+#lets creat a histogram:
+hist(drug_variances, main = "Distribution of Drug Variances", xlab = "Variance", ylab = "Frequency")
+#extracting drugs with var higher than 1
+selected_drugs_1 <- rownames(prism_celllines_matrix_transposed)[drug_variances > 1]
+#just to prove the code
+drug_variance <- drug_variances[which(rownames(prism_celllines_matrix_transposed) == "BRD-A00758722-001-04-9::10::HTS002")]
+print(drug_variance)
+#extracting only those drugs from the data frame:
+prism_celllines_matrix_drugvariances1 <- prism_celllines_matrix_transposed[rownames(prism_celllines_matrix_transposed) %in% selected_drugs_1, ]
+View (prism_celllines_matrix_drugvariances1)
+#just to prove the code
+drug_variances11<-apply(prism_celllines_matrix_drugvariances1, 1, var)
+hist(drug_variances11, main = "Distribution of Drug Variances 1", xlab = "Variance", ylab = "Frequency")
+##Now doing PCA only with these drugs:
+pca_result_drugvariances1<- prcomp(prism_celllines_matrix_drugvariances1)
+pca_values_drugvariances1 <- pca_result_drugvariances1$x # Principal component scores (transformed data)
+pca_variances_drugvariances1 <- pca_result_drugvariances1$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances1<- pca_variances_drugvariances1/ sum(pca_variances_drugvariances1)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances1 <- pca_result_drugvariances1$rotation  
+# Loadings (coefficients) of each variable on each principal component
+
+plot(1:length(pca_variances_drugvariances1), pca_variances_drugvariances1, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+
+plot(pca_values_drugvariances1[, 1], pca_values_drugvariances1[, 2], xlab = "PC1", ylab = "PC2")
+
+##now for the transposed matrix:
+prism_celllines_matrix_drugvariances1_t <- t(prism_celllines_matrix_drugvariances1)
+pca_result_drugvariances1_t<- prcomp(prism_celllines_matrix_drugvariances1_t)
+pca_values_drugvariances1_t <- pca_result_drugvariances1_t$x # Principal component scores (transformed data)
+pca_variances_drugvariances1_t <- pca_result_drugvariances1_t$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances1_t<- pca_variances_drugvariances1_t/ sum(pca_variances_drugvariances1_t)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances1_t <- pca_result_drugvariances1_t$rotation  
+# Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_drugvariances1_t), pca_variances_drugvariances1_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_drugvariances1_t[, 1], pca_values_drugvariances1_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+pca_data_drugvariances1_t <- data.frame(PC1 = pca_values_drugvariances1_t[, 1], PC2 = pca_values_drugvariances1_t[, 2],CellLine = rownames(pca_values_drugvariances1_t) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data_drugvariances1_t$Group <- NA
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% bone.cancer.celllines.v] <- "Group 1"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% kidney.cancer.celllines.v] <- "Group 2"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% liver.cancer.celllines.v] <- "Group 3"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% gastric.cancer.celllines.v] <- "Group 4"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% breast.cancer.celllines.v]<-"Group 5"
+
+
+ggplot(pca_data_drugvariances1_t, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+Lets try with drugs with variance higher than 2:
+```{r}
+#extracting drugs with var higher than 1
+selected_drugs_2 <- rownames(prism_celllines_matrix_transposed)[drug_variances > 2]
+#just to prove the code
+drug_variance <- drug_variances[which(rownames(prism_celllines_matrix_transposed) == "BRD-A00758722-001-04-9::10::HTS002")]
+print(drug_variance)
+#extracting only those drugs from the data frame:
+prism_celllines_matrix_drugvariances2 <- prism_celllines_matrix_transposed[rownames(prism_celllines_matrix_transposed) %in% selected_drugs_2, ]
+View (prism_celllines_matrix_drugvariances2)
+#just to prove the code
+drug_variances22<-apply(prism_celllines_matrix_drugvariances2, 1, var)
+hist(drug_variances22, main = "Distribution of Drug Variances 1", xlab = "Variance", ylab = "Frequency")
+##Now doing PCA only with these drugs:
+pca_result_drugvariances2<- prcomp(prism_celllines_matrix_drugvariances2)
+pca_values_drugvariances2 <- pca_result_drugvariances2$x # Principal component scores (transformed data)
+pca_variances_drugvariances2 <- pca_result_drugvariances2$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances2<- pca_variances_drugvariances2/ sum(pca_variances_drugvariances2)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances2 <- pca_result_drugvariances2$rotation  
+# Loadings (coefficients) of each variable on each principal component
+
+plot(1:length(pca_variances_drugvariances2), pca_variances_drugvariances2, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+
+plot(pca_values_drugvariances2[, 1], pca_values_drugvariances2[, 2], xlab = "PC1", ylab = "PC2")
+
+##now for the transposed matrix:
+prism_celllines_matrix_drugvariances2_t <- t(prism_celllines_matrix_drugvariances2)
+pca_result_drugvariances2_t<- prcomp(prism_celllines_matrix_drugvariances2_t)
+pca_values_drugvariances2_t <- pca_result_drugvariances2_t$x # Principal component scores (transformed data)
+pca_variances_drugvariances2_t <- pca_result_drugvariances2_t$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances2_t<- pca_variances_drugvariances2_t/ sum(pca_variances_drugvariances2_t)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances2_t <- pca_result_drugvariances2_t$rotation  
+# Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_drugvariances2_t), pca_variances_drugvariances2_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_drugvariances2_t[, 1], pca_values_drugvariances2_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+pca_data_drugvariances2_t <- data.frame(PC1 = pca_values_drugvariances2_t[, 1], PC2 = pca_values_drugvariances2_t[, 2],CellLine = rownames(pca_values_drugvariances2_t) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data_drugvariances2_t$Group <- NA
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% bone.cancer.celllines.v] <- "Group 1"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% kidney.cancer.celllines.v] <- "Group 2"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% liver.cancer.celllines.v] <- "Group 3"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% gastric.cancer.celllines.v] <- "Group 4"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% breast.cancer.celllines.v]<-"Group 5"
+
+
+ggplot(pca_data_drugvariances2_t, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+```
+
+
+
+
 
 PCA of this reduced data frame: 
 ```{r}
