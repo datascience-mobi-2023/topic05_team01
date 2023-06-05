@@ -271,7 +271,7 @@ bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
 View(bone.cancer.celllines)
 ```
 
-**Extract these IDs from prism**
+**Extract these IDs from prism.exp**
 
 ```{r}
 gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
@@ -392,4 +392,137 @@ plot(pc1, pc2, xlab = "PC4", ylab = "PC7", main = "PCA Scatter Plot",
 
 # Add a color legend
 legend("topright", legend = "PC3", col = unique(pc_to_color), pch = 16)
+```
+
+**Calculating the variance of the rows in Prism.exp to find the genes that show the highest variance in the five cancer types and are the genes that distinguish the cancer types:**
+
+```{r}
+# Transpose the dataframe
+transposed_prism.exp_celllines <- t(prism.exp_celllines)
+```
+
+```{r}
+# Calculate the variance of each row
+gene.exp_variances <- apply(transposed_prism.exp_celllines, MARGIN = 1, var)
+
+```
+
+```{r}
+#plotting the variances to define a logical treshold for selecting drugs
+hist(gene.exp_variances)
+```
+
+```{r}
+threshold <- 3
+selected_genes_var <- transposed_prism.exp_celllines[gene.exp_variances > threshold, ]
+```
+
+```{r}
+print(selected_genes_var)
+```
+
+```{r}
+prism.exp.var<-t(selected_genes_var)
+```
+
+PCA von Prism.exp:
+
+```{r}
+
+pca_result_prism.exp.var <- prcomp(prism.exp.var)
+pca_values <- pca_result_prism.exp.var$x # Principal component scores (transformed data)
+pca_variances <- pca_result_prism.exp.var$sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_prism.exp.var$rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+
+```{r}
+pca_result_genes_var <- prcomp(selected_genes_var)
+pca_values <- pca_result_genes_var$x # Principal component scores (transformed data)
+pca_variances <- pca_result_genes_var$sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_genes_var$rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+
+**Create new dataframes of prism based of the treatments original indication:**
+
+Creating dataframe of prism with treatment of oncology and with treat not of oncology
+
+```{r}
+condition1 <- prism.treat$disease.area ==  'oncology'
+condition2 <- prism.treat$disease.area !=  'oncology'
+```
+
+```{r}
+selected_treat_onc<- rownames(prism.treat)[condition1]
+selected_treat_nonc<- rownames(prism.treat)[condition2]
+selected_treat_onc <- na.omit(selected_treat_onc)
+selected_treat_nonc<- na.omit(selected_treat_nonc)
+```
+
+```{r}
+prism_onc <- prism[, selected_treat_onc,drop = FALSE] 
+prism_nonc <- prism[, selected_treat_nonc,drop = FALSE]
+```
+
+```{r}
+# Replace NA values with zero in the entire dataframe
+prism_onc[is.na(prism_onc)] <- 0
+# Replace NA values with zero in the entire dataframe
+prism_nonc[is.na(prism_nonc)] <- 0
+pheatmap(prism_onc)
+```
+
+```{r}
+pheatmap(prism_nonc,ColCol = NA)
 ```
