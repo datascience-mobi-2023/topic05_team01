@@ -402,9 +402,10 @@ transposed_prism.exp_celllines <- t(prism.exp_celllines)
 ```
 
 ```{r}
-# Calculate the variance of each row
-gene.exp_variances <- apply(transposed_prism.exp_celllines, MARGIN = 1, var)
 
+# Calculate the variance of each row
+
+gene.exp_variances <- apply(transposed_prism.exp_celllines, MARGIN = 1, var)
 ```
 
 ```{r}
@@ -525,4 +526,160 @@ pheatmap(prism_onc)
 
 ```{r}
 pheatmap(prism_nonc,ColCol = NA)
+```
+
+**Trying to extract treatments froms prism.treat that have already an indication related to gastric affected diseases:**
+
+```{r}
+gastric_treat <- subset(prism.treat, grepl("gastroenterology", disease.area))
+selected_gastric_treat<- rownames(gastric_treat)
+
+selected_gastric_treat<- na.omit(selected_gastric_treat)
+prism_gastrictreat <- prism[, selected_gastric_treat,drop = FALSE]
+```
+
+```{r}
+# Replace NA values with zero in the entire dataframe
+prism_gastrictreat[is.na(prism_gastrictreat)] <- 0
+
+pheatmap(prism_gastrictreat)
+```
+
+**Reducing the dataframe prism.exp to just the genes that show high variance within a cancertype to see if the clustering based on PCA differs :**
+
+First Step:
+
+Create dataframes with just the cellines from one of the five cancer types:
+
+```{r}
+#Gastric cancer Dataframe of Prism.exp
+G.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% gastric.cancer.celllines.v, ]
+#Kidney cancer Dataframe of Prism.exp
+K.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% kidney.cancer.celllines.v, ]
+#Bone cancer Dataframe of Prism.exp
+B.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% bone.cancer.celllines.v, ]
+#Breast cancer Dataframe of Prism.exp
+Br.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% breast.cancer.celllines.v, ]
+#Liver cancer Dataframe of Prism.exp
+L.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% liver.cancer.celllines.v, ]
+```
+
+Second step:
+
+Transpose those dataframes to calculate the variance of each row so from the gene expression of one gene :
+
+```{r}
+# Transpose the dataframes
+t.G.prism.exp <- t(G.prism.exp)
+t.K.prism.exp<- t(K.prism.exp)
+t.B.prism.exp<- t(B.prism.exp)
+t.Br.prism.exp<-t(Br.prism.exp)
+t.L.prism.exp<-t(L.prism.exp)
+```
+
+```{r}
+# Calculate the variance of each row of the dataframes cancertypes
+
+G.gene.exp_variances <- apply(t.G.prism.exp, MARGIN = 1, var)
+K.gene.exp_variances <- apply(t.K.prism.exp, MARGIN = 1, var)
+B.gene.exp_variances <- apply(t.B.prism.exp, MARGIN = 1, var)
+Br.gene.exp_variances <- apply(t.Br.prism.exp, MARGIN = 1, var)
+L.gene.exp_variances <- apply(t.L.prism.exp, MARGIN = 1, var)
+```
+
+```{r}
+#plotting the variances to define a logical treshold for selecting drugs
+hist(G.gene.exp_variances)
+hist(K.gene.exp_variances)
+hist(L.gene.exp_variances)
+hist(B.gene.exp_variances)
+hist(Br.gene.exp_variances)
+```
+
+Tresholds:
+
+Gatsric Cancer: 3
+
+Kidney Cancer: 3
+
+Liver Cancer: 4
+
+Bone Cancer : 3
+
+Breast Cancer 3
+
+```{r}
+threshold <- 7
+G.selected_genes_var <- t.G.prism.exp[G.gene.exp_variances > threshold, ]
+threshold <- 7
+K.selected_genes_var <- t.K.prism.exp[K.gene.exp_variances > threshold, ]
+threshold2 <- 8
+L.selected_genes_var <- t.L.prism.exp[L.gene.exp_variances > threshold2, ]
+threshold <- 7
+B.selected_genes_var <- t.B.prism.exp[B.gene.exp_variances > threshold, ]
+threshold <- 7
+Br.selected_genes_var <- t.Br.prism.exp[Br.gene.exp_variances > threshold, ]
+```
+
+```{r}
+G.prism.exp.var<-t(G.selected_genes_var)
+K.prism.exp.var<-t(K.selected_genes_var)
+L.prism.exp.var<-t(L.selected_genes_var)
+B.prism.exp.var<-t(B.selected_genes_var)
+Br.prism.exp.var<-t(Br.selected_genes_var)
+```
+
+Step 3: Creating a new dataframe of prism.exp with all genes that are left in the dataframes reduced to the genes showing high variance within a cancer type:
+
+```{r}
+G.column_names <- colnames(G.prism.exp.var)
+K.column_names <- colnames(K.prism.exp.var)
+L.column_names <- colnames(L.prism.exp.var)
+B.column_names <- colnames(B.prism.exp.var)
+Br.column_names <- colnames(Br.prism.exp.var)
+
+```
+
+```{r}
+genes_variance.V <- c(G.column_names,K.column_names,L.column_names,B.column_names,Br.column_names)
+```
+
+```{r}
+prism.exp_geneshv <- prism.exp_celllines[,colnames( prism.exp_celllines) %in% genes_variance.V ]
+
+```
+
+Step 4: Creating PCA
+
+```{r}
+pca_result_prism.exp_geneshv <- prcomp(prism.exp_geneshv)
+pca_values <- pca_result_prism.exp_geneshv $x # Principal component scores (transformed data)
+pca_variances <- pca_result_prism.exp_geneshv $sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_prism.exp_geneshv $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
