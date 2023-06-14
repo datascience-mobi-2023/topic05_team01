@@ -458,8 +458,9 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+
 ```
 
 ```{r}
@@ -680,7 +681,7 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
@@ -715,7 +716,7 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
@@ -748,7 +749,7 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
@@ -782,7 +783,7 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
@@ -824,7 +825,7 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
@@ -858,7 +859,7 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
@@ -892,6 +893,6 @@ pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer
 
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
