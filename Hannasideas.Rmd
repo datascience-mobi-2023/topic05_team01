@@ -1033,3 +1033,5 @@ ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
   geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 ```
+
+**Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
