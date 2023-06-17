@@ -685,6 +685,63 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
+Redoing the plot above with circles in the scatterplot :
+
+```{r}
+install.packages("ggalt")
+
+library(ggplot2)
+library(ggalt)
+
+pca_result_prism.exp_geneshv <- prcomp(prism.exp_geneshv)
+pca_values <- pca_result_prism.exp_geneshv $x # Principal component scores (transformed data)
+pca_variances <- pca_result_prism.exp_geneshv $sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_prism.exp_geneshv $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  geom_encircle(aes(x = PC1, y = PC2), color = "black", expand = 0.05) +
+  scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group, "Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" = gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+
+```{r}
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  stat_ellipse(geom = "path", aes(group = Group), color = "black", alpha = 0.2) +
+  scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group, "Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" = gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+
+```{r}
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  stat_ellipse(geom = "path", aes(group = Group, color = Group), alpha = 0.2) +
+  scale_color_manual(values = c("Bone cancer" = "red", "Kidney cancer" = "blue", "Liver cancer" = "green", "Gastric cancer" = "purple", "Breast cancer" = "orange")) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+
 **Applying PCA on the oncological and non-oncological dataframes:**
 
 ```{r}
@@ -896,3 +953,85 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
+
+**K-Means Clustering of the cell lines by using the pca results:**
+
+```{r}
+pca_result_prism.exp_geneshv<- prcomp(prism.exp_geneshv)
+pca_values <- pca_result_prism.exp_geneshv $x # Principal component scores (transformed data)
+pca_variances <- pca_result_prism.exp_geneshv $sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_prism.exp_geneshv $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+# Extract the PC scores
+pc_scores <- as.data.frame(pca_result_prism.exp_geneshv$x[, 1:2])
+
+# Perform k-means clustering on the PC scores
+kmeans_result <- kmeans(pc_scores, centers = 3)
+
+# Add cluster labels to the PC scores
+pc_scores$cluster <- as.factor(kmeans_result$cluster)
+
+# Plot the clustered data
+ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
+```
+
+```{r}
+library(ggplot2)
+library(ggforce)
+library(cluster)
+
+# Scatter plot without clustering
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group, "Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" = gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+
+# Perform PCA
+pca_result <- prcomp(pca_data[, c("PC1", "PC2")])
+
+# Extract the PC scores
+pc_scores <- as.data.frame(pca_result_prism.exp_geneshv$x[, 1:2])
+# Perform k-means clustering on the PC scores
+kmeans_result <- kmeans(pc_scores[, c("PC1", "PC2")], centers = 5)
+
+# Add cluster labels to the PC scores
+pc_scores$cluster <- as.factor(kmeans_result$cluster)
+
+# Calculate the center and radius of each cluster
+cluster_centers <- aggregate(pc_scores[, c("PC1", "PC2")], list(cluster = pc_scores$cluster), mean)
+cluster_radii <- aggregate(pc_scores[, c("PC1", "PC2")], list(cluster = pc_scores$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+
+# Plot the clustered data with circles around each cluster
+ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
+```
+
+**Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
