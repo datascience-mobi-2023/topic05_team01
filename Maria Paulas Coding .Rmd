@@ -72,6 +72,9 @@ print(correlation)
 # General Observations: I want to create two date set with Pris.treat, where there are oncology and non oncology treatments as control gropus and then specificallly for gastric cancer cell treatments 
 
 
+
+# Gastric: oncology gastric and non oncology gastric 
+
 ```{r}
 
 gastric.oncology_treatments  <- subset(prism.treat, indication == "gastric adenocarcinoma")
@@ -82,12 +85,22 @@ View (gastric.oncology_treatments )
 ```
 
 
+```{r}
+
+gastric.nononcology_treatments  <- subset(prism.treat, indication == "gastric adenocarcinoma")
+
+View (gastric.oncology_treatments )
 
 
+```
+
+
+
+# General, oncology and non oncology treatments 
 
 ```{r}
 
-contains_cancer <- grepl("cancer", prism.treat$indication, ignore.case = TRUE)
+contains_cancer <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
 
 # Subset the dataframe to include only the rows where the keyword is present
 
