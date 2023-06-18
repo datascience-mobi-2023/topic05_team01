@@ -1213,7 +1213,7 @@ hist(valuesb, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab =
 correlation_results2 <- list()
 
 # Loop through each column of df2=cor_prism_gastric
-for (col in colnames(prism)) {
+for (col in colnames(new_df)) {
   # Get the corresponding row name from df2
   row_name <- col
 
@@ -1228,7 +1228,7 @@ for (col in colnames(prism)) {
     # Check if the column name exists in df3=prism.cnv_gastric
     if (df3_col %in% colnames(prism.cnv)) {
       # Subset the columns from df2 and df3
-      subset_df2 <- prism[, col]
+      subset_df2 <- new_df[, col]
       subset_df3 <- prism.cnv[, df3_col]
 
       # Calculate the correlation
@@ -1270,4 +1270,157 @@ if (length(my_list_cleaned) > 0) {
 } else {
   print("Die Liste enthält keine gültigen Werte nach Entfernen der NA-Werte.")
 }
+```
+
+```{r}
+# Install and load the "zoo" package
+install.packages("zoo")
+library(zoo)
+
+
+
+# Replace NA values with column means
+new_df <- na.aggregate(prism, FUN = mean)
+
+# Print the new dataframe
+print(new_df)
+```
+
+```{r}
+# Replace zeros with column means
+new_df1 <- na.aggregate(prism.exp, FUN = function(x) { ifelse(x == 0, mean(x, na.rm = TRUE), x) })
+
+# Print the new dataframe
+print(new_df1)
+
+# Replace zeros with column means
+new_df2 <- na.aggregate(prism.cnv, FUN = function(x) { ifelse(x == 0, mean(x, na.rm = TRUE), x) })
+
+# Print the new dataframe
+print(new_df2)
+# Replace zeros with column means
+new_df3 <- na.aggregate(prism.achilles, FUN = function(x) { ifelse(x == 0, mean(x, na.rm = TRUE), x) })
+
+# Print the new dataframe
+print(prism.achilles)
+```
+
+```{r}
+# Get the common row names
+common_rows <- intersect(row.names(new_df), row.names(prism.exp))
+
+# Create new dataframes with common rows
+new_prism <- new_df[common_rows, ]
+new_prism.exp <- prism.exp[common_rows, ]
+
+```
+
+```{r}
+
+# Create an empty list to store the correlation results
+correlation_results4 <- list()
+
+# Loop through each column of df2=cor_prism_gastric
+for (col in colnames(new_prism)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1=prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Find the matching column name in df3
+    df3_col <- variable
+
+    # Check if the column name exists in df3=prism.cnv_gastric
+    if (df3_col %in% colnames(new_prism.exp)) {
+      # Subset the columns from df2 and df3
+      subset_df2 <- new_prism[, col]
+      subset_df3 <- new_prism.exp[, df3_col]
+
+      # Calculate the correlation
+      correlation <- cor(subset_df2, subset_df3)
+
+      # Store the correlation result with a descriptive name
+      correlation_results4[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+    }
+  }
+}
+
+```
+
+```{r}
+# NA-Werte aus der Liste entfernen
+correlation_results4 <- na.omit(correlation_results4)
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesch <- unlist(correlation_results4)
+
+# Werte als numerische Werte umwandeln
+valuesch <- as.numeric(unlist(correlation_results4))
+
+# Histogramm erstellen
+hist(valuesch, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+```
+
+```{r}
+# Get the common row names
+common_rows <- intersect(row.names(new_df), row.names(new_df1))
+
+# Create new dataframes with common rows
+new_prism <- new_df[common_rows, ]
+new_prism.exp1 <- new_df1[common_rows, ]
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results5 <- list()
+
+# Loop through each column of df2=cor_prism_gastric
+for (col in colnames(new_prism)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1=prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Find the matching column name in df3
+    df3_col <- variable
+
+    # Check if the column name exists in df3=prism.cnv_gastric
+    if (df3_col %in% colnames(new_prism.exp1)) {
+      # Subset the columns from df2 and df3
+      subset_df2 <- new_prism[, col]
+      subset_df3 <- new_prism.exp1[, df3_col]
+
+      # Calculate the correlation
+      correlation <- cor(subset_df2, subset_df3)
+
+      # Store the correlation result with a descriptive name
+      correlation_results5[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+    }
+  }
+}
+
+```
+
+```{r}
+# NA-Werte aus der Liste entfernen
+correlation_results5 <- na.omit(correlation_results5)
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesd <- unlist(correlation_results5)
+
+# Werte als numerische Werte umwandeln
+valuesd <- as.numeric(unlist(correlation_results5))
+
+# Histogramm erstellen
+hist(valuesd, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
 ```
