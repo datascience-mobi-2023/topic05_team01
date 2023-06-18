@@ -528,19 +528,21 @@ bar_chart
 ```
 ```{r}
 # Do the same with the targets
-library(ggplot2)
 
-# Create the bar chart with modified x-axis labels
 bar_chart <- ggplot(data = prism_treat_new, aes(x = target)) +
   geom_bar(fill = "steelblue") +
   theme_minimal() +
   labs(title = "Target Distribution", x = "Target", y = "Count") +
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.title.x = element_text(margin = margin(t = 10))) # Adjust the margin as needed
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 10)  # Adjust the range as needed
 
 # Display the bar chart
 bar_chart
+```
+```{r}
+## Open the image to see the distribution better
+ggsave("bar_chart.png", bar_chart, width = 20, height = 20, units = "cm")
 ```
 
 ```{r}
