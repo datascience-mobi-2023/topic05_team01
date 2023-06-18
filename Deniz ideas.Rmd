@@ -465,6 +465,13 @@ pc1_selected_drugs
 ```
 
 ```{r}
+# create a new data frame of prism.treat which include only those 66 drugs 
+## Create a vector of these drugs
+prism_treat_new <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs, ]
+prism_treat_new
+```
+
+```{r}
 var_sd <- apply(prism_celllines_matrix_filtered1, 2, sd)
 zero_sd_vars <- names(var_sd[var_sd == 0])
 prism_celllines_filtered <- prism_celllines_matrix_filtered1[, -which(colnames(prism_celllines_matrix_filtered1) %in% zero_sd_vars)]
