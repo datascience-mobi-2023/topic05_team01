@@ -474,6 +474,61 @@ pc1_selected_drugs
 ```
 
 ```{r}
+# create a new data frame of prism.treat which include only those 66 drugs 
+## Create a vector of these drugs
+prism_treat_new <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs, ]
+prism_treat_new
+```
+```{r}
+View(prism_treat_new)
+```
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+#visualize the mechanism of action (moa) of different drugs to specify which target is playing a major role by inhibiting the cell growth of gastric cancer cell lines
+
+mechanism_counts <- table(prism_treat_new$moa)
+
+# Step 2: Create a pie chart
+pie_chart <- ggplot(data = data.frame(mechanism = names(mechanism_counts), count = as.numeric(mechanism_counts)),
+                    aes(x = "", y = count, fill = mechanism)) +
+  geom_col(width = 1) +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  labs(title = "Mechanism of Action Distribution")
+
+# Display the pie chart
+print(pie_chart)
+
+```
+
+
+```{r}
+#visualize the target of different drugs to specify which target is playing a major role by inhibiting the cell growth of gastric cancer cell lines
+
+target_counts <- table(prism_treat_new$target)
+
+# Step 2: Create a pie chart
+pie_chart_target <- ggplot(data = data.frame(target = names(target_counts), count = as.numeric(target_counts)),
+                    aes(x = "", y = count, fill = target)) +
+  geom_col(width = 1) +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  labs(title = "Target Distribution")
+
+
+
+ggsave("pie_chart.png", plot = pie_chart_target, width = 10, height = 10, units = "in")
+
+
+# Display the pie chart
+print(pie_chart_target)
+```
+
+```{r}
 var_sd <- apply(prism_celllines_matrix_filtered1, 2, sd)
 zero_sd_vars <- names(var_sd[var_sd == 0])
 prism_celllines_filtered <- prism_celllines_matrix_filtered1[, -which(colnames(prism_celllines_matrix_filtered1) %in% zero_sd_vars)]

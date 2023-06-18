@@ -8,6 +8,12 @@ date: "2023-05-29"
 
 
 
+```{r}
+library(ggplot2)
+library(ggforce)
+library(cluster)
+```
+
 
 ```{r}
 prism.cnv_celllines <- prism.cnv[rownames(prism.cnv) %in% cancer.celllines.v, ]
@@ -77,22 +83,45 @@ print(correlation)
 
 ```{r}
 
-gastric.oncology_treatments  <- subset(prism.treat, indication == "gastric adenocarcinoma")
+# Filter for oncology treatments related to gastric or gastrointestinal cancer
+contains_gastric_or_gastrointestinal <- grepl("gastric|gastrointestinal", prism.treat$indication, ignore.case = TRUE)
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
 
-View (gastric.oncology_treatments )
 
+gastric_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & contains_oncology, ]
+
+```
+
+```{r}
+# Extract treatment IDs for gastric/gastrointestinal oncology treatments
+gastric.oncology_treatment_ids <- rownames(gastric_oncology_treatments)
+
+# Filter prism data for these treatment IDs
+gastric_oncology_responses <- prism[, colnames(prism) %in% gastric.oncology_treatment_ids]
+
+
+```
+
+
+
+```{r}
+
+# Filter for non-oncology treatments related to gastric or gastrointestinal cancer
+gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & !contains_oncology, ]
 
 ```
 
 
 ```{r}
 
-gastric.nononcology_treatments  <- subset(prism.treat, indication == "gastric adenocarcinoma")
+# Extract treatment IDs for gastric/gastrointestinal non-oncology treatments
+gastric.non_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
 
-View (gastric.oncology_treatments )
-
+# Filter prism data for these treatment IDs
+gastric_non_oncology_responses <- prism[, colnames(prism) %in% gastric.non_oncology_treatment_ids]
 
 ```
+
 
 
 
@@ -106,3 +135,80 @@ contains_cancer <- grepl("oncology", prism.treat$disease.area, ignore.case = TRU
 
 oncology_treatments <- prism.treat[contains_cancer, ]
 ```
+
+
+```{r}
+# Extract treatment IDs from row names of oncology_treatments
+treatment_ids <- rownames(oncology_treatments)
+
+# Subset prism based on treatment_ids
+oncology_treatments_prism <- prism[, colnames(prism) %in% treatment_ids]
+
+# Now selected_treatments_prism contains only the responses of the treatments in oncology_treatments
+
+```
+
+```{r}
+# Replace NA values with zero in the entire dataframe
+
+oncology_treatments_prism[is.na(oncology_treatments_prism)] <- 0
+
+```
+
+
+
+```{r}
+# Filter rows that do not contain the keyword "oncology"
+non_oncology_treatments <- prism.treat[!grepl("oncology", prism.treat$disease.area, ignore.case = TRUE), ]
+
+# Extract treatment IDs from row names of non_oncology_treatments
+non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+
+# Subset prism based on non_oncology_treatment_ids
+non_oncology_treatments_prism <- prism[, colnames(prism) %in% non_oncology_treatment_ids]
+
+# Now non_oncology_treatments_prism contains only the responses of the non-oncological treatments
+
+```
+
+
+
+```{r}
+# Replace NA values with zero in the entire dataframe
+
+non_oncology_treatments_prism[is.na(non_oncology_treatments_prism)] <- 0
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+# Your list of target molecules, replace this with your actual list
+target_molecules <- c("mTor", "NHP2L1", "RPL10L", "RPL11", "RPL13A", "RPL15", "RPL19", "RPL23", "AURKB", "CDK2", "CDK4", "MTOR", "PIK3CA", "BRD2", "BRD3", "BRD4", "BCL2", "EGFR", "AURKA", "AURKB", "AURKC","BRD4", "JAK1", "JAK2", "JAK3", "TYK2", "HDAC1", "HDAC2", "HDAC3", "HDAC6","HDAC1","CDK1", "CDK2", "CDK5", "CDK9", "HDAC1", "HDAC2", "HDAC3", "HDAC4", "HDAC5", "HDAC6", "HDAC7","FGFR1", "FGFR2", "FGFR3", "FGFR4", "KDR","OPRL1","HDAC1", "HDAC10", "HDAC11", "HDAC2", "HDAC3", "HDAC4", "HDAC5","FLT3", "JAK1", "JAK2", "JAK3","XPO1","EGFR", "ERBB2","BRAF","SLC6A3","ABL1","BCR", "HSP90AA1", "RELA", "CDK1", "CDK4", "CDK9", "TOP1", "TOP2A","MELK", "AURKA", "HDAC1", "HDAC2", "HDAC3", "HDAC4", "HDAC5", "HDAC6", "HDAC7", "EGFR", "ERBB2", "ERBB4", "KIF11","KIF11","XPO1","TOP2A",
+"MAPK8","ARF1", "CYTH2","GSK3B", "TUBB","HSP90AA1","CHEK1", "CHEK2",
+"MTOR", "PDPK1", "PDPK1","TOP1")
+
+Filtered_data.snv <- prism.snv[prism.snv$Hugo_Symbol %in% target_molecules, ]
+
+
+```
+
+
+
+
+```{r}
+str(prism.snv)
+```
+
+
+
+
+
+
