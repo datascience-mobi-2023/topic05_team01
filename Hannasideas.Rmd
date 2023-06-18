@@ -1035,3 +1035,239 @@ ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
 ```
 
 **Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
+
+```{r}
+# Select a column by its name and store it in a vector
+column_name <- "MTOR"
+vector <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-A28467416-002-01-0::10::HTS002"
+vector1 <- prism_gastric[[column_name]]
+```
+
+```{r}
+plot(vector, vector1, type = "p", pch = 16, col = "blue",
+     xlab = "X", ylab = "Y", main = "Plot of X vs Y")
+```
+
+```{r}
+# Calculate the correlation
+correlation <- cor(vector1, vector)
+
+# Print the correlation
+print(correlation)
+```
+
+```{r}
+# Select a column by its name and store it in a vector
+column_name <- "AURKB"
+vector2 <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K01683783-001-02-6::10::HTS002"
+vector3 <- prism_gastric[[column_name]]
+```
+
+```{r}
+# Calculate the correlation
+correlation <- cor(vector2, vector3)
+
+# Print the correlation
+print(correlation)
+```
+
+```{r}
+# Select columns using character variables
+
+cor_prism_gastric <- prism_gastric[pc1_selected_drugs]
+
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results <- list()
+
+# Loop through each column of df2
+for (col in colnames(cor_prism_gastric)) {
+  # Get the corresponding column name from df1
+  df1_col <- df1[rownames(df2), col]
+
+  # Find the matching column name in df3
+  df3_col <- as.character(df3[df3$column_of_interest == df1_col, "column_name_to_match"])
+
+  # Check if a matching column name was found in df3
+  if (length(df3_col) > 0) {
+    # Subset the columns from df2 and df3
+    subset_df2 <- df2[, col]
+    subset_df3 <- df3[, df3_col]
+
+    # Calculate the correlation
+    correlation <- cor(subset_df2, subset_df3)
+
+    # Store the correlation result with a descriptive name
+    correlation_results[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+  }
+}
+
+# Access the correlation results
+print(correlation_results)
+
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results <- list()
+
+# Loop through each column of df2=cor_prism_gastric
+for (col in colnames(cor_prism_gastric)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1=prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Find the matching column name in df3
+    df3_col <- variable
+
+    # Check if the column name exists in df3=prism.cnv_gastric
+    if (df3_col %in% colnames(prism.cnv_gastric)) {
+      # Subset the columns from df2 and df3
+      subset_df2 <- cor_prism_gastric[, col]
+      subset_df3 <- prism.cnv_gastric[, df3_col]
+
+      # Calculate the correlation
+      correlation <- cor(subset_df2, subset_df3)
+
+      # Store the correlation result with a descriptive name
+      correlation_results[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+    }
+  }
+}
+
+# Access the correlation results
+print(correlation_results)
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results1 <- list()
+
+# Loop through each column of df2=cor_prism_gastric
+for (col in colnames(prism_gastric)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1=prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Find the matching column name in df3
+    df3_col <- variable
+
+    # Check if the column name exists in df3=prism.cnv_gastric
+    if (df3_col %in% colnames(prism.cnv_gastric)) {
+      # Subset the columns from df2 and df3
+      subset_df2 <- prism_gastric[, col]
+      subset_df3 <- prism.cnv_gastric[, df3_col]
+
+      # Calculate the correlation
+      correlation <- cor(subset_df2, subset_df3)
+
+      # Store the correlation result with a descriptive name
+      correlation_results1[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+    }
+  }
+}
+
+# Access the correlation results
+print(correlation_results1)
+```
+
+```{r}
+# NA-Werte aus der Liste entfernen
+correlation_results1 <- na.omit(correlation_results1)
+
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesw <- unlist(correlation_results1)
+
+# Histogramm erstellen
+hist(valuesw, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesb<- unlist(correlation_results)
+
+# Histogramm erstellen
+hist(valuesb, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results2 <- list()
+
+# Loop through each column of df2=cor_prism_gastric
+for (col in colnames(prism)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1=prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Find the matching column name in df3
+    df3_col <- variable
+
+    # Check if the column name exists in df3=prism.cnv_gastric
+    if (df3_col %in% colnames(prism.cnv)) {
+      # Subset the columns from df2 and df3
+      subset_df2 <- prism[, col]
+      subset_df3 <- prism.cnv[, df3_col]
+
+      # Calculate the correlation
+      correlation <- cor(subset_df2, subset_df3)
+
+      # Store the correlation result with a descriptive name
+      correlation_results2[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+    }
+  }
+}
+
+```
+
+```{r}
+# NA-Werte aus der Liste entfernen
+correlation_results2 <- na.omit(correlation_results2)
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesc <- unlist(correlation_results2)
+
+# Werte als numerische Werte umwandeln
+valuesc <- as.numeric(unlist(correlation_results2))
+
+# Histogramm erstellen
+hist(valuesc, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+```
+
+```{r}
+# NA-Werte entfernen, indem du zuerst die Werte in numerische Werte umwandelst
+my_list_numeric <- as.numeric(unlist(correlation_results2))
+my_list_cleaned <- na.omit(my_list_numeric)
+
+# Überprüfen, ob NA-Werte erfolgreich entfernt wurden
+if (length(my_list_cleaned) > 0) {
+  # Histogramm erstellen
+  hist(my_list_cleaned, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+} else {
+  print("Die Liste enthält keine gültigen Werte nach Entfernen der NA-Werte.")
+}
+```

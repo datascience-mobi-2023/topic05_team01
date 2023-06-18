@@ -4,19 +4,19 @@ output: html_document
 date: "2023-05-11"
 ---
 
-<<<<<<< Updated upstream
+\<\<\<\<\<\<\< Updated upstream
+
 ```{r}
 load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/cellline_datasets.rda")
 load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/prism_datasets.rda")
 ```
 
-
 ```{r}
 View(prism)
 ```
 
-Step1 : Remove the NA values from the columns for the data reduction
-median value impute 
+Step1 : Remove the NA values from the columns for the data reduction median value impute
+
 ```{r}
 prism_cleaned <- prism
 prism_cleaned[is.na(prism_cleaned)] <- 0
@@ -39,6 +39,7 @@ prism_cleaned <- (
 )
 is.numeric(prism_cleaned)
 ```
+
 ```{r}
 hist(prism_cleaned)
 ```
@@ -51,7 +52,9 @@ num_positive_cols <- sum(positive_cols)
 num_positive_cols
 
 ```
+
 Step 4: We want to remove those columns
+
 ```{r}
 prism_cleaned <- prism_cleaned[, !positive_cols]
 positive_values <- colSums(prism_cleaned > 0) > 0
@@ -62,26 +65,24 @@ dim(prism_cleaned)
 View(prism_cleaned)
 ```
 
-
 ```{r}
 heatmap(prism_cleaned)
 ```
 
-
 Step 1: Create 5 vectors for the 5 different cancer cell lines
 
+Vector of breast cancer cell lines:
 
-Vector of breast cancer cell lines: 
 ```{r}
 breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
 ```
-
 
 ```{r}
 View(breast.cancer.celllines)
 ```
 
 Vector of gastric cancer cell lines:
+
 ```{r}
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
 ```
@@ -91,6 +92,7 @@ View(gastric.cancer.celllines)
 ```
 
 Vector of kidney cancer cell lines:
+
 ```{r}
 kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
 ```
@@ -100,6 +102,7 @@ View(kidney.cancer.celllines)
 ```
 
 Vector of liver cancer cell lines:
+
 ```{r}
 liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
 ```
@@ -109,6 +112,7 @@ View(liver.cancer.celllines)
 ```
 
 Vector of bone cancer cell lines:
+
 ```{r}
 bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
 ```
@@ -117,8 +121,8 @@ bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
 View(bone.cancer.celllines)
 ```
 
-
 Extract these IDs from prism
+
 ```{r}
 gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
 ```
@@ -162,15 +166,14 @@ cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.
 
 ```
 
-
 ```{r}
 prism_celllines <- prism[rownames(prism) %in% cancer.celllines.v, ]
 View (prism_celllines)
 
 ```
 
-
 Step 2: NA Values Evgeniya idea version
+
 ```{r}
 typeof(prism_celllines)
 prism_celllines_numeric_2 <- (
@@ -194,7 +197,6 @@ typeof(prism_celllines_matrix_filtered1)
 class(prism_celllines_matrix_filtered1)
 sum(is.na(prism_celllines_matrix_filtered1))###no missing values
 ```
-
 
 ```{r}
 pca_result_matrix_filtrated1 <- prcomp(prism_celllines_matrix_filtered1)
@@ -223,7 +225,6 @@ pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Group 3"
 pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Group 4"
 pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Group 5"
 ```
-
 
 ```{r}
 install.packages(ggplot2)
@@ -260,7 +261,6 @@ sum(is.na(prism_celllines_matrix_transposed))
 is.numeric(prism_celllines_matrix_transposed)
 ```
 
-
 ```{r}
 #PCA of transposed matrix:
 pca_result_matrix_transposed <- prcomp(prism_celllines_matrix_transposed)
@@ -273,7 +273,9 @@ plot(pca_values_t[, 1], pca_values_t[, 2], xlab = "PC1", ylab = "PC2")
 
 
 ```
+
 PCA for drugs for our gastric cancer cellline:
+
 ```{r}
 prism_gastric_cleaned_treatments_t<- t(prism_gastric_cleaned_treatments)
 sum(is.na(prism_gastric_cleaned_treatments_t))
@@ -289,7 +291,9 @@ plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_tr
 
 
 ```
+
 Now we calculate pearson correlation of the PCS of gastric cancer cell lines with the contribution of drugs to the cell growth
+
 ```{r}
 #Select the principle components with high variance
 pca_proportions_gastric_cleaned_treatment_t
@@ -300,6 +304,7 @@ correlation_gastric_cancercelllines_selected_PCs <- cor(selected_components, pri
 correlation_gastric_cancercelllines_selected_PCs
 summary(correlation_gastric_cancercelllines_selected_PCs)
 ```
+
 ```{r}
 #Visualize the pearson correlation of PCs with the gastric cancer cell lines
 barplot(correlation_gastric_cancercelllines_selected_PCs, main = "Pearson Correlation of Principal Components with Gastric Cancer Cell Lines", 
@@ -308,6 +313,7 @@ barplot(correlation_gastric_cancercelllines_selected_PCs, main = "Pearson Correl
 #create an intermediate object
 
 ```
+
 ```{r}
 gastric_cancer_cell_line1 <- prism_gastric_cleaned_treatments_t[, 1]
 
@@ -316,6 +322,7 @@ correlation_gastric_cancercellline1_selected_PCs <- cor(selected_components, gas
 correlation_gastric_cancercellline1_selected_PCs
 
 ```
+
 ```{r}
 # Create a vector of correlation values
 correlation_values <- c(-0.922615177, 0.083180285,-0.063771576 , 0.001032055, -0.133581302, 0.001307767, -0.186299116)
@@ -331,7 +338,9 @@ barplot(correlation_values,
 text(x = 1:7, y = correlation_values, 
      labels = round(correlation_values, 2), pos = 3)
 ```
+
 # do it with other cell lines
+
 ```{r}
 # cell line 2
 
@@ -354,6 +363,7 @@ barplot(correlation_values,
 text(x = 1:7, y = correlation_values, 
      labels = round(correlation_values, 2), pos = 3)
 ```
+
 ```{r}
 #cell line 3
 
@@ -364,7 +374,6 @@ gastric_cancer_cell_line3 <- prism_gastric_cleaned_treatments_t[,3]
 correlation_gastric_cancercellline3_selected_PCs <- cor(selected_components, gastric_cancer_cell_line3, method = "pearson")
 correlation_gastric_cancercellline3_selected_PCs
 ```
-
 
 ```{r}
 # Create a vector of correlation values
@@ -413,10 +422,10 @@ text(x = 1:7, y = correlation_values3,
 install.packages("ggplot2")
 library(ggplot2)
 ```
+
 ```{r}
 library(ggplot2)
 ```
-
 
 ```{r}
 # Create a data frame with the correlation values
@@ -478,4 +487,3 @@ prism_celllines_filtered <- prism_celllines_matrix_filtered1[, -which(colnames(p
 selected_pcs <- pca_values[, 1:8]
 pc_correlation <- cor(selected_pcs, prism_celllines_filtered)
 ```
-  
