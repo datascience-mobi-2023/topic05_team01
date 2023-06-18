@@ -487,6 +487,7 @@ View(prism_treat_new)
 library(ggplot2)
 ```
 
+Do not click on this chunk: There is a problem
 ```{r}
 #visualize the mechanism of action (moa) of different drugs to specify which target is playing a major role by inhibiting the cell growth of gastric cancer cell lines
 
@@ -509,7 +510,7 @@ ggsave(filename = "pie_chart.png", plot = pie_chart, width = 12, height = 8, dpi
 
 ```
 
-
+Click on this chunk to see the distribution
 ```{r}
 library(ggplot2)
 
