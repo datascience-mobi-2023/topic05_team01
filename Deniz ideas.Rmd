@@ -487,6 +487,7 @@ View(prism_treat_new)
 library(ggplot2)
 ```
 
+Do not click on this chunk: There is a problem
 ```{r}
 #visualize the mechanism of action (moa) of different drugs to specify which target is playing a major role by inhibiting the cell growth of gastric cancer cell lines
 
@@ -504,28 +505,44 @@ pie_chart <- ggplot(data = data.frame(mechanism = names(mechanism_counts), count
 print(pie_chart)
 
 ```
-
-
 ```{r}
-#visualize the target of different drugs to specify which target is playing a major role by inhibiting the cell growth of gastric cancer cell lines
+ggsave(filename = "pie_chart.png", plot = pie_chart, width = 12, height = 8, dpi = 300)
 
-target_counts <- table(prism_treat_new$target)
+```
 
-# Step 2: Create a pie chart
-pie_chart_target <- ggplot(data = data.frame(target = names(target_counts), count = as.numeric(target_counts)),
-                    aes(x = "", y = count, fill = target)) +
-  geom_col(width = 1) +
-  coord_polar("y", start = 0) +
-  theme_void() +
-  labs(title = "Target Distribution")
+Click on this chunk to see the distribution
+```{r}
+library(ggplot2)
 
+# Create the bar chart with modified x-axis labels
+bar_chart <- ggplot(data = prism_treat_new, aes(x = moa)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Mechanism of Action Distribution", x = "Mechanism of Action", y = "Count") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_text(margin = margin(t = 10))) # Adjust the margin as needed
 
+# Display the bar chart
+bar_chart
+```
+```{r}
+# Do the same with the targets
 
-ggsave("pie_chart.png", plot = pie_chart_target, width = 10, height = 10, units = "in")
+bar_chart <- ggplot(data = prism_treat_new, aes(x = target)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Target Distribution", x = "Target", y = "Count") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 10)  # Adjust the range as needed
 
-
-# Display the pie chart
-print(pie_chart_target)
+# Display the bar chart
+bar_chart
+```
+```{r}
+## Open the image to see the distribution better
+ggsave("bar_chart.png", bar_chart, width = 20, height = 20, units = "cm")
 ```
 
 ```{r}
