@@ -342,6 +342,71 @@ cbmc <- FindClusters(cbmc, resolution = 0.8, verbose = FALSE)
 cbmc <- RunUMAP(cbmc, dims = 1:30)
 DimPlot(cbmc, label = TRUE)
 ```
+```{r}
+
+```
+Calculating the drug concentration and the drug response for each drug
+```{r}
+for (drug_column in colnames(prism_gastric_cleaned_treatments)) {
+  drug_name <- strsplit(drug_column, "::")[[1]][1]
+  concentration <- concentration 
+  for (cell_line in rownames(prism_gastric_cleaned_treatments)) {
+    cell_line_data <- prism_gastric_cleaned_treatments[cell_line, drug_column] 
+    correlation_df <- cor(cell_line_data, prism_gastric_cleaned_treatments[cell_line, ])
+    print(paste("Correlation for", drug_name, "at concentration", concentration, "and", cell_line, ":", correlation))
+  }
+}
+
+name <- ""
+drug_names_prism <- sub("::.*", "", treatment_names)
+
+drug_matrices <- vector("list", length(treatment_names))
+
+# Loop over each drug
+for (j in 1:length(treatment_names)) {
+  # Create a matrix for the current drug
+  drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))))
+  for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
+    drug_response_try <- prism_gastric_cleaned_treatments[i, grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))]
+    drug_matrix[i, ] <- drug_response_try
+  }
+  drug_matrices[[j]] <- drug_matrix
+}
+
+
+
+```
+Now only for drugs with strong negative correlation:
+```{r}
+drugs_names <- colnames(selected_drugs)
+concentration_seld<- sub(".*::(.*?)::.*", "\\1", drugs_names)
+concentration_seld <- as.numeric(concentration_seld)
+drug_response_1_seld <- as.numeric(selected_drugs[1, ])
+correlation1_gastric_selected_drugs <- cor(concentration_seld, drug_response_1_seld)
+print(correlation1_gastric_selected_drugs)
+plot(concentration_seld, drug_response_1_seld, pch = 16, col = "blue", xlab = "Concentration", ylab = "Drug Response", main = "Correlation Plot")
+#Just testing:
+ 
+  #This works:   
+correlation_results_seld <- apply(selected_drugs, 1, function(row) {
+  drug_response_seld <- as.numeric(row)
+  correlation_seld <- cor(concentration_seld, drug_response_seld)
+  print(correlation_seld)
+  })      
+   #conclusion: strong negative correlation: by increasing the concentration, we have stronger drug response   
+ 
+    for (i in 1:nrow(selected_drugs)) {
+  drug_response_i_seld <- as.numeric(selected_drugs[i, ])
+  correlation_seld <- cor(concentration_seld, drug_response_i_seld)
+  plot(concentration_seld, drug_response_i_seld, pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_seld))
+}
+ 
+hist(correlation_results_seld, main = "Correlation Histogram", xlab = "Correlation")
+```
+
+
 
 
 4.Calculating the variance:
@@ -642,7 +707,7 @@ ggplot(pca_data_drugvariances5_t, aes(x = PC1, y = PC2, color = Group)) +
 #Create dataframes with just the cellines from one of the five cancer types:
 
 
-```{r}
+
 
 #Gastric cancer Dataframe of Prism.exp
 G.prism.filtered<-prism_celllines_matrix_filtered1[rownames(prism_celllines_matrix_filtered1) %in% gastric.cancer.celllines.v, ]
@@ -770,11 +835,22 @@ ggplot(pca_data_prism.filtered1_drugs_variances, aes(x = PC1, y = PC2, color = G
   scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group,"Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" =  gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 
- 
+pc_scores_prism <- as.data.frame(pca_result_prism.filtered1_drugs_variances$x[, 1:2])
+kmeans_result_prism <- kmeans(pc_scores_prism, centers = 4)
 
+# Add cluster labels to the PC scores
+pc_scores_prism$cluster <- as.factor(kmeans_result_prism$cluster)
 
+# Plot the clustered data
+ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
 
-
+cluster_centers_prism <- aggregate(pc_scores_prism[, c("PC1", "PC2")], list(cluster = pc_scores_prism$cluster), mean)
+cluster_radii_prism <- aggregate(pc_scores_prism[, c("PC1", "PC2")], list(cluster = pc_scores_prism$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 
 PCA of this reduced data frame: 
 ```{r}
