@@ -345,7 +345,8 @@ DimPlot(cbmc, label = TRUE)
 ```{r}
 
 ```
-Calculating the drug concentration and the drug response for each drug
+Important! Calculating the drug concentration and the drug response for each drug: 
+
 ```{r}
 for (drug_column in colnames(prism_gastric_cleaned_treatments)) {
   drug_name <- strsplit(drug_column, "::")[[1]][1]
@@ -364,7 +365,6 @@ drug_matrices <- vector("list", length(treatment_names))
 
 # Loop over each drug
 for (j in 1:length(treatment_names)) {
-  # Create a matrix for the current drug
   drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))))
   for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
     drug_response_try <- prism_gastric_cleaned_treatments[i, grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))]
