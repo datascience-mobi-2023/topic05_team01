@@ -1092,30 +1092,42 @@ cor_prism_gastric <- prism_gastric[pc1_selected_drugs]
 # Create an empty list to store the correlation results
 correlation_results <- list()
 
-# Loop through each column of df2=cor_prism_gastric
+# Loop through each column of df2 = cor_prism_gastric
 for (col in colnames(cor_prism_gastric)) {
   # Get the corresponding row name from df2
   row_name <- col
 
-  # Get the variable (string) from the specified column in df1=prism.treat
+  # Get the variable (string) from the specified column in df1 = prism.treat
   variable <- as.character(prism.treat[row_name, "target"])
 
   # Check if the variable exists and is a string
   if (!is.na(variable) && is.character(variable)) {
-    # Find the matching column name in df3
-    df3_col <- variable
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
 
-    # Check if the column name exists in df3=prism.cnv_gastric
-    if (df3_col %in% colnames(prism.cnv_gastric)) {
-      # Subset the columns from df2 and df3
-      subset_df2 <- cor_prism_gastric[, col]
-      subset_df3 <- prism.cnv_gastric[, df3_col]
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
 
-      # Calculate the correlation
-      correlation <- cor(subset_df2, subset_df3)
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
 
-      # Store the correlation result with a descriptive name
-      correlation_results[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(prism.cnv_gastric)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- cor_prism_gastric[, col]
+          subset_df3 <- prism.cnv_gastric[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
     }
   }
 }
@@ -1131,38 +1143,53 @@ valuesb<- unlist(correlation_results)
 # Histogramm erstellen
 hist(valuesb, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
 
+
+
 ```
 
 Dataframe used: Prism with just gastric celllines and all drugs ; Prism.cnv just gastric cellines
 
 ```{r}
+
 # Create an empty list to store the correlation results
 correlation_results1 <- list()
 
-# Loop through each column of df2=cor_prism_gastric
+# Loop through each column of df2 = cor_prism_gastric
 for (col in colnames(prism_gastric)) {
   # Get the corresponding row name from df2
   row_name <- col
 
-  # Get the variable (string) from the specified column in df1=prism.treat
+  # Get the variable (string) from the specified column in df1 = prism.treat
   variable <- as.character(prism.treat[row_name, "target"])
 
   # Check if the variable exists and is a string
   if (!is.na(variable) && is.character(variable)) {
-    # Find the matching column name in df3
-    df3_col <- variable
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
 
-    # Check if the column name exists in df3=prism.cnv_gastric
-    if (df3_col %in% colnames(prism.cnv_gastric)) {
-      # Subset the columns from df2 and df3
-      subset_df2 <- prism_gastric[, col]
-      subset_df3 <- prism.cnv_gastric[, df3_col]
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
 
-      # Calculate the correlation
-      correlation <- cor(subset_df2, subset_df3)
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
 
-      # Store the correlation result with a descriptive name
-      correlation_results1[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(prism.cnv_gastric)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- prism_gastric[, col]
+          subset_df3 <- prism.cnv_gastric[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results1[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
     }
   }
 }
@@ -1196,33 +1223,46 @@ cor_prismdf <- new_df[pc1_selected_drugs]#-> ohne NA values
 ```
 
 ```{r}
+
 # Create an empty list to store the correlation results
 correlation_results6 <- list()
 
-# Loop through each column of df2=cor_prism_gastric
+# Loop through each column of df2 = cor_prism_gastric
 for (col in colnames(cor_prismdf)) {
   # Get the corresponding row name from df2
   row_name <- col
 
-  # Get the variable (string) from the specified column in df1=prism.treat
+  # Get the variable (string) from the specified column in df1 = prism.treat
   variable <- as.character(prism.treat[row_name, "target"])
 
   # Check if the variable exists and is a string
   if (!is.na(variable) && is.character(variable)) {
-    # Find the matching column name in df3
-    df3_col <- variable
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
 
-    # Check if the column name exists in df3=prism.cnv_gastric
-    if (df3_col %in% colnames(new_df2)) {
-      # Subset the columns from df2 and df3
-      subset_df2 <- cor_prismdf[, col]
-      subset_df3 <- new_df2[, df3_col]
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
 
-      # Calculate the correlation
-      correlation <- cor(subset_df2, subset_df3)
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
 
-      # Store the correlation result with a descriptive name
-      correlation_results6[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(new_df2)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- cor_prismdf[, col]
+          subset_df3 <- new_df2[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results6[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
     }
   }
 }
@@ -1249,36 +1289,50 @@ hist(valuese, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "
 Dataframe used: Prism with all celllines and all drugs but NA values replaced with mean value; Prism.cnv
 
 ```{r}
+
 # Create an empty list to store the correlation results
 correlation_results2 <- list()
 
-# Loop through each column of df2=cor_prism_gastric
+# Loop through each column of df2 = cor_prism_gastric
 for (col in colnames(new_df)) {
   # Get the corresponding row name from df2
   row_name <- col
 
-  # Get the variable (string) from the specified column in df1=prism.treat
+  # Get the variable (string) from the specified column in df1 = prism.treat
   variable <- as.character(prism.treat[row_name, "target"])
 
   # Check if the variable exists and is a string
   if (!is.na(variable) && is.character(variable)) {
-    # Find the matching column name in df3
-    df3_col <- variable
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
 
-    # Check if the column name exists in df3=prism.cnv_gastric
-    if (df3_col %in% colnames(prism.cnv)) {
-      # Subset the columns from df2 and df3
-      subset_df2 <- new_df[, col]
-      subset_df3 <- prism.cnv[, df3_col]
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
 
-      # Calculate the correlation
-      correlation <- cor(subset_df2, subset_df3)
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
 
-      # Store the correlation result with a descriptive name
-      correlation_results2[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(prism.cnv)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- new_df[, col]
+          subset_df3 <- prism.cnv[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results2[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
     }
   }
 }
+
 
 ```
 
@@ -1359,37 +1413,49 @@ new_prism.exp <- prism.exp[common_rows, ]
 Dataframe used: Prism with the same amount of celllines as prism.exp and all drugs but NA values replaced with mean value; Prism.exp with the same amount of celllines as prism
 
 ```{r}
-
 # Create an empty list to store the correlation results
 correlation_results4 <- list()
 
-# Loop through each column of df2=cor_prism_gastric
+# Loop through each column of df2 = cor_prism_gastric
 for (col in colnames(new_prism)) {
   # Get the corresponding row name from df2
   row_name <- col
 
-  # Get the variable (string) from the specified column in df1=prism.treat
+  # Get the variable (string) from the specified column in df1 = prism.treat
   variable <- as.character(prism.treat[row_name, "target"])
 
   # Check if the variable exists and is a string
   if (!is.na(variable) && is.character(variable)) {
-    # Find the matching column name in df3
-    df3_col <- variable
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
 
-    # Check if the column name exists in df3=prism.cnv_gastric
-    if (df3_col %in% colnames(new_prism.exp)) {
-      # Subset the columns from df2 and df3
-      subset_df2 <- new_prism[, col]
-      subset_df3 <- new_prism.exp[, df3_col]
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
 
-      # Calculate the correlation
-      correlation <- cor(subset_df2, subset_df3)
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
 
-      # Store the correlation result with a descriptive name
-      correlation_results4[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(new_prism.exp)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- new_prism[, col]
+          subset_df3 <- new_prism.exp[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results4[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
     }
   }
 }
+
 
 ```
 
@@ -1424,33 +1490,46 @@ new_prism.exp1 <- new_df1[common_rows, ]
 # Create an empty list to store the correlation results
 correlation_results5 <- list()
 
-# Loop through each column of df2=cor_prism_gastric
+# Loop through each column of df2 = cor_prism_gastric
 for (col in colnames(new_prism)) {
   # Get the corresponding row name from df2
   row_name <- col
 
-  # Get the variable (string) from the specified column in df1=prism.treat
+  # Get the variable (string) from the specified column in df1 = prism.treat
   variable <- as.character(prism.treat[row_name, "target"])
 
   # Check if the variable exists and is a string
   if (!is.na(variable) && is.character(variable)) {
-    # Find the matching column name in df3
-    df3_col <- variable
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
 
-    # Check if the column name exists in df3=prism.cnv_gastric
-    if (df3_col %in% colnames(new_prism.exp1)) {
-      # Subset the columns from df2 and df3
-      subset_df2 <- new_prism[, col]
-      subset_df3 <- new_prism.exp1[, df3_col]
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
 
-      # Calculate the correlation
-      correlation <- cor(subset_df2, subset_df3)
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
 
-      # Store the correlation result with a descriptive name
-      correlation_results5[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(new_prism.exp1)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- new_prism[, col]
+          subset_df3 <- new_prism.exp1[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results5[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
     }
   }
 }
+
 
 ```
 
@@ -1485,33 +1564,46 @@ new_prism.achilles <- new_df3[common_rows, ]
 # Create an empty list to store the correlation results
 correlation_results7 <- list()
 
-# Loop through each column of df2=cor_prism_gastric
+# Loop through each column of df2 = cor_prism_gastric
 for (col in colnames(new_prism)) {
   # Get the corresponding row name from df2
   row_name <- col
 
-  # Get the variable (string) from the specified column in df1=prism.treat
+  # Get the variable (string) from the specified column in df1 = prism.treat
   variable <- as.character(prism.treat[row_name, "target"])
 
   # Check if the variable exists and is a string
   if (!is.na(variable) && is.character(variable)) {
-    # Find the matching column name in df3
-    df3_col <- variable
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
 
-    # Check if the column name exists in df3=prism.cnv_gastric
-    if (df3_col %in% colnames(new_prism.achilles)) {
-      # Subset the columns from df2 and df3
-      subset_df2 <- new_prism[, col]
-      subset_df3 <- new_prism.achilles[, df3_col]
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
 
-      # Calculate the correlation
-      correlation <- cor(subset_df2, subset_df3)
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
 
-      # Store the correlation result with a descriptive name
-      correlation_results7[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(new_prism.achilles)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- new_prism[, col]
+          subset_df3 <- new_prism.achilles[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results7[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
     }
   }
 }
+
 
 ```
 
