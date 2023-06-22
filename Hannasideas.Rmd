@@ -1034,7 +1034,9 @@ ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 ```
 
-**Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
+## **Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
+
+Calculating correlation as an example of treatment response to the gene expression of the target of that treatment in the celllines as an example:
 
 ```{r}
 # Select a column by its name and store it in a vector
@@ -1075,41 +1077,14 @@ correlation <- cor(vector2, vector3)
 print(correlation)
 ```
 
+**Calculating all correlations of the respective treatment response with respective gene expression of its target in cellines with help of loop of a whole dataframe:**
+
+Dataframe used: Prism with just gastric celllines and selected drugs with Deniz code; Prism.cnv just gastric cellines
+
 ```{r}
 # Select columns using character variables
 
 cor_prism_gastric <- prism_gastric[pc1_selected_drugs]
-
-```
-
-```{r}
-# Create an empty list to store the correlation results
-correlation_results <- list()
-
-# Loop through each column of df2
-for (col in colnames(cor_prism_gastric)) {
-  # Get the corresponding column name from df1
-  df1_col <- df1[rownames(df2), col]
-
-  # Find the matching column name in df3
-  df3_col <- as.character(df3[df3$column_of_interest == df1_col, "column_name_to_match"])
-
-  # Check if a matching column name was found in df3
-  if (length(df3_col) > 0) {
-    # Subset the columns from df2 and df3
-    subset_df2 <- df2[, col]
-    subset_df3 <- df3[, df3_col]
-
-    # Calculate the correlation
-    correlation <- cor(subset_df2, subset_df3)
-
-    # Store the correlation result with a descriptive name
-    correlation_results[[paste("Correlation between", col, "and", df3_col)]] <- correlation
-  }
-}
-
-# Access the correlation results
-print(correlation_results)
 
 ```
 
@@ -1148,6 +1123,17 @@ for (col in colnames(cor_prism_gastric)) {
 # Access the correlation results
 print(correlation_results)
 ```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesb<- unlist(correlation_results)
+
+# Histogramm erstellen
+hist(valuesb, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+
+```
+
+Dataframe used: Prism with just gastric celllines and all drugs ; Prism.cnv just gastric cellines
 
 ```{r}
 # Create an empty list to store the correlation results
@@ -1199,14 +1185,68 @@ valuesw <- unlist(correlation_results1)
 hist(valuesw, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
 ```
 
-```{r}
-# Werte aus der Liste als Vektor extrahieren
-valuesb<- unlist(correlation_results)
+Dataframe used: Prism with all celllines and selected drugs with Deniz code; Prism.cnv but 0 values replaced with mean value
 
-# Histogramm erstellen
-hist(valuesb, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+```{r}
+# Select columns using character variables
+
+cor_prism <- prism[pc1_selected_drugs]
+
+cor_prismdf <- new_df[pc1_selected_drugs]#-> ohne NA values
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results6 <- list()
+
+# Loop through each column of df2=cor_prism_gastric
+for (col in colnames(cor_prismdf)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1=prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Find the matching column name in df3
+    df3_col <- variable
+
+    # Check if the column name exists in df3=prism.cnv_gastric
+    if (df3_col %in% colnames(new_df2)) {
+      # Subset the columns from df2 and df3
+      subset_df2 <- cor_prismdf[, col]
+      subset_df3 <- new_df2[, df3_col]
+
+      # Calculate the correlation
+      correlation <- cor(subset_df2, subset_df3)
+
+      # Store the correlation result with a descriptive name
+      correlation_results6[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+    }
+  }
+}
+
 
 ```
+
+```{r}
+# NA-Werte aus der Liste entfernen
+correlation_results6 <- na.omit(correlation_results6)
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuese <- unlist(correlation_results6)
+
+# Werte als numerische Werte umwandeln
+valuese <- as.numeric(unlist(correlation_results6))
+
+# Histogramm erstellen
+hist(valuese, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+```
+
+Dataframe used: Prism with all celllines and all drugs but NA values replaced with mean value; Prism.cnv
 
 ```{r}
 # Create an empty list to store the correlation results
@@ -1303,6 +1343,7 @@ new_df3 <- na.aggregate(prism.achilles, FUN = function(x) { ifelse(x == 0, mean(
 
 # Print the new dataframe
 print(prism.achilles)
+
 ```
 
 ```{r}
@@ -1314,6 +1355,8 @@ new_prism <- new_df[common_rows, ]
 new_prism.exp <- prism.exp[common_rows, ]
 
 ```
+
+Dataframe used: Prism with the same amount of celllines as prism.exp and all drugs but NA values replaced with mean value; Prism.exp with the same amount of celllines as prism
 
 ```{r}
 
@@ -1365,6 +1408,8 @@ valuesch <- as.numeric(unlist(correlation_results4))
 # Histogramm erstellen
 hist(valuesch, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
 ```
+
+Dataframe used: Prism with the same amount of celllines as prism.exp and all drugs but NA values replaced with mean value; Prism.cnv with the same amount of celllines as prism but 0 values replaced with mean value of the column
 
 ```{r}
 # Get the common row names
@@ -1423,4 +1468,297 @@ valuesd <- as.numeric(unlist(correlation_results5))
 
 # Histogramm erstellen
 hist(valuesd, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+```
+
+Dataframe used: Prism with the same amount of celllines as prism.achilles and all drugs but NA values replaced with mean value; Prism.achillws with the same amount of celllines as prism and zero values replaced with mean value
+
+```{r}
+# Get the common row names
+common_rows <- intersect(row.names(new_df), row.names(new_df3)) #prism;prism.achilles
+
+# Create new dataframes with common rows
+new_prism <- new_df[common_rows, ]
+new_prism.achilles <- new_df3[common_rows, ]
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results7 <- list()
+
+# Loop through each column of df2=cor_prism_gastric
+for (col in colnames(new_prism)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1=prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Find the matching column name in df3
+    df3_col <- variable
+
+    # Check if the column name exists in df3=prism.cnv_gastric
+    if (df3_col %in% colnames(new_prism.achilles)) {
+      # Subset the columns from df2 and df3
+      subset_df2 <- new_prism[, col]
+      subset_df3 <- new_prism.achilles[, df3_col]
+
+      # Calculate the correlation
+      correlation <- cor(subset_df2, subset_df3)
+
+      # Store the correlation result with a descriptive name
+      correlation_results7[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+    }
+  }
+}
+
+```
+
+```{r}
+# NA-Werte aus der Liste entfernen
+correlation_results7 <- na.omit(correlation_results7)
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesf <- unlist(correlation_results7)
+
+# Werte als numerische Werte umwandeln
+valuesf <- as.numeric(unlist(correlation_results7))
+
+# Histogramm erstellen
+hist(valuesf, breaks = 10, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+```
+
+**Extract maximal correlation value of each correlation list:**
+
+```{r}
+#Prism with just gastric celllines and selected drugs with Deniz code; Prism.cnv just gastric cellines
+# Find the index of the maximum value in the list
+max_index <- which.max(sapply(correlation_results, function(x) x[1]))
+
+# Extract the entry with the maximum value
+max_entry <- correlation_results[[max_index]]
+
+# Print the entry with the maximum value
+print(max_entry)
+
+# Get the maximum value from max_entry
+search_value <- max_entry[1]
+
+# Search for the maximum value in the entry
+matching_indices <- grep(search_value, max_entry)
+
+# Extract the value and description using the index
+extracted_value <- max_entry[matching_indices]
+description <- names(correlation_results)[matching_indices]
+# Print the extracted value and description
+print(extracted_value)
+print(description)
+```
+
+```{r}
+#Dataframe used: Prism with just gastric celllines and all drugs ; Prism.cnv just gastric cellines
+# Find the index of the maximum value in the list
+max_index <- which.max(sapply(correlation_results1, function(x) x[1]))
+
+# Extract the entry with the maximum value
+max_entry <- correlation_results1[[max_index]]
+
+# Print the entry with the maximum value
+print(max_entry)
+
+# Get the maximum value from max_entry
+search_value <- max_entry[1]
+
+# Search for the maximum value in the entry
+matching_indices <- grep(search_value, max_entry)
+
+# Extract the value and description using the index
+extracted_value <- max_entry[matching_indices]
+description <- names(correlation_results1)[matching_indices]
+# Print the extracted value and description
+print(extracted_value)
+print(description)
+```
+
+```{r}
+# Flatten the list to a numeric vector
+flat_list <- unlist(correlation_results1)
+
+# Sort the flat list in descending order
+sorted_list <- sort(flat_list, decreasing = TRUE)
+
+# Extract the 10 highest values
+highest_values <- sorted_list[1:10]
+
+# Print the 10 highest values
+print(highest_values)
+
+```
+
+```{r}
+#Scatter plot of all the concentrations of drug prism_gastric BRD-K84564571-001-02-4 and prism.cnv_gastric gene expression of KDR
+# Select a column by its name and store it in a vector
+column_name <- "KDR"
+vector <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K84564571-001-02-4::0.00061034::HTS002"
+vector1 <- prism_gastric[[column_name0]]
+column_name1 <- "BRD-K84564571-001-02-4::0.0024414::HTS002"
+vector2 <- prism_gastric[[column_name1]]
+column_name2 <- "BRD-K84564571-001-02-4::0.00976562::HTS002"
+vector3 <- prism_gastric[[column_name2]]
+column_name3<- "BRD-K84564571-001-02-4::0.0390625::HTS002"
+vector4 <- prism_gastric[[column_name3]]
+column_name4 <- "BRD-K84564571-001-02-4::0.15625::HTS002"
+vector5 <- prism_gastric[[column_name4]]
+column_name5 <- "BRD-K84564571-001-02-4::0.625::HTS002"
+vector6 <- prism_gastric[[column_name5]]
+column_name6 <- "BRD-K84564571-001-02-4::2.5::HTS002"
+vector7 <- prism_gastric[[column_name6]]
+column_name7 <- "BRD-K84564571-001-02-4::10::HTS002"
+vector8<- prism_gastric[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector1, vector2, vector3, vector4, vector5, vector6, vector7, vector8)
+
+# Plot the vectors
+matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+        xlab = "Vector", ylab = "Value")
+
+# Add a legend
+legend("topright", legend = c("Vector1", "Vector2", "Vector3", "Vector4", "Vector5", "Vector6", "Vector7", "Vector8"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16)
+```
+
+```{r}
+cor(vector, vectors)
+
+```
+
+```{r}
+#Dataframe used: Prism with all celllines and all drugs but NA values replaced with mean value; Prism.cnv 
+# Find the index of the maximum value in the list
+max_index <- which.max(sapply(correlation_results2, function(x) x[1]))
+
+# Extract the entry with the maximum value
+max_entry <- correlation_results2[[max_index]]
+
+# Print the entry with the maximum value
+print(max_entry)
+
+# Get the maximum value from max_entry
+search_value <- max_entry[1]
+
+# Search for the maximum value in the entry
+matching_indices <- grep(search_value, max_entry)
+
+# Extract the value and description using the index
+extracted_value <- max_entry[matching_indices]
+description <- names(correlation_results2)[matching_indices]
+# Print the extracted value and description
+print(extracted_value)
+print(description)
+
+```
+
+```{r}
+#Dataframe used: Prism with the same amount of celllines as prism.exp and all drugs but NA values replaced with mean value; Prism.exp with the same amount of celllines as prism
+# Find the index of the maximum value in the list
+max_index <- which.max(sapply(correlation_results4, function(x) x[1]))
+
+# Extract the entry with the maximum value
+max_entry <- correlation_results4[[max_index]]
+
+# Print the entry with the maximum value
+print(max_entry)
+
+# Get the maximum value from max_entry
+search_value <- max_entry[1]
+
+# Search for the maximum value in the entry
+matching_indices <- grep(search_value, max_entry)
+
+# Extract the value and description using the index
+extracted_value <- max_entry[matching_indices]
+description <- names(correlation_results4)[matching_indices]
+# Print the extracted value and description
+print(extracted_value)
+print(description)
+```
+
+```{r}
+#Dataframe used: Prism with the same amount of celllines as prism.exp and all drugs but NA values replaced with mean value; Prism.cnv with the same amount of celllines as prism but 0 values replaced with mean value of the column
+# Find the index of the maximum value in the list
+max_index <- which.max(sapply(correlation_results5, function(x) x[1]))
+
+# Extract the entry with the maximum value
+max_entry <- correlation_results5[[max_index]]
+
+# Print the entry with the maximum value
+print(max_entry)
+
+# Get the maximum value from max_entry
+search_value <- max_entry[1]
+
+# Search for the maximum value in the entry
+matching_indices <- grep(search_value, max_entry)
+
+# Extract the value and description using the index
+extracted_value <- max_entry[matching_indices]
+description <- names(correlation_results5)[matching_indices]
+# Print the extracted value and description
+print(extracted_value)
+print(description)
+```
+
+```{r}
+#Dataframe used: Prism with all celllines and selected drugs with Deniz code; Prism.cnv but 0 values replaced with mean value
+# Find the index of the maximum value in the list
+max_index <- which.max(sapply(correlation_results6, function(x) x[1]))
+
+# Extract the entry with the maximum value
+max_entry <- correlation_results6[[max_index]]
+
+# Print the entry with the maximum value
+print(max_entry)
+
+# Get the maximum value from max_entry
+search_value <- max_entry[1]
+
+# Search for the maximum value in the entry
+matching_indices <- grep(search_value, max_entry)
+
+# Extract the value and description using the index
+extracted_value <- max_entry[matching_indices]
+description <- names(correlation_results6)[matching_indices]
+# Print the extracted value and description
+print(extracted_value)
+print(description)
+```
+
+```{r}
+#Dataframe used: Prism with the same amount of celllines as prism.achilles and all drugs but NA values replaced with mean value; Prism.achillws with the same amount of celllines as prism and zero values replaced with mean value
+# Find the index of the maximum value in the list
+max_index <- which.max(sapply(correlation_results7, function(x) x[1]))
+
+# Extract the entry with the maximum value
+max_entry <- correlation_results7[[max_index]]
+
+# Print the entry with the maximum value
+print(max_entry)
+
+# Get the maximum value from max_entry
+search_value <- max_entry[1]
+
+# Search for the maximum value in the entry
+matching_indices <- grep(search_value, max_entry)
+
+# Extract the value and description using the index
+extracted_value <- max_entry[matching_indices]
+description <- names(correlation_results7)[matching_indices]
+# Print the extracted value and description
+print(extracted_value)
+print(description)
 ```
