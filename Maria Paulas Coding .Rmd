@@ -92,6 +92,7 @@ gastric_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal 
 
 ```
 
+
 ```{r}
 # Extract treatment IDs for gastric/gastrointestinal oncology treatments
 gastric.oncology_treatment_ids <- rownames(gastric_oncology_treatments)
@@ -102,16 +103,30 @@ gastric_oncology_responses <- prism[, colnames(prism) %in% gastric.oncology_trea
 
 ```
 
-
-
 ```{r}
-
-# Filter for non-oncology treatments related to gastric or gastrointestinal cancer
-gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & !contains_oncology, ]
+# Impute NA values with column means
+gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
 
 ```
 
 
+
+```{r}
+
+avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
+
+```
+
+
+
+
+Gastric non oncology 
+
+```{r}
+# Filter for non-oncology treatments related to gastric or gastrointestinal cancer
+gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & !contains_oncology, ]
+
+```
 ```{r}
 
 # Extract treatment IDs for gastric/gastrointestinal non-oncology treatments
@@ -121,6 +136,81 @@ gastric.non_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
 gastric_non_oncology_responses <- prism[, colnames(prism) %in% gastric.non_oncology_treatment_ids]
 
 ```
+
+
+
+```{r}
+
+# Impute NA values with column means
+gastric_non_oncology_responses <- as.data.frame(lapply(gastric_non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+```
+
+
+
+
+
+```{r}
+
+avg_response_non_oncology_gastric <- rowMeans(gastric_non_oncology_responses)
+
+```
+
+
+```{r}
+# Calculate the fold change for each cell line
+
+fold_changes.ongological <- avg_response_non_oncology_gastric / avg_response_oncology_gastric
+
+```
+
+
+```{r}
+# Convert the fold_changes to a data frame for easier plotting
+fold_changes_gastric_df <- data.frame(cell_line = names(fold_changes), fold_change = fold_changes.ongological)
+
+# Sort the dataframe by fold_change for a more organized plot
+fold_changes_gastric_df <- fold_changes_gastric_df [order(fold_changes_gastric_df$fold_change, decreasing = TRUE), ]
+
+# Plot the fold changes
+barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df$cell_line, las = 2, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+```
+
+
+
+
+
+```{r}
+# ... [previous steps] ...
+
+# Convert the fold_changes to a data frame for easier plotting
+fold_changes_gastric_df <- data.frame(cell_line = names(fold_changes_ongological), fold_change = fold_changes_ongological)
+
+# Filter out non-finite values
+fold_changes_gastric_df <- fold_changes_gastric_df[is.finite(fold_changes_gastric_df$fold_change), ]
+
+# Sort the dataframe by fold_change for a more organized plot
+fold_changes_gastric_df <- fold_changes_gastric_df[order(fold_changes_gastric_df$fold_change, decreasing = TRUE), ]
+
+# Print the first few values
+print(head(fold_changes_gastric_df))
+
+# If the dataset is too large, plot only a subset
+n_plot <- min(nrow(fold_changes_gastric_df), 50)
+
+# Try plotting the fold changes
+barplot(fold_changes_gastric_df$fold_change[1:n_plot], names.arg = fold_changes_gastric_df$cell_line[1:n_plot], las = 2, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+
+```
+
+
+
+
+
+
+
+
+
 
 
 
@@ -135,6 +225,7 @@ contains_cancer <- grepl("oncology", prism.treat$disease.area, ignore.case = TRU
 
 oncology_treatments <- prism.treat[contains_cancer, ]
 ```
+
 
 
 ```{r}
@@ -158,6 +249,26 @@ oncology_treatments_prism[is.na(oncology_treatments_prism)] <- 0
 
 
 ```{r}
+
+str(oncology_treatments_prism)
+
+```
+
+
+```{r}
+avg_response_oncology <- rowMeans(oncology_treatments_prism)
+
+
+str(avg_response_oncology)
+```
+
+
+
+
+
+
+
+```{r}
 # Filter rows that do not contain the keyword "oncology"
 non_oncology_treatments <- prism.treat[!grepl("oncology", prism.treat$disease.area, ignore.case = TRUE), ]
 
@@ -171,8 +282,6 @@ non_oncology_treatments_prism <- prism[, colnames(prism) %in% non_oncology_treat
 
 ```
 
-
-
 ```{r}
 # Replace NA values with zero in the entire dataframe
 
@@ -181,6 +290,39 @@ non_oncology_treatments_prism[is.na(non_oncology_treatments_prism)] <- 0
 ```
 
 
+```{r}
+str(non_oncology_treatments_prism)
+```
+
+
+```{r}
+avg_response_non_oncology <- rowMeans(non_oncology_treatments_prism)
+
+```
+
+
+
+```{r}
+# Calculate the fold change for each cell line
+fold_changes <- avg_response_non_oncology / avg_response_oncology
+
+```
+
+
+```{r}
+
+# Convert the fold_changes to a data frame for easier plotting
+fold_changes_df <- data.frame(cell_line = names(fold_changes), fold_change = fold_changes)
+
+# Sort the dataframe by fold_change for a more organized plot
+fold_changes_df <- fold_changes_df[order(fold_changes_df$fold_change, decreasing = TRUE), ]
+
+# Plot the fold changes
+barplot(fold_changes_df$fold_change, names.arg = fold_changes_df$cell_line, las = 3, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+```
+
+
+
 
 
 
@@ -190,15 +332,15 @@ non_oncology_treatments_prism[is.na(non_oncology_treatments_prism)] <- 0
 
 ```{r}
 
-# Your list of target molecules, replace this with your actual list
+# list of target molecules, replace this with actual list
 target_molecules <- c("mTor", "NHP2L1", "RPL10L", "RPL11", "RPL13A", "RPL15", "RPL19", "RPL23", "AURKB", "CDK2", "CDK4", "MTOR", "PIK3CA", "BRD2", "BRD3", "BRD4", "BCL2", "EGFR", "AURKA", "AURKB", "AURKC","BRD4", "JAK1", "JAK2", "JAK3", "TYK2", "HDAC1", "HDAC2", "HDAC3", "HDAC6","HDAC1","CDK1", "CDK2", "CDK5", "CDK9", "HDAC1", "HDAC2", "HDAC3", "HDAC4", "HDAC5", "HDAC6", "HDAC7","FGFR1", "FGFR2", "FGFR3", "FGFR4", "KDR","OPRL1","HDAC1", "HDAC10", "HDAC11", "HDAC2", "HDAC3", "HDAC4", "HDAC5","FLT3", "JAK1", "JAK2", "JAK3","XPO1","EGFR", "ERBB2","BRAF","SLC6A3","ABL1","BCR", "HSP90AA1", "RELA", "CDK1", "CDK4", "CDK9", "TOP1", "TOP2A","MELK", "AURKA", "HDAC1", "HDAC2", "HDAC3", "HDAC4", "HDAC5", "HDAC6", "HDAC7", "EGFR", "ERBB2", "ERBB4", "KIF11","KIF11","XPO1","TOP2A",
 "MAPK8","ARF1", "CYTH2","GSK3B", "TUBB","HSP90AA1","CHEK1", "CHEK2",
 "MTOR", "PDPK1", "PDPK1","TOP1")
 
 Filtered_data.snv <- prism.snv[prism.snv$Hugo_Symbol %in% target_molecules, ]
 
-
 ```
+
 
 
 
