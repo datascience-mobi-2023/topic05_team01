@@ -571,6 +571,15 @@ bar_plot <- ggplot(target_frequency, aes(x = target_vector, fill = target_vector
 
 print(bar_plot)
 ```
+
+
+
+```{r}
+# Install and load the stringr package
+install.packages("stringr")
+library(stringr)
+```
+
 ```{r}
 # Create a bar plot using ggplot2
 bar_plot <- ggplot(target_frequency, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
@@ -580,6 +589,8 @@ bar_plot <- ggplot(target_frequency, aes(x = reorder(target_vector, -Freq), y = 
         axis.text.x = element_text(angle = 45, hjust = 1))+
   ylim(0, 15)  # Adjust the range as needed
 
+# Adjust the x-axis labels
+bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
 
 
 print(bar_plot)
@@ -591,7 +602,38 @@ ggsave("bar_plot.png", bar_plot, width = 20, height = 20, units = "cm")
 ```
 
 ```{r}
+# create a new dataframe of target frequency and select those which have more than 2 freq:
 
+target_freq_dataframe_selected <- subset(target_frequency, Freq > 2)
+
+
+# Print the new dataframe
+print(target_freq_dataframe_selected)
+```
+
+
+```{r}
+# Remove the row with "NA" in target_vector column
+target_freq_dataframe_selected <- target_freq_dataframe_selected[target_freq_dataframe_selected$target_vector != "NA", ]
+
+# Print the updated dataframe
+print(target_freq_dataframe_selected)
+```
+
+```{r}
+# Create a bar plot using ggplot2
+bar_plot <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot)
 ```
 
 
