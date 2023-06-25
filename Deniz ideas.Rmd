@@ -540,10 +540,141 @@ bar_chart <- ggplot(data = prism_treat_new, aes(x = target)) +
 # Display the bar chart
 bar_chart
 ```
+
 ```{r}
 ## Open the image to see the distribution better
 ggsave("bar_chart.png", bar_chart, width = 20, height = 20, units = "cm")
 ```
+
+
+```{r}
+# Seperate the strings of the column target
+big_string <- paste(prism_treat_new$target, collapse = ",")
+```
+
+```{r}
+target_vector <- unlist(strsplit(big_string, ","))
+target_vector <- gsub(" ", "", target_vector)
+target_frequency <- as.data.frame(table(target_vector))
+target_frequency
+View(target_frequency)
+```
+
+```{r}
+# Create a bar plot using ggplot2
+bar_plot <- ggplot(target_frequency, aes(x = target_vector, fill = target_vector)) +
+  geom_bar() +
+  labs(x = "Target", y = "Frequency") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle("Target Frequencies")
+
+
+print(bar_plot)
+```
+
+
+
+```{r}
+# Install and load the stringr package
+install.packages("stringr")
+library(stringr)
+```
+
+```{r}
+# Create a bar plot using ggplot2
+bar_plot <- ggplot(target_frequency, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot)
+```
+
+```{r}
+## Open the image to see the distribution better
+ggsave("bar_plot.png", bar_plot, width = 20, height = 20, units = "cm")
+```
+
+```{r}
+# create a new dataframe of target frequency and select those which have more than 2 freq:
+
+target_freq_dataframe_selected <- subset(target_frequency, Freq > 2)
+
+
+# Print the new dataframe
+print(target_freq_dataframe_selected)
+```
+
+
+```{r}
+# Remove the row with "NA" in target_vector column
+target_freq_dataframe_selected <- target_freq_dataframe_selected[target_freq_dataframe_selected$target_vector != "NA", ]
+
+# Print the updated dataframe
+print(target_freq_dataframe_selected)
+```
+
+```{r}
+# Create a bar plot using ggplot2
+bar_plot <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot)
+```
+```{r}
+#The same with moa
+# Seperate the strings of the column target
+big_string <- paste(prism_treat_new$moa, collapse = ",")
+
+```
+
+```{r}
+moa_vector <- unlist(strsplit(big_string, ","))
+moa_vector <- gsub(" ", "", moa_vector)
+moa_frequency <- as.data.frame(table(moa_vector))
+moa_frequency
+View(moa_frequency)
+```
+```{r}
+# create a new dataframe of target frequency and select those which have more than 1 freq:
+
+moa_freq_dataframe_selected <- subset(moa_frequency, Freq > 1)
+
+
+# Print the new dataframe
+print(moa_freq_dataframe_selected)
+```
+```{r}
+# Create a bar plot using ggplot2
+bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
+  geom_bar(stat = "identity") +
+  labs(x = "moa", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot_moa <- bar_plot_moa + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot_moa)
+```
+
+
 
 ```{r}
 var_sd <- apply(prism_celllines_matrix_filtered1, 2, sd)

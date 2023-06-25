@@ -149,7 +149,6 @@ gastric_non_oncology_responses <- as.data.frame(lapply(gastric_non_oncology_resp
 
 
 
-
 ```{r}
 
 avg_response_non_oncology_gastric <- rowMeans(gastric_non_oncology_responses)
@@ -162,14 +161,17 @@ avg_response_non_oncology_gastric <- rowMeans(gastric_non_oncology_responses)
 
 fold_changes.ongological <- avg_response_non_oncology_gastric / avg_response_oncology_gastric
 
+dim(avg_response_non_oncology_gastric)
+dim(avg_response_oncology)
+
 ```
 
 
 ```{r}
-# Convert the fold_changes to a data frame for easier plotting
+# Convert the fold_changes to a data frame for plotting
 fold_changes_gastric_df <- data.frame(cell_line = names(fold_changes), fold_change = fold_changes.ongological)
 
-# Sort the dataframe by fold_change for a more organized plot
+# Sort the dataframe by fold_change 
 fold_changes_gastric_df <- fold_changes_gastric_df [order(fold_changes_gastric_df$fold_change, decreasing = TRUE), ]
 
 # Plot the fold changes
