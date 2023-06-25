@@ -345,7 +345,8 @@ DimPlot(cbmc, label = TRUE)
 ```{r}
 
 ```
-Calculating the drug concentration and the drug response for each drug
+Important! Calculating the drug concentration and the drug response for each drug: 
+
 ```{r}
 for (drug_column in colnames(prism_gastric_cleaned_treatments)) {
   drug_name <- strsplit(drug_column, "::")[[1]][1]
@@ -364,7 +365,6 @@ drug_matrices <- vector("list", length(treatment_names))
 
 # Loop over each drug
 for (j in 1:length(treatment_names)) {
-  # Create a matrix for the current drug
   drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))))
   for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
     drug_response_try <- prism_gastric_cleaned_treatments[i, grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))]
@@ -852,6 +852,73 @@ ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
   geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 
+#testing the right number og clusters:
+library(cluster)
+library(factoextra)
+install.packages ("factoextra")
+
+
+fviz_nbclust(pc_scores_prism, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype=2)
+
+  
+
+ 
+#trying things
+install.packages("NbClust")
+library(NbClust)
+clusternum <- NbClust ((pc_scores_prism), distance="euclidean", method="kmeans")
+
+pam.res5 <- pam(pc_scores_prism, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+install.packages("tidyverse")
+library(purrr)
+
+fviz_silhouette(pam.res5, palette = "jco", ggtheme = theme_classic())
+#higher values indicates a better clustering
+avg_sil <- function(k) {
+  km.res <- kmeans(pc_scores_prism, centers = 5, nstart = 25)
+  ss <- silhouette(km.res$cluster, dist(pc_scores_prism))
+  mean(ss[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values <- map_dbl(k.values, avg_sil)
+
+plot(k.values, avg_sil_values,
+       type = "b", pch = 19, frame = FALSE, 
+       xlab = "Number of clusters K",
+       ylab = "Average Silhouettes")
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism, kmeans, method = "silhouette")
+
+
+
+
+pam.res4 <- pam(pc_scores_prism, 4,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
+#In our case, an average silhouette width of 0.41 indicates a moderate to good separation of data points within their respective clusters. This suggests that the clustering result has some level of distinction and coherence, with a reasonably clear separation between the clusters
+ #trying with other numbers:
+pam.res2 <- pam(pc_scores_prism, 2,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res2, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+fviz_silhouette(pam.res2, palette = "jco", ggtheme = theme_classic())
+
+#here we have 0.49, which is even better
 PCA of this reduced data frame: 
 ```{r}
 standardized_data.p <- scale(prism_cleaned)
