@@ -1034,8 +1034,6 @@ ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 ```
 
- 
-
 ```{r}
 library(ggplot2)
 library(ggforce)
@@ -1051,41 +1049,51 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
 pca_result <- prcomp(pca_data[, c("PC1", "PC2")])
 
 # Extract the PC scores
-pc_scores <- as.data.frame(pca_result_prism.exp_geneshv$x[, 1:2])
-# Perform k-means clustering on the PC scores
-kmeans_result <- kmeans(pc_scores[, c("PC1", "PC2")], centers = 5)
+pc_scores <- as.data.frame(pca_result$x[, 1:2])
 
-# Add cluster labels to the PC scores
-pc_scores$cluster <- as.factor(kmeans_result$cluster)
+# Determine the range of k values for elbow method and silhouette coefficient
+k_values <- 2:10
+# Create empty vectors for silhouette and WCSS values
+silhouette_values <- numeric(length(k_values))
+wcss_values <- numeric(length(k_values))
 
-# Calculate the center and radius of each cluster
-cluster_centers <- aggregate(pc_scores[, c("PC1", "PC2")], list(cluster = pc_scores$cluster), mean)
-cluster_radii <- aggregate(pc_scores[, c("PC1", "PC2")], list(cluster = pc_scores$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
-
+# Loop over k values
 for (i in seq_along(k_values)) {
   k <- k_values[i]
   
   # Perform k-means clustering
-  kmeans_result <- kmeans(pc_scores[, c("PC1", "PC2")], centers = k)
+  kmeans_result <- kmeans(pc_scores[, c(1, 2)], centers = k)
   
   # Calculate silhouette coefficient
-  silhouette_values[i] <- silhouette(kmeans_result$cluster, dist(pc_scores[, c("PC1", "PC2")]))$avg.width
+  silhouette_obj <- silhouette(kmeans_result$cluster, dist(pc_scores[, c(1, 2)]))
+  silhouette_values[i] <- mean(silhouette_obj)
   
   # Calculate within-cluster sum of squares (WCSS)
   wcss_values[i] <- kmeans_result$tot.withinss
 }
+# Plot the elbow method graph
+elbow_plot <- ggplot(data.frame(k = k_values, WCSS = wcss_values), aes(x = k, y = WCSS)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Number of clusters (k)", y = "Within-cluster sum of squares (WCSS)", title = "Elbow Method")
 
-# Plot silhouette coefficients
-plot(k_values, silhouette_values, type = "b", xlab = "Number of clusters", ylab = "Silhouette coefficient")
+# Plot the silhouette coefficients
+silhouette_plot <- ggplot(data.frame(k = k_values, Silhouette = silhouette_values), aes(x = k, y = Silhouette)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Number of clusters (k)", y = "Silhouette coefficient", title = "Silhouette Coefficient")
 
-# Plot within-cluster sum of squares (WCSS)
-plot(k_values, wcss_values, type = "b", xlab = "Number of clusters", ylab = "Within-Cluster Sum of Squares (WCSS)")
+# Print both plots
+print(elbow_plot)
+print(silhouette_plot)
 
 # Plot the clustered data with circles around each cluster
 ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
   geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 ```
+
+ 
 
 ## **Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
 
