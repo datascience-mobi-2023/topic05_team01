@@ -635,6 +635,45 @@ bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x
 
 print(bar_plot)
 ```
+```{r}
+#The same with moa
+# Seperate the strings of the column target
+big_string <- paste(prism_treat_new$moa, collapse = ",")
+
+```
+
+```{r}
+moa_vector <- unlist(strsplit(big_string, ","))
+moa_vector <- gsub(" ", "", moa_vector)
+moa_frequency <- as.data.frame(table(moa_vector))
+moa_frequency
+View(moa_frequency)
+```
+```{r}
+# create a new dataframe of target frequency and select those which have more than 1 freq:
+
+moa_freq_dataframe_selected <- subset(moa_frequency, Freq > 1)
+
+
+# Print the new dataframe
+print(moa_freq_dataframe_selected)
+```
+```{r}
+# Create a bar plot using ggplot2
+bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
+  geom_bar(stat = "identity") +
+  labs(x = "moa", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot_moa <- bar_plot_moa + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot_moa)
+```
+
 
 
 ```{r}
