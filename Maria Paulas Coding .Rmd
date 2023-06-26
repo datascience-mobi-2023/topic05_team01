@@ -183,25 +183,78 @@ barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df
 
 
 ```{r}
-# ... [previous steps] ...
+# Filter for oncology treatments related to gastric or gastrointestinal cancer
+contains_gastric_or_gastrointestinal <- grepl("gastric|gastrointestinal", prism.treat$indication, ignore.case = TRUE)
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
 
-# Convert the fold_changes to a data frame for easier plotting
-fold_changes_gastric_df <- data.frame(cell_line = names(fold_changes_ongological), fold_change = fold_changes_ongological)
+gastric_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & contains_oncology, ]
 
-# Filter out non-finite values
-fold_changes_gastric_df <- fold_changes_gastric_df[is.finite(fold_changes_gastric_df$fold_change), ]
+# Extract treatment IDs for gastric/gastrointestinal oncology treatments
+gastric_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
 
-# Sort the dataframe by fold_change for a more organized plot
+# Filter prism data for these treatment IDs
+gastric_oncology_responses <- prism[, colnames(prism) %in% gastric_oncology_treatment_ids]
+
+# Impute NA values with column means
+gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
+
+# Filter for non-oncology treatments related to gastric or gastrointestinal cancer
+gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & !contains_oncology, ]
+
+# Extract treatment IDs for gastric/gastrointestinal non-oncology treatments
+gastric_non_oncology_treatment_ids <- rownames(gastric_non_oncology_treatments) # Fixed this line
+
+# Filter prism data for these treatment IDs
+gastric_non_oncology_responses <- prism[, colnames(prism) %in% gastric_non_oncology_treatment_ids]
+
+# Impute NA values with column means
+gastric_non_oncology_responses <- as.data.frame(lapply(gastric_non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_non_oncology_gastric <- rowMeans(gastric_non_oncology_responses)
+
+# Calculate the fold change for each cell line
+pseudo_count <- 1e-9
+fold_changes_oncological <- (avg_response_non_oncology_gastric + pseudo_count) / (avg_response_oncology_gastric + pseudo_count)
+
+# Convert the fold_changes to a data frame for plotting
+fold_changes_gastric_df <- data.frame(cell_line = names(fold_changes_oncological), fold_change = fold_changes_oncological)
+
+# Sort the dataframe by fold_change 
 fold_changes_gastric_df <- fold_changes_gastric_df[order(fold_changes_gastric_df$fold_change, decreasing = TRUE), ]
 
-# Print the first few values
-print(head(fold_changes_gastric_df))
+# Plot the fold changes
+barplot
 
-# If the dataset is too large, plot only a subset
-n_plot <- min(nrow(fold_changes_gastric_df), 50)
+```
 
-# Try plotting the fold changes
-barplot(fold_changes_gastric_df$fold_change[1:n_plot], names.arg = fold_changes_gastric_df$cell_line[1:n_plot], las = 2, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+
+```{r}
+# Check the lengths of fold_changes_oncological and its names
+print(length(fold_changes_oncological))
+print(length(names(fold_changes_oncological)))
+
+# Check if avg_response_oncology_gastric and avg_response_non_oncology_gastric have names
+print(length(names(avg_response_oncology_gastric)))
+print(length(names(avg_response_non_oncology_gastric)))
+
+# If the avg_response vectors have names, use them for the cell_line column
+if (length(names(avg_response_oncology_gastric)) == length(fold_changes_oncological)) {
+  cell_lines <- names(avg_response_oncology_gastric)
+} else {
+  # Provide a default value, or handle this case as needed
+  cell_lines <- 1:length(fold_changes_oncological)
+}
+
+# Create the data frame using cell_lines for the cell_line column
+fold_changes_gastric_df <- data.frame(cell_line = cell_lines, fold_change = fold_changes_oncological)
+
+# Sort the dataframe by fold_change 
+fold_changes_gastric_df <- fold_changes_gastric_df[order(fold_changes_gastric_df$fold_change, decreasing = TRUE), ]
+
+# Plot the fold changes
+barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df$cell_line, las = 2, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
 
 ```
 
@@ -212,6 +265,124 @@ barplot(fold_changes_gastric_df$fold_change[1:n_plot], names.arg = fold_changes_
 
 
 
+```{r}
+# Filter for oncology treatments related to gastric cancer
+contains_gastric <- grepl("gastric", prism.treat$indication, ignore.case = TRUE)
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
+
+# Filtering for treatments that are both related to gastric cancer and are oncology treatments
+gastric_oncology_treatments <- prism.treat[contains_gastric & contains_oncology, ]
+
+# Extract treatment IDs for gastric oncology treatments
+gastric_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
+
+# Filter prism data for these treatment IDs
+gastric_oncology_responses <- prism[, colnames(prism) %in% gastric_oncology_treatment_ids]
+
+# Impute NA values with column means
+gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+# Calculate average response for oncology treatments
+avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
+
+# Now, for non-oncology treatments related to gastric cancer
+gastric_non_oncology_treatments <- prism.treat[contains_gastric & !contains_oncology, ]
+
+# Extract treatment IDs for gastric non-oncology treatments
+gastric_non_oncology_treatment_ids <- rownames(gastric_non_oncology_treatments)
+
+# Filter prism data for these treatment IDs
+gastric_non_oncology_responses <- prism[, colnames(prism) %in% gastric_non_oncology_treatment_ids]
+
+# Impute NA values with column means
+gastric_non_oncology_responses <- as.data.frame(lapply(gastric_non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+# Calculate average response for non-oncology treatments
+avg_response_non_oncology_gastric <- rowMeans(gastric_non_oncology_responses)
+
+
+# Calculate the fold change for each cell line
+fold_changes_oncological <- avg_response_non_oncology_gastric / avg_response_oncology_gastric
+
+# Creating data frame for plotting
+cell_line_names <- rownames(gastric_oncology_responses) # Use row names from the responses matrix
+fold_changes_gastric_df <- data.frame(cell_line = cell_line_names, fold_change = fold_changes_oncological)
+
+# Sort the dataframe by fold_change 
+fold_changes_gastric_df <- fold_changes_gastric_df[order(fold_changes_gastric_df$fold_change, decreasing = TRUE), ]
+
+# Plot the fold changes
+barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df$cell_line, las = 2, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+
+
+
+```
+
+
+
+
+```{r}
+# Filter for oncology treatments related to gastric or gastrointestinal cancer
+contains_gastric_or_gastrointestinal <- grepl("gastric|gastrointestinal", prism.treat$indication, ignore.case = TRUE)
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
+
+gastric_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & contains_oncology, ]
+gastric_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
+
+gastric_oncology_responses <- prism[, colnames(prism) %in% gastric_oncology_treatment_ids]
+gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
+
+# Gastric non oncology 
+gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & !contains_oncology, ]
+gastric_non_oncology_treatment_ids <- rownames(gastric_non_oncology_treatments)
+
+gastric_non_oncology_responses <- prism[, colnames(prism) %in% gastric_non_oncology_treatment_ids]
+gastric_non_oncology_responses <- as.data.frame(lapply(gastric_non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_non_oncology_gastric <- rowMeans(gastric_non_oncology_responses)
+
+# Adding print statements for debug:
+print(length(avg_response_oncology_gastric))
+print(sum(is.na(avg_response_oncology_gastric)))
+print(length(avg_response_non_oncology_gastric))
+print(sum(is.na(avg_response_non_oncology_gastric)))
+
+# Calculate the fold change for each cell line
+fold_changes_oncological <- avg_response_non_oncology_gastric / avg_response_oncology_gastric
+
+# Debug: print fold change values
+print(head(fold_changes_oncological))
+
+# Creating data frame for plotting
+cell_line_names <- rownames(gastric_oncology_responses) # Use row names from the responses matrix
+fold_changes_gastric_df <- data.frame(cell_line = cell_line_names, fold_change = fold_changes_oncological)
+
+# Sort the dataframe by fold_change 
+fold_changes_gastric_df <- fold_changes_gastric_df[order(fold_changes_gastric_df$fold_change, decreasing = TRUE), ]
+
+# Plot the fold changes
+barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df$cell_line, las = 2, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+
+```
+
+
+
+
+# Hypotesis Test: 
+
+```{r}
+# Perform a t-test to test if there is a significant difference in average response
+# between oncology treatments and non-oncology treatments for gastric cancer
+t_test_result <- t.test(avg_response_non_oncology_gastric, avg_response_oncology_gastric)
+
+# Output the result of the t-test
+print(t_test_result)
+```
+
+
+# The extremely low p-value (< 2.2e-16) is a strong indicator that the difference in means between the two groups is statistically significant and not likely due to random chance.
 
 
 
@@ -326,7 +497,16 @@ barplot(fold_changes_df$fold_change, names.arg = fold_changes_df$cell_line, las 
 
 
 
+```{r}
+# Perform a t-test to test if there is a significant difference in average response
+# between oncology treatments and non-oncology treatments for gastric cancer
+t_test_result.general <- t.test(avg_response_non_oncology, avg_response_oncology)
 
+# Output the result of the t-test
+print(t_test_result.general)
+
+```
+# statistically significant difference in the average responses between the two groups.
 
 
 
