@@ -77,7 +77,7 @@ Data visualization of prism_cleaned data frame, which include only the columns(d
 heatmap(prism_cleaned)
 ```
 
-# General data visualization of selected 5 cancer cell lines 
+# General data visualization of selected 5 cancer cell lines
 
 # First create 5 vectors
 
@@ -126,8 +126,7 @@ bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
 View(bone.cancer.celllines)
 ```
 
-#Create a new prism data frame with selected cancer cell lines
-##Step 1: Extract the IDs from prism.cl and create a new data frame of prism
+#Create a new prism data frame with selected cancer cell lines ##Step 1: Extract the IDs from prism.cl and create a new data frame of prism
 
 ```{r}
 gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
@@ -213,7 +212,6 @@ pca_result_matrix_filtrated1 <- prcomp(prism_celllines_matrix_filtered1)
 pca_values <- pca_result_matrix_filtrated1$x
 ```
 
-
 ```{r}
 # Variance explained by each principal component
 pca_variances <- pca_result_matrix_filtrated1$sdev^2  
@@ -225,9 +223,8 @@ pca_loadings <- pca_result_matrix_filtrated1$rotation  # Loadings (coefficients)
 plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
 ```
 
-
-
 ##PCA visualization
+
 ```{r}
 pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
 
@@ -257,8 +254,8 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
-
 # Get the dataframe ready for future anaysis
+
 ```{r}
 ##lets create a transposed matrix:
 prism_celllines_matrix_transposed<- t(prism_celllines_matrix_filtered1)
@@ -312,7 +309,9 @@ plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_tr
 ```
 
 # Pearson correlation of each PCs (drugs) for gastric cancer cell lines
+
 ## Selection of PCs
+
 ```{r}
 #Select the principle components with high variance
 pca_proportions_gastric_cleaned_treatment_t
@@ -324,7 +323,8 @@ correlation_gastric_cancercelllines_selected_PCs
 summary(correlation_gastric_cancercelllines_selected_PCs)
 ```
 
-### Visualization of PCs 
+### Visualization of PCs
+
 ```{r}
 #Visualize the pearson correlation of PCs with the gastric cancer cell lines (not so good, the next chunk is better)
 barplot(correlation_gastric_cancercelllines_selected_PCs, main = "Pearson Correlation of Principal Components with Gastric Cancer Cell Lines", 
@@ -333,7 +333,9 @@ barplot(correlation_gastric_cancercelllines_selected_PCs, main = "Pearson Correl
 #create an intermediate object
 
 ```
+
 ###Analysis for specific cell lines
+
 ```{r}
 gastric_cancer_cell_line1 <- prism_gastric_cleaned_treatments_t[, 1]
 
@@ -448,6 +450,7 @@ library(ggplot2)
 ```
 
 #Visualization of Pearson correlation of each PC(correct version)
+
 ```{r}
 # Create a data frame with the correlation values
 correlation_data <- data.frame(CellLine = 1:17,
@@ -473,7 +476,10 @@ ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLin
   theme_minimal()
 ```
 
+
+
 # Selection of the drugs which contribute positive to PC1
+
 ```{r}
 #PC1 is the one with negative correlation for each 17 gastric cancer cell line:
 ##Let's find the drugs which contribute more to PC1:
@@ -487,7 +493,6 @@ pc1_positive_drugs
 ```{r}
 View(prism.snv)
 ```
-
 
 ```{r}
 mean(pca_loadings_gastric_cleaned_treatments_t[,1])
@@ -557,6 +562,7 @@ bar_chart
 ```
 
 ###Distribution of targets from selected drugs
+
 ```{r}
 # Do the same with the targets
 
@@ -682,6 +688,7 @@ print(target_freq_dataframe_selected)
 ```
 
 # Bar plot of targets
+
 ```{r}
 # Create a bar plot using ggplot2
 bar_plot <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
@@ -723,7 +730,8 @@ moa_freq_dataframe_selected <- subset(moa_frequency, Freq > 1)
 print(moa_freq_dataframe_selected)
 ```
 
-#Bar plot of moa 
+#Bar plot of moa
+
 ```{r}
 # Create a bar plot of moa
 bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
@@ -747,3 +755,44 @@ prism_celllines_filtered <- prism_celllines_matrix_filtered1[, -which(colnames(p
 selected_pcs <- pca_values[, 1:8]
 pc_correlation <- cor(selected_pcs, prism_celllines_filtered)
 ```
+
+#Further anaysis
+## Find the mutation characteristics of most of the targets
+```{r}
+selected_genes <- c("HDAC1", "HDAC2", "HDAC3", "HDAC4", "HDAC5", "HDAC6", "HDAC7", "HDAC8", "HDAC9")
+
+selected_prism_snv <- prism.snv[prism.snv$Hugo_Symbol %in% selected_genes, ]
+```
+
+
+```{r}
+selected_prism_snv
+```
+```{r}
+library(ggplot2)
+
+# Count the frequency of each mutation type
+mutation_counts <- table(prism.snv$Variant_Classification)
+
+# Create a data frame with mutation types and their counts
+mutation_data <- data.frame(Mutation_Type = names(mutation_counts),
+                            Count = as.numeric(mutation_counts))
+
+# Sort the data frame by mutation type counts in descending order
+mutation_data <- mutation_data[order(mutation_data$Count, decreasing = TRUE), ]
+
+# Plot the distribution of mutation types
+ggplot(mutation_data, aes(x = reorder(Mutation_Type, Count), y = Count)) +
+  geom_bar(stat = "identity", fill = "lightblue", color = "black") +
+  labs(title = "Distribution of Mutation Types",
+       x = "Mutation Type",
+       y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+```{r}
+
+```
+
