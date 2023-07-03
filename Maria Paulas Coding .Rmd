@@ -241,6 +241,7 @@ ggplot(fold_changes_gastric_df, aes(x = reorder(cell_line, -fold_change), y = fo
 
 
 
+
 ```{r}
 # Check if the data is normally distributed
 shapiro_test_oncology_gastric <- shapiro.test(avg_response_oncology_gastric)
@@ -287,106 +288,74 @@ print(mann_whitney_test_result)
 
 
 
+
+
 ```{r}
 # Filter for oncology treatments related to gastric or gastrointestinal cancer
 contains_gastric_or_gastrointestinal <- grepl("gastric|gastrointestinal", prism.treat$indication, ignore.case = TRUE)
 contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
 
 gastric_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & contains_oncology, ]
-
-# Extract treatment IDs for gastric/gastrointestinal oncology treatments
 gastric_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
+gastric_oncology_responses <- prism_gastric[, colnames(prism_gastric) %in% gastric_oncology_treatment_ids]
+gastric_oncology_responses_imputed <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses_imputed, na.rm = TRUE)
 
-# Filter prism data for these treatment IDs
-gastric_oncology_responses <- prism_gastric[, colnames(prism) %in% gastric_oncology_treatment_ids]
-
-# Impute NA values with column means
-gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
-
-avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
-
-
-# Filter for non-oncology treatments
-non_oncology_treatments <- prism.treat[!grepl("oncology", prism.treat$disease.area, ignore.case = TRUE), ]
-
-# Extract treatment IDs for non-oncology treatments
+#Repeat steps 2 and 3 for non-oncology treatments
+non_oncology_treatments <- prism.treat[!contains_oncology, ]
 non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+non_oncology_responses <- prism_gastric[, colnames(prism_gastric) %in% non_oncology_treatment_ids]
+non_oncology_responses_imputed <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_non_oncology <- rowMeans(non_oncology_responses_imputed, na.rm = TRUE)
 
-# Filter prism data for these treatment IDs
-non_oncology_responses <- prism_gastric[, colnames(prism) %in% non_oncology_treatment_ids]
 
-# Impute NA values with column means
-non_oncology_responses <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
-
-avg_response_non_oncology <- rowMeans(non_oncology_responses)
-
-# Calculate the fold change for each cell line
+# Calculate the fold changes
 pseudo_count <- 1e-9
-fold_changes_oncological_2 <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology_gastric + pseudo_count)
+fold_changes <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology_gastric + pseudo_count)
+cell_lines <- rownames(prism_gastric)  # Assuming row names represent the cell lines
 
-# Check for errors: This should be fold_changes_oncological_2
-if (length(names(avg_response_oncology_gastric)) == length(fold_changes_oncological_2)) {
-    cell_lines <- names(avg_response_oncology_gastric)
-} else {
-    # Provide a default value, or handle this case as needed
-    cell_lines <- 1:length(fold_changes_oncological_2) 
-}
+# Plot the fold changes
+fold_changes_df <- data.frame(cell_line = cell_lines, fold_change = fold_changes)
 
-# Create the data frame using cell_lines for the cell_line column
-fold_changes_gastric_df_2 <- data.frame(cell_line = cell_lines, fold_change = fold_changes_oncological_2)  
-
-# Sort the dataframe by fold_change 
-fold_changes_gastric_df_2 <- fold_changes_gastric_df_2[order(fold_changes_gastric_df_2$fold_change, decreasing = TRUE), ]
-
-
-
-# Using ggplot2 for plotting
+# Load the necessary library
 library(ggplot2)
 
-ggplot(fold_changes_gastric_df_2, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = cell_line)) +
-    geom_bar(stat = "identity") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Gastric Treatments",
-         x = "Cell Lines",
-         y = "Fold Change",
-         fill = "Cell Line") +
-    guides(fill = FALSE)  # This removes the legend
+# Define custom color palette
+my_colors <- colorRampPalette(c("purple", "pink"))(length(unique(fold_changes_df$cell_line)))
 
-
-
+# Create the plot
+ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = my_colors) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
 
 ```
-
 
 
 ```{r}
+# Check if the data is normally distributed
+shapiro_test_oncology_gastric <- shapiro.test(avg_response_oncology_gastric)
+shapiro_test_non_oncology <- shapiro.test(avg_response_non_oncology)
 
-library(ggplot2)
-
-ggplot(fold_changes_gastric_df_2, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = cell_line)) +
-    geom_bar(stat = "identity") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Gastric Treatments",
-         x = "Cell Lines",
-         y = "Fold Change",
-         fill = "Cell Line") +
-    guides(fill = FALSE)  # This removes the legend
+# Print the results
+print(shapiro_test_oncology_gastric)
+print(shapiro_test_non_oncology)
 
 ```
 
+# They are normally distributed, greater than 0.05 
 
 
+```{r}
+t_test_result <- t.test(avg_response_oncology_gastric, avg_response_non_oncology)
 
+# Print the result
+print(t_test_result)
 
+```
 
-
-
-
-
-
-
+# P value is shorter than 0,05 -> diference is significant 
 
 
 
@@ -472,7 +441,6 @@ ggplot(fold_changes_df, aes(x = reorder(cell_line, -fold_change), y = fold_chang
          y = "Fold Change",
          fill = "Cell Line") +
     guides(fill = FALSE)  # This removes the legend
-
 
 
 
