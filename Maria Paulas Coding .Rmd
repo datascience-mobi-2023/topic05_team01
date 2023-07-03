@@ -348,14 +348,27 @@ print(shapiro_test_non_oncology)
 
 
 ```{r}
-t_test_result <- t.test(avg_response_oncology_gastric, avg_response_non_oncology)
+t_test_result_2 <- t.test(avg_response_oncology_gastric, avg_response_non_oncology)
 
 # Print the result
-print(t_test_result)
+print(t_test_result_2)
 
 ```
 
 # P value is shorter than 0,05 -> diference is significant 
+
+
+```{r}
+# Perform the Mann-Whitney U Test
+mann_whitney_test_result_2 <- wilcox.test(avg_response_oncology_gastric, avg_response_non_oncology)
+
+# Print the results
+print(mann_whitney_test_result_2)
+
+```
+# P value is shorter than 0,05 -> diference is significant 
+
+
 
 
 
@@ -363,105 +376,105 @@ print(t_test_result)
 # General, oncology and non oncology treatments
 
 ```{r}
+# Filter for oncology treatments
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
+oncology_treatments <- prism.treat[contains_oncology, ]
+oncology_treatment_ids <- rownames(oncology_treatments)
+oncology_responses <- prism[, colnames(prism) %in% oncology_treatment_ids]
+oncology_responses_imputed <- as.data.frame(lapply(oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_oncology <- rowMeans(oncology_responses_imputed, na.rm = TRUE)
 
-contains_cancer <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
-
-# Subset the dataframe to include only the rows where the keyword is present
-
-oncology_treatments <- prism.treat[contains_cancer, ]
-
-# Extract treatment IDs from row names of oncology_treatments
-treatment_ids <- rownames(oncology_treatments)
-
-# Subset prism based on treatment_ids
-oncology_treatments_prism <- prism[, colnames(prism) %in% treatment_ids]
-
-# Now selected_treatments_prism contains only the responses of the treatments in oncology_treatments
-# Replace NA values with zero in the entire dataframe
-
-
-oncology_treatments_prism[is.na(oncology_treatments_prism)] <- 0
-
-
-avg_response_oncology <- rowMeans(oncology_treatments_prism)
-
-
-# Filter rows that do not contain the keyword "oncology"
-non_oncology_treatments <- prism.treat[!grepl("oncology", prism.treat$disease.area, ignore.case = TRUE), ]
-
-# Extract treatment IDs from row names of non_oncology_treatments
+#Repeat steps 2 and 3 for non-oncology treatments
+non_oncology_treatments <- prism.treat[!contains_oncology, ]
 non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+non_oncology_responses <- prism[, colnames(prism) %in% non_oncology_treatment_ids]
+non_oncology_responses_imputed <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_non_oncology <- rowMeans(non_oncology_responses_imputed, na.rm = TRUE)
 
-# Subset prism based on non_oncology_treatment_ids
-non_oncology_treatments_prism <- prism[, colnames(prism) %in% non_oncology_treatment_ids]
-
-# Now non_oncology_treatments_prism contains only the responses of the non-oncological treatments
-
-
-# Replace NA values with zero in the entire dataframe
-
-non_oncology_treatments_prism[is.na(non_oncology_treatments_prism)] <- 0
-
-
-
-avg_response_non_oncology <- rowMeans(non_oncology_treatments_prism)
-
-
-# Calculate the fold change for each cell line
-
-pseudo_count <- 1
-# Calculate the fold change for each cell line with pseudo count
-fold_changes <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology + pseudo_count)
-
-
-
-fold_changes <- avg_response_non_oncology / avg_response_oncology
-
-
-# Convert the fold_changes to a data frame for easier plotting
-fold_changes_df <- data.frame(cell_line = names(fold_changes), fold_change = fold_changes)
-
-# Sort the dataframe by fold_change for a more organized plot
-fold_changes_df <- fold_changes_df[order(fold_changes_df$fold_change, decreasing = TRUE), ]
+# Calculate the fold changes
+pseudo_count <- 1e-9
+fold_changes_general <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology + pseudo_count)
+cell_lines <- rownames(prism)  # Assuming row names represent the cell lines
 
 # Plot the fold changes
-barplot(fold_changes_df$fold_change, names.arg = fold_changes_df$cell_line, las = 3, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+fold_changes_df_general <- data.frame(cell_line = cell_lines, fold_change = fold_changes_general)
 
-
-
-# Using ggplot2 for plotting
+# Load the necessary library
 library(ggplot2)
 
-ggplot(fold_changes_df, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = cell_line)) +
-    geom_bar(stat = "identity") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
-         x = "Cell Lines",
-         y = "Fold Change",
-         fill = "Cell Line") +
-    guides(fill = FALSE)  # This removes the legend
+# Using ggplot2
+ggplot(fold_changes_df_general, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
+  geom_bar(stat = "identity", fill = "yellow") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank()) + # This hides the x-axis labels
+  labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
+       x = "Cell Lines",
+       y = "Fold Change") 
 
 
 
 ```
-
-
 
 
 
 
 ```{r}
-# Perform a t-test to test if there is a significant difference in average response
-# between oncology treatments and non-oncology treatments for gastric cancer
-t_test_result.general <- t.test(avg_response_non_oncology, avg_response_oncology)
+library(plotly)
 
-# Output the result of the t-test
-print(t_test_result.general)
+plot_ly(fold_changes_df_general, x = ~reorder(cell_line, -fold_change), y = ~fold_change, type = 'bar') %>%
+  layout(title = "Fold Changes Non-Oncology gastric Treatments Relative to Oncology gastric Treatments",
+         xaxis = list(title = "Cell Lines"),
+         yaxis = list (title = "Fold Change"))
+```
+
+
+```{r}
+# Check if the data is normally distributed
+shapiro_test_oncology <- shapiro.test(avg_response_oncology)
+shapiro_test_non_oncology <- shapiro.test(avg_response_non_oncology)
+
+# Print the results
+print(shapiro_test_oncology)
+print(shapiro_test_non_oncology)
 
 ```
 
-# statistically significant difference in the average responses between the two groups.
+# They are normally distributed, greater than 0.05 
+
+
+```{r}
+t_test_result_3 <- t.test(avg_response_oncology, avg_response_non_oncology)
+
+# Print the result
+print(t_test_result_3 )
+
+```
+
+# P value is shorter than 0,05 -> diference is significant 
+
+
+```{r}
+# Perform the Mann-Whitney U Test
+mann_whitney_test_result_3 <- wilcox.test(avg_response_oncology, avg_response_non_oncology)
+
+# Print the results
+print(mann_whitney_test_result_3)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
