@@ -220,6 +220,7 @@ fold_changes_gastric_df <- fold_changes_gastric_df[order(fold_changes_gastric_df
 barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df$cell_line, las = 2, cex.names = 0.5, main = "Fold Changes Non-Oncology gastric Treatments Relative to Oncology gastric Treatments", xlab = "Cell Lines", ylab = "Fold Change")
 
 
+
 library(ggplot2)
 
 # Using ggplot2
@@ -241,6 +242,7 @@ ggplot(fold_changes_gastric_df, aes(x = reorder(cell_line, -fold_change), y = fo
 
 
 
+
 ```{r}
 # Check if the data is normally distributed
 shapiro_test_oncology_gastric <- shapiro.test(avg_response_oncology_gastric)
@@ -255,6 +257,35 @@ print(shapiro_test_non_oncology_gastric)
 #For avg_response_oncology_gastric, the p-value is 0.9127, which is greater than 0.05. This indicates that the data does not significantly deviate from a normal distribution.
 
 # For avg_response_non_oncology_gastric, the p-value is 0.06901, which is greater than 0.05. -> normally distributed
+
+
+```{r}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="lightblue") +
+  labs(title="Histogram for avg_response_oncology_gastric", x="Values", y="Frequency")
+
+# For avg_response_non_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_non_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="lightgreen") +
+  labs(title="Histogram for avg_response_non_oncology_gastric", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology_gastric
+qqnorm(avg_response_oncology_gastric, main = "Q-Q Plot for avg_response_oncology_gastric")
+qqline(avg_response_oncology_gastric, col = "red", lwd = 2)
+
+# For avg_response_non_oncology_gastric
+qqnorm(avg_response_non_oncology_gastric, main = "Q-Q Plot for avg_response_non_oncology_gastric")
+qqline(avg_response_non_oncology_gastric, col = "red", lwd = 2)
+
+```
+
+
 
 
 
@@ -287,104 +318,154 @@ print(mann_whitney_test_result)
 
 
 
+
+
 ```{r}
 # Filter for oncology treatments related to gastric or gastrointestinal cancer
 contains_gastric_or_gastrointestinal <- grepl("gastric|gastrointestinal", prism.treat$indication, ignore.case = TRUE)
 contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
 
 gastric_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & contains_oncology, ]
-
-# Extract treatment IDs for gastric/gastrointestinal oncology treatments
 gastric_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
+gastric_oncology_responses <- prism_gastric[, colnames(prism_gastric) %in% gastric_oncology_treatment_ids]
+gastric_oncology_responses_imputed <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses_imputed, na.rm = TRUE)
 
-# Filter prism data for these treatment IDs
-gastric_oncology_responses <- prism_gastric[, colnames(prism) %in% gastric_oncology_treatment_ids]
-
-# Impute NA values with column means
-gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
-
-avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
-
-
-# Filter for non-oncology treatments
-non_oncology_treatments <- prism.treat[!grepl("oncology", prism.treat$disease.area, ignore.case = TRUE), ]
-
-# Extract treatment IDs for non-oncology treatments
+#Repeat steps 2 and 3 for non-oncology treatments
+non_oncology_treatments <- prism.treat[!contains_oncology, ]
 non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+non_oncology_responses <- prism_gastric[, colnames(prism_gastric) %in% non_oncology_treatment_ids]
+non_oncology_responses_imputed <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_non_oncology <- rowMeans(non_oncology_responses_imputed, na.rm = TRUE)
 
-# Filter prism data for these treatment IDs
-non_oncology_responses <- prism_gastric[, colnames(prism) %in% non_oncology_treatment_ids]
 
-# Impute NA values with column means
-non_oncology_responses <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
-
-avg_response_non_oncology <- rowMeans(non_oncology_responses)
-
-# Calculate the fold change for each cell line
+# Calculate the fold changes
 pseudo_count <- 1e-9
-fold_changes_oncological_2 <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology_gastric + pseudo_count)
+fold_changes <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology_gastric + pseudo_count)
+cell_lines <- rownames(prism_gastric)  # Assuming row names represent the cell lines
 
-# Check for errors: This should be fold_changes_oncological_2
-if (length(names(avg_response_oncology_gastric)) == length(fold_changes_oncological_2)) {
-    cell_lines <- names(avg_response_oncology_gastric)
-} else {
-    # Provide a default value, or handle this case as needed
-    cell_lines <- 1:length(fold_changes_oncological_2) 
-}
+# Plot the fold changes
+fold_changes_df <- data.frame(cell_line = cell_lines, fold_change = fold_changes)
 
-# Create the data frame using cell_lines for the cell_line column
-fold_changes_gastric_df_2 <- data.frame(cell_line = cell_lines, fold_change = fold_changes_oncological_2)  
-
-# Sort the dataframe by fold_change 
-fold_changes_gastric_df_2 <- fold_changes_gastric_df_2[order(fold_changes_gastric_df_2$fold_change, decreasing = TRUE), ]
-
-
-
-# Using ggplot2 for plotting
+# Load the necessary library
 library(ggplot2)
 
-ggplot(fold_changes_gastric_df_2, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = cell_line)) +
-    geom_bar(stat = "identity") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Gastric Treatments",
-         x = "Cell Lines",
-         y = "Fold Change",
-         fill = "Cell Line") +
-    guides(fill = FALSE)  # This removes the legend
+# Define custom color palette
+my_colors <- colorRampPalette(c("purple", "pink"))(length(unique(fold_changes_df$cell_line)))
 
-
-
+# Create the plot
+ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = my_colors) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
 
 ```
+
+
+```{r}
+# Add a new column to indicate if the treatment is oncology or non-oncology
+fold_changes_df$type <- ifelse(fold_changes_df$cell_line %in% gastric_oncology_treatment_ids, "Oncology", "Non-Oncology")
+
+# Create the violin plot
+ggplot(fold_changes_df, aes(x = type, y = fold_change, fill = type)) +
+  geom_violin(scale = "width", trim = FALSE) +
+  geom_boxplot(width = 0.1, fill = "white") +
+  labs(x = "cell line", y = "Fold Change", title = "Distribution of Fold Changes by Treatment Type") +
+  theme_minimal()
+
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
+
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, color = cell_line)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
+
+```
+
+
+
+
+
 
 
 
 ```{r}
+# Check if the data is normally distributed
+shapiro_test_oncology_gastric <- shapiro.test(avg_response_oncology_gastric)
+shapiro_test_non_oncology <- shapiro.test(avg_response_non_oncology)
 
+# Print the results
+print(shapiro_test_oncology_gastric)
+print(shapiro_test_non_oncology)
+
+```
+
+# They are normally distributed, greater than 0.05 
+
+
+```{r}
+# Load the necessary library
 library(ggplot2)
 
-ggplot(fold_changes_gastric_df_2, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = cell_line)) +
-    geom_bar(stat = "identity") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Gastric Treatments",
-         x = "Cell Lines",
-         y = "Fold Change",
-         fill = "Cell Line") +
-    guides(fill = FALSE)  # This removes the legend
+# Histograms
+# For avg_response_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="pink") +
+  labs(title="Histogram for avg_response_oncology_gastric", x="Values", y="Frequency")
+
+# For avg_response_non_oncology
+ggplot(data=NULL, aes(x=avg_response_non_oncology)) +
+  geom_histogram(bins = 30, color="black", fill="lightblue") +
+  labs(title="Histogram for avg_response_non_oncology", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology_gastric
+qqnorm(avg_response_oncology_gastric, main = "Q-Q Plot for avg_response_oncology_gastric")
+qqline(avg_response_oncology_gastric, col = "red", lwd = 2)
+
+# For avg_response_non_oncology
+qqnorm(avg_response_non_oncology, main = "Q-Q Plot for avg_response_non_oncology")
+qqline(avg_response_non_oncology, col = "red", lwd = 2)
 
 ```
 
 
 
 
+```{r}
+t_test_result_2 <- t.test(avg_response_oncology_gastric, avg_response_non_oncology)
+
+# Print the result
+print(t_test_result_2)
+
+```
+
+# P value is shorter than 0,05 -> diference is significant 
 
 
+```{r}
+# Perform the Mann-Whitney U Test
+mann_whitney_test_result_2 <- wilcox.test(avg_response_oncology_gastric, avg_response_non_oncology)
 
+# Print the results
+print(mann_whitney_test_result_2)
 
-
-
+```
+# P value is shorter than 0,05 -> diference is significant 
 
 
 
@@ -394,106 +475,170 @@ ggplot(fold_changes_gastric_df_2, aes(x = reorder(cell_line, -fold_change), y = 
 # General, oncology and non oncology treatments
 
 ```{r}
+# Filter for oncology treatments
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
+oncology_treatments <- prism.treat[contains_oncology, ]
+oncology_treatment_ids <- rownames(oncology_treatments)
+oncology_responses <- prism[, colnames(prism) %in% oncology_treatment_ids]
+oncology_responses_imputed <- as.data.frame(lapply(oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_oncology <- rowMeans(oncology_responses_imputed, na.rm = TRUE)
 
-contains_cancer <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
-
-# Subset the dataframe to include only the rows where the keyword is present
-
-oncology_treatments <- prism.treat[contains_cancer, ]
-
-# Extract treatment IDs from row names of oncology_treatments
-treatment_ids <- rownames(oncology_treatments)
-
-# Subset prism based on treatment_ids
-oncology_treatments_prism <- prism[, colnames(prism) %in% treatment_ids]
-
-# Now selected_treatments_prism contains only the responses of the treatments in oncology_treatments
-# Replace NA values with zero in the entire dataframe
-
-
-oncology_treatments_prism[is.na(oncology_treatments_prism)] <- 0
-
-
-avg_response_oncology <- rowMeans(oncology_treatments_prism)
-
-
-# Filter rows that do not contain the keyword "oncology"
-non_oncology_treatments <- prism.treat[!grepl("oncology", prism.treat$disease.area, ignore.case = TRUE), ]
-
-# Extract treatment IDs from row names of non_oncology_treatments
+#Repeat steps 2 and 3 for non-oncology treatments
+non_oncology_treatments <- prism.treat[!contains_oncology, ]
 non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+non_oncology_responses <- prism[, colnames(prism) %in% non_oncology_treatment_ids]
+non_oncology_responses_imputed <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_non_oncology <- rowMeans(non_oncology_responses_imputed, na.rm = TRUE)
 
-# Subset prism based on non_oncology_treatment_ids
-non_oncology_treatments_prism <- prism[, colnames(prism) %in% non_oncology_treatment_ids]
-
-# Now non_oncology_treatments_prism contains only the responses of the non-oncological treatments
-
-
-# Replace NA values with zero in the entire dataframe
-
-non_oncology_treatments_prism[is.na(non_oncology_treatments_prism)] <- 0
-
-
-
-avg_response_non_oncology <- rowMeans(non_oncology_treatments_prism)
-
-
-# Calculate the fold change for each cell line
-
-pseudo_count <- 1
-# Calculate the fold change for each cell line with pseudo count
-fold_changes <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology + pseudo_count)
-
-
-
-fold_changes <- avg_response_non_oncology / avg_response_oncology
-
-
-# Convert the fold_changes to a data frame for easier plotting
-fold_changes_df <- data.frame(cell_line = names(fold_changes), fold_change = fold_changes)
-
-# Sort the dataframe by fold_change for a more organized plot
-fold_changes_df <- fold_changes_df[order(fold_changes_df$fold_change, decreasing = TRUE), ]
+# Calculate the fold changes
+pseudo_count <- 1e-9
+fold_changes_general <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology + pseudo_count)
+cell_lines <- rownames(prism)  # Assuming row names represent the cell lines
 
 # Plot the fold changes
-barplot(fold_changes_df$fold_change, names.arg = fold_changes_df$cell_line, las = 3, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
+fold_changes_df_general <- data.frame(cell_line = cell_lines, fold_change = fold_changes_general)
 
-
-
-# Using ggplot2 for plotting
+# Load the necessary library
 library(ggplot2)
 
-ggplot(fold_changes_df, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = cell_line)) +
-    geom_bar(stat = "identity") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
-         x = "Cell Lines",
-         y = "Fold Change",
-         fill = "Cell Line") +
-    guides(fill = FALSE)  # This removes the legend
-
+# Using ggplot2
+ggplot(fold_changes_df_general, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
+  geom_bar(stat = "identity", fill = "yellow") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank()) + # This hides the x-axis labels
+  labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
+       x = "Cell Lines",
+       y = "Fold Change") 
 
 
 
 ```
-
-
 
 
 
 
 ```{r}
-# Perform a t-test to test if there is a significant difference in average response
-# between oncology treatments and non-oncology treatments for gastric cancer
-t_test_result.general <- t.test(avg_response_non_oncology, avg_response_oncology)
+library(plotly)
 
-# Output the result of the t-test
-print(t_test_result.general)
+plot_ly(fold_changes_df_general, x = ~reorder(cell_line, -fold_change), y = ~fold_change, type = 'bar') %>%
+  layout(title = "Fold Changes Non-Oncology gastric Treatments Relative to Oncology gastric Treatments",
+         xaxis = list(title = "Cell Lines"),
+         yaxis = list (title = "Fold Change"))
+```
+
+
+```{r}
+# Check if the data is normally distributed
+shapiro_test_oncology <- shapiro.test(avg_response_oncology)
+shapiro_test_non_oncology <- shapiro.test(avg_response_non_oncology)
+
+# Print the results
+print(shapiro_test_oncology)
+print(shapiro_test_non_oncology)
 
 ```
 
-# statistically significant difference in the average responses between the two groups.
+# They are normally distributed, greater than 0.05 
+
+
+```{r}
+t_test_result_3 <- t.test(avg_response_oncology, avg_response_non_oncology)
+
+# Print the result
+print(t_test_result_3 )
+
+```
+
+# P value is shorter than 0,05 -> diference is significant 
+
+
+```{r}
+# Perform the Mann-Whitney U Test
+mann_whitney_test_result_3 <- wilcox.test(avg_response_oncology, avg_response_non_oncology)
+
+# Print the results
+print(mann_whitney_test_result_3)
+
+```
+
+
+
+
+# Gene expression analysis from cell lines with fold changes above 1.0
+
+```{r}
+
+# Let's assume fold_changes_gastric_df contains the fold changes you computed earlier
+
+# Select cell lines with high fold changes (above 1)
+selected_cell_lines <- fold_changes_gastric_df$cell_line[fold_changes_gastric_df$fold_change > 1]
+
+# Filter gene expression data for the selected cell lines
+selected_gene_expression <- prism.exp[selected_cell_lines, ]
+
+# Calculate mean expression levels across the selected cell lines
+mean_expression_fold_changes_analyisis <- rowMeans(selected_gene_expression)
+
+
+
+
+
+
+
+# You may also want to identify genes that are consistently overexpressed or underexpressed.
+# Let's assume a gene is considered overexpressed if its mean expression is above a certain threshold (e.g. 10)
+# and underexpressed if below another threshold (e.g. 5).
+
+overexpressed_genes <- rownames(selected_gene_expression)[mean_expression_fold_changes_analyisis > 10]
+underexpressed_genes <- rownames(selected_gene_expression)[mean_expression_fold_changes_analyisis < 5]
+
+# Compare these genes with known genes that are implicated in gastric cancer or drug resistance.
+
+# Known genes (for demonstration, replace this with actual known genes)
+known_genes <- c("ERBB2", "TP53", "CDH1", "CTNNB1", "")
+
+# Find intersection with overexpressed genes
+common_overexpressed_genes <- intersect(overexpressed_genes, known_genes)
+
+# Find intersection with underexpressed genes
+common_underexpressed_genes <- intersect(underexpressed_genes, known_genes)
+
+# Output common genes
+print("Common overexpressed genes:")
+print(common_overexpressed_genes)
+
+print("Common underexpressed genes:")
+print(common_underexpressed_genes)
+
+
+
+
+
+
+
+```
+
+
+
+
+```{r}
+# Find the highest value in the prism.exp data frame
+max_value <- max(prism.exp, na.rm = TRUE)  # na.rm = TRUE ignores NA values
+
+# Find the lowest value in the prism.exp data frame
+min_value <- min(prism.exp, na.rm = TRUE)  # na.rm = TRUE ignores NA values
+
+# Print the highest and lowest values
+print(paste("Highest value in prism.exp:", max_value))
+print(paste("Lowest value in prism.exp:", min_value))
+
+```
+
+
+
+
+
+
 
 
 
