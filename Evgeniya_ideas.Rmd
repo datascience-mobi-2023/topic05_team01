@@ -666,6 +666,89 @@ for (i in 1:nrow(HDAC_inhibitor_df)) {
 
 hist(correlation_results_HDAC6, main = "Correlation Histogram of BRD-K61397605-001-03-4", xlab = "Correlation")
 
+
+correlation_matrix <- matrix(c(correlation_results_HDAC1, correlation_results_HDAC2, correlation_results_HDAC3, correlation_results_HDAC4, correlation_results_HDAC5, correlation_results_HDAC6),nrow = nrow(HDAC_inhibitor_df), ncol = 6, byrow = TRUE)
+
+rownames(correlation_matrix) <- rownames(HDAC_inhibitor_df)
+colnames(correlation_matrix) <- c("BRD-K12867552-001-04-7", "BRD-K13167095-001-02-9",
+                                  "BRD-K13810148-311-03-2", "RD-K17743125-001-08-4",
+                                  "BRD-K56957086-001-06-3", "BRD-K61397605-001-03-4")
+correlation_matrix_t <- t(correlation_matrix)
+View(correlation_matrix_t)
+plot.new()
+install.packages("RColorBrewer")
+install.packages("gplots")
+library(RColorBrewer)
+library(gplots)
+colors <- rev(colorRampPalette(brewer.pal(9, "Blues"))(100))
+
+par(mar = c(5, 5, 2, 2))
+
+legend_breaks <- seq(-1, 0, length.out = length(colors) + 1)
+
+heatmap.2(correlation_matrix,
+          col = colors,
+          main = "Correlation Heatmap",
+          xlab = "Drug",
+          ylab = "Cell",
+          key = TRUE,
+          keysize = 1.5,
+          symkey = FALSE,  # Display only negative values on the legend
+          breaks = legend_breaks,  # Specify the color legend breaks
+          cex.main = 1.5,  # Adjust main title size
+          cex.axis = 0.8,  # Adjust axis label size
+          cex.lab = 0.8)
+help("heatmap.2")
+heatmap.2(correlation_matrix,
+          col = colors,
+          main = "Correlation Heatmap",
+          xlab = "Drug",
+          ylab = "Cell",
+          cexRow = 0.7,
+          cexCol = 0.4,
+          key = TRUE,
+          keysize = 1.5,
+          symkey = FALSE,  # Display only negative values on the legend
+          breaks = legend_breaks,  # Specify the color legend breaks
+          cex.main = 1.5,  # Adjust main title size
+          cex.axis = 0.8,  # Adjust axis label size
+          cex.lab = 0.8) 
+
+legend("right",
+       legend = c("High", "Low"),
+       fill = colors[1:2],
+       bty = "n",
+       title = "Correlation",
+       cex = 0.8,
+       y.intersp = 1.5)
+
+heatmap(correlation_matrix,
+        col = colors,
+        main = "Correlation Heatmap",
+        xlab = "Drug",
+        ylab = "Row")
+
+
+
+color.legend(legend = c("High", "Low"),
+             gradient = c("blue", "white"),
+             bty = "n",
+             main = "Correlation",
+             side = 4,
+             cex.main = 1.2,
+             cex.axis = 1,
+             cex.lab = 1)
+
+
+legend("right", legend = c("High", "Low"),
+       fill = colors[c(1, num_colors)],
+       title = "Correlation",
+       bty = "n")
+
+legend("right", legend = c("Low", "Medium", "High"),
+       fill = c("blue", "white", "red"),
+       title = "Correlation",
+       bty = "n")
 ```
 
 
@@ -1126,7 +1209,7 @@ fviz_nbclust(pca_data_prism.filtered1_drugs_variances_PC, kmeans, method = "wss"
  #it works ith pc_scpres_prism in the same way, so both are correct
   
 
- 
+View(prism.filtered1_drugs_variances)
 #trying things
 install.packages("NbClust")
 library(NbClust)
@@ -1190,6 +1273,108 @@ star.plot = TRUE,
 repel = TRUE, 
 ggtheme = theme_minimal(), geom = "point")
  #it does not work with 6 because too few points to calculate an ellipse
+
+
+
+
+
+#the same for the transposed matrix:
+prism.filtered1_drugs_variances_t <- t(prism.filtered1_drugs_variances)
+pca_result_prism.filtered1_drugs_variances_t <- prcomp(prism.filtered1_drugs_variances_t)
+pca_values_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $x # Principal component scores (transformed data)
+pca_variances_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $sdev^2  # Variance explained by each principal component
+pca_proportions_prism.filtered1_drugs_variance_t <- pca_variances_prism.filtered1_drugs_variances_t / sum(pca_variances_prism.filtered1_drugs_variances_t)  # Proportion of variance explained by each principal component
+pca_loadings_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances_prism.filtered1_drugs_variances_t), pca_variances_prism.filtered1_drugs_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values_prism.filtered1_drugs_variances_t[, 1], pca_values_prism.filtered1_drugs_variances_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+pc_scores_prism_t <- as.data.frame(pca_result_prism.filtered1_drugs_variances_t$x[, 1:2])
+kmeans_result_prism_t <- kmeans(pc_scores_prism_t, centers = 4)
+
+# Add cluster labels to the PC scores
+pc_scores_prism_t$cluster <- as.factor(kmeans_result_prism_t$cluster)
+
+# Plot the clustered data
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
+
+cluster_centers_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), mean)
+cluster_radii_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
+
+
+library(cluster)
+library(factoextra)
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
+  
+
+View(prism.filtered1_drugs_variances)
+#trying things
+install.packages("NbClust")
+library(NbClust)
+clusternum <- NbClust ((pc_scores_prism), distance="euclidean", method="kmeans")
+
+pam.res5_t <- pam(pc_scores_prism_t, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+install.packages("tidyverse")
+library(purrr)
+
+fviz_silhouette(pam.res5_t, palette = "jco", ggtheme = theme_classic())
+#higher values indicates a better clustering
+avg_sil_t <- function(k) {
+  km.res_t <- kmeans(pc_scores_prism_t, centers = 5, nstart = 25)
+  ss_t <- silhouette(km.res_t$cluster, dist(pc_scores_prism_t))
+  mean(ss_t[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values_t <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values_t <- map_dbl(k.values_t, avg_sil_t)
+
+plot(k.values_t, avg_sil_values_t,
+       type = "b", pch = 19, frame = FALSE, 
+       xlab = "Number of clusters K",
+       ylab = "Average Silhouettes")
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "silhouette")
+
+
+
+
+pam.res4_t <- pam(pc_scores_prism_t, 4,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(),geom = "point" )
+
+fviz_silhouette(pam.res4_t, palette = "jco", ggtheme = theme_classic())
+pam.res6_t <- pam(pc_scores_prism_t, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res6_t, palette = "jco", ggtheme = theme_classic())
+
+
+pam.res3_t <- pam(pc_scores_prism_t, 3,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res3_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res3_t, palette = "jco", ggtheme = theme_classic())
+
 
 
 
