@@ -590,6 +590,7 @@ for (i in 1:nrow(HDAC_inhibitor_df)) {
   correlation_results_HDAC1 <- c(correlation_results_HDAC1, correlation_new_1_HDAC)
 }
 
+
 hist(correlation_results_HDAC1, main = "Correlation Histogram of BRD-K12867552-001-04-7", xlab = "Correlation")
 
 
@@ -602,10 +603,10 @@ for (i in 1:nrow(HDAC_inhibitor_df)) {
        xlab = "Concentration", ylab = "Drug Response",
        main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_2_HDAC))
   
-  correlation_results_HDAC2 <- c(correlation_results_HDAC2, correlation_new_2_HDAC)
+  correlation_results_HDAC2<- c(correlation_results_HDAC2, correlation_new_2_HDAC)
 }
-
-hist(correlation_results_HDAC2, main = "Correlation Histogram of BRD-K13167095-001-02-9", xlab = "Correlation")
+correlation_results_HDAC2 <- unique(correlation_results_HDAC2)
+correlation_results_HDAC2 <- correlation_results_HDAC2[1:17]
 
 #for drug 3
 
@@ -667,7 +668,7 @@ for (i in 1:nrow(HDAC_inhibitor_df)) {
 hist(correlation_results_HDAC6, main = "Correlation Histogram of BRD-K61397605-001-03-4", xlab = "Correlation")
 
 
-correlation_matrix <- matrix(c(correlation_results_HDAC1, correlation_results_HDAC2, correlation_results_HDAC3, correlation_results_HDAC4, correlation_results_HDAC5, correlation_results_HDAC6),nrow = nrow(HDAC_inhibitor_df), ncol = 6, byrow = TRUE)
+correlation_matrix <- matrix(c(correlation_results_HDAC1, correlation_results_HDAC2, correlation_results_HDAC3, correlation_results_HDAC4, correlation_results_HDAC5, correlation_results_HDAC6),nrow = nrow(HDAC_inhibitor_df), ncol = 6, byrow = FALSE)
 
 rownames(correlation_matrix) <- rownames(HDAC_inhibitor_df)
 colnames(correlation_matrix) <- c("BRD-K12867552-001-04-7", "BRD-K13167095-001-02-9",
@@ -704,6 +705,7 @@ heatmap.2(correlation_matrix,
           main = "Correlation Heatmap",
           xlab = "Drug",
           ylab = "Cell",
+          trace = "none",
           cexRow = 0.7,
           cexCol = 0.4,
           key = TRUE,
