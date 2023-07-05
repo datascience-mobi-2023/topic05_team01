@@ -220,6 +220,7 @@ fold_changes_gastric_df <- fold_changes_gastric_df[order(fold_changes_gastric_df
 barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df$cell_line, las = 2, cex.names = 0.5, main = "Fold Changes Non-Oncology gastric Treatments Relative to Oncology gastric Treatments", xlab = "Cell Lines", ylab = "Fold Change")
 
 
+
 library(ggplot2)
 
 # Using ggplot2
@@ -256,6 +257,35 @@ print(shapiro_test_non_oncology_gastric)
 #For avg_response_oncology_gastric, the p-value is 0.9127, which is greater than 0.05. This indicates that the data does not significantly deviate from a normal distribution.
 
 # For avg_response_non_oncology_gastric, the p-value is 0.06901, which is greater than 0.05. -> normally distributed
+
+
+```{r}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="lightblue") +
+  labs(title="Histogram for avg_response_oncology_gastric", x="Values", y="Frequency")
+
+# For avg_response_non_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_non_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="lightgreen") +
+  labs(title="Histogram for avg_response_non_oncology_gastric", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology_gastric
+qqnorm(avg_response_oncology_gastric, main = "Q-Q Plot for avg_response_oncology_gastric")
+qqline(avg_response_oncology_gastric, col = "red", lwd = 2)
+
+# For avg_response_non_oncology_gastric
+qqnorm(avg_response_non_oncology_gastric, main = "Q-Q Plot for avg_response_non_oncology_gastric")
+qqline(avg_response_non_oncology_gastric, col = "red", lwd = 2)
+
+```
+
+
 
 
 
@@ -334,6 +364,46 @@ ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
 
 
 ```{r}
+# Add a new column to indicate if the treatment is oncology or non-oncology
+fold_changes_df$type <- ifelse(fold_changes_df$cell_line %in% gastric_oncology_treatment_ids, "Oncology", "Non-Oncology")
+
+# Create the violin plot
+ggplot(fold_changes_df, aes(x = type, y = fold_change, fill = type)) +
+  geom_violin(scale = "width", trim = FALSE) +
+  geom_boxplot(width = 0.1, fill = "white") +
+  labs(x = "cell line", y = "Fold Change", title = "Distribution of Fold Changes by Treatment Type") +
+  theme_minimal()
+
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
+
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, color = cell_line)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
+
+```
+
+
+
+
+
+
+
+
+```{r}
 # Check if the data is normally distributed
 shapiro_test_oncology_gastric <- shapiro.test(avg_response_oncology_gastric)
 shapiro_test_non_oncology <- shapiro.test(avg_response_non_oncology)
@@ -345,6 +415,35 @@ print(shapiro_test_non_oncology)
 ```
 
 # They are normally distributed, greater than 0.05 
+
+
+```{r}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="pink") +
+  labs(title="Histogram for avg_response_oncology_gastric", x="Values", y="Frequency")
+
+# For avg_response_non_oncology
+ggplot(data=NULL, aes(x=avg_response_non_oncology)) +
+  geom_histogram(bins = 30, color="black", fill="lightblue") +
+  labs(title="Histogram for avg_response_non_oncology", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology_gastric
+qqnorm(avg_response_oncology_gastric, main = "Q-Q Plot for avg_response_oncology_gastric")
+qqline(avg_response_oncology_gastric, col = "red", lwd = 2)
+
+# For avg_response_non_oncology
+qqnorm(avg_response_non_oncology, main = "Q-Q Plot for avg_response_non_oncology")
+qqline(avg_response_non_oncology, col = "red", lwd = 2)
+
+```
+
+
 
 
 ```{r}
@@ -465,10 +564,75 @@ print(mann_whitney_test_result_3)
 
 
 
+# Gene expression analysis from cell lines with fold changes above 1.0
+
+```{r}
+
+# Let's assume fold_changes_gastric_df contains the fold changes you computed earlier
+
+# Select cell lines with high fold changes (above 1)
+selected_cell_lines <- fold_changes_gastric_df$cell_line[fold_changes_gastric_df$fold_change > 1]
+
+# Filter gene expression data for the selected cell lines
+selected_gene_expression <- prism.exp[selected_cell_lines, ]
+
+# Calculate mean expression levels across the selected cell lines
+mean_expression_fold_changes_analyisis <- rowMeans(selected_gene_expression)
 
 
 
 
+
+
+
+# You may also want to identify genes that are consistently overexpressed or underexpressed.
+# Let's assume a gene is considered overexpressed if its mean expression is above a certain threshold (e.g. 10)
+# and underexpressed if below another threshold (e.g. 5).
+
+overexpressed_genes <- rownames(selected_gene_expression)[mean_expression_fold_changes_analyisis > 10]
+underexpressed_genes <- rownames(selected_gene_expression)[mean_expression_fold_changes_analyisis < 5]
+
+# Compare these genes with known genes that are implicated in gastric cancer or drug resistance.
+
+# Known genes (for demonstration, replace this with actual known genes)
+known_genes <- c("ERBB2", "TP53", "CDH1", "CTNNB1", "")
+
+# Find intersection with overexpressed genes
+common_overexpressed_genes <- intersect(overexpressed_genes, known_genes)
+
+# Find intersection with underexpressed genes
+common_underexpressed_genes <- intersect(underexpressed_genes, known_genes)
+
+# Output common genes
+print("Common overexpressed genes:")
+print(common_overexpressed_genes)
+
+print("Common underexpressed genes:")
+print(common_underexpressed_genes)
+
+
+
+
+
+
+
+```
+
+
+
+
+```{r}
+# Find the highest value in the prism.exp data frame
+max_value <- max(prism.exp, na.rm = TRUE)  # na.rm = TRUE ignores NA values
+
+# Find the lowest value in the prism.exp data frame
+min_value <- min(prism.exp, na.rm = TRUE)  # na.rm = TRUE ignores NA values
+
+# Print the highest and lowest values
+print(paste("Highest value in prism.exp:", max_value))
+print(paste("Lowest value in prism.exp:", min_value))
+
+```
 
 
 
