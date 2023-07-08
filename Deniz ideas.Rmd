@@ -203,6 +203,10 @@ class(prism_celllines_matrix_filtered1)
 sum(is.na(prism_celllines_matrix_filtered1))
 ```
 
+```{r}
+heatmap(prism_celllines_matrix_filtered1)
+```
+
 # Data reduction: PCA
 
 ```{r}
@@ -361,7 +365,7 @@ text(x = 1:7, y = correlation_values,
      labels = round(correlation_values, 2), pos = 3)
 ```
 
-# 
+
 
 ```{r}
 # cell line 2
@@ -748,13 +752,7 @@ bar_plot_moa <- bar_plot_moa + scale_x_discrete(labels = function(x) stringr::st
 print(bar_plot_moa)
 ```
 
-```{r}
-var_sd <- apply(prism_celllines_matrix_filtered1, 2, sd)
-zero_sd_vars <- names(var_sd[var_sd == 0])
-prism_celllines_filtered <- prism_celllines_matrix_filtered1[, -which(colnames(prism_celllines_matrix_filtered1) %in% zero_sd_vars)]
-selected_pcs <- pca_values[, 1:8]
-pc_correlation <- cor(selected_pcs, prism_celllines_filtered)
-```
+
 
 #Further anaysis
 ## Find the mutation characteristics of most of the targets
