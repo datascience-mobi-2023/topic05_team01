@@ -4,6 +4,61 @@ output: html_document
 date: "2023-05-29"
 ---
 
+# **Dataframe gastric Cancer: Prism**
+
+**Step1:** Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
+
+```{r}
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+View(gastric.cancer.celllines)
+
+
+```
+
+**Step2:** Creating a vector including the DepMap ID from the gastric cancer cell lines as elements of the vector
+
+```{r}
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+
+View(gastric.cancer.celllines.v)
+
+```
+
+**Step3:** Creating a new dataframe by extracting just the gastric cancer cell lines shown in the vector created in step 2
+
+```{r}
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+View (prism_gastric)
+
+
+
+```
+
+```{r}
+sum (is.na (prism_gastric)) 
+```
+
+Removing treatments with NA-values to clean the created data frame
+
+```{r}
+prism_gastric_cleaned_treatments <- prism_gastric[, colSums(is.na(prism_gastric)) == 0]
+View (prism_gastric_cleaned_treatments)
+
+```
+
+```{r}
+pheatmap(prism_gastric_cleaned_treatments)
+```
+
+
+
+
+
+
+
+
 # MY AIM: The overall objective is to investigate whether there's a relationship between genetic variations in different cancer cell lines and their response to various treatments.
 
 ```{r}
@@ -146,6 +201,7 @@ fold_changes_gastric_df <- fold_changes_gastric_df [order(fold_changes_gastric_d
 # Plot the fold changes
 barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df$cell_line, las = 2, cex.names = 0.5, main = "Fold Changes of Non-Oncology Treatments Relative to Oncology Treatments", xlab = "Cell Lines", ylab = "Fold Change")
 ```
+
 
 
 
@@ -503,7 +559,7 @@ library(ggplot2)
 
 # Using ggplot2
 ggplot(fold_changes_df_general, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
-  geom_bar(stat = "identity", fill = "yellow") +
+  geom_bar(stat = "identity", fill = "purple") +
   theme_minimal() +
   theme(axis.text.x = element_blank()) + # This hides the x-axis labels
   labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
@@ -560,6 +616,38 @@ mann_whitney_test_result_3 <- wilcox.test(avg_response_oncology, avg_response_no
 print(mann_whitney_test_result_3)
 
 ```
+
+
+```{r}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology
+ggplot(data=NULL, aes(x=avg_response_oncology)) +
+  geom_histogram(bins = 30, color="black", fill="lightpink") +
+  labs(title="Histogram for avg_response_oncology", x="Values", y="Frequency")
+
+# For avg_response_non_oncology
+ggplot(data=NULL, aes(x=avg_response_non_oncology)) +
+  geom_histogram(bins = 30, color="black", fill="lightyellow") +
+  labs(title="Histogram for avg_response_non_oncology", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology_gastric
+qqnorm(avg_response_oncology, main = "Q-Q Plot for avg_response_oncology")
+qqline(avg_response_oncology, col = "red", lwd = 2)
+
+# For avg_response_non_oncology
+qqnorm(avg_response_non_oncology, main = "Q-Q Plot for avg_response_non_oncology")
+qqline(avg_response_non_oncology, col = "red", lwd = 2)
+
+```
+
+
+
+
+
 
 
 
