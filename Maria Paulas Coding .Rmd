@@ -299,6 +299,58 @@ ggplot(fold_changes_gastric_df, aes(x = reorder(cell_line, -fold_change), y = fo
 ```
 
 
+```{r}
+
+cell_line_to_investigate <- "ACH-000427"
+
+# Assuming the cell line names are in the row names of your data frame
+cell_line_row <- prism_gastric_cleaned_treatments[cell_line_to_investigate, ]
+
+# Now, 'cell_line_row' is a named vector where the names are the treatments
+# and the values are the responses
+
+# Convert the data frame row to a numeric vector
+cell_line_values <- as.numeric(cell_line_row)
+
+# Assign treatment names to the numeric vector
+names(cell_line_values) <- colnames(cell_line_row)
+
+# Filter the treatments based on the response
+cell_line_values_filtered <- cell_line_values[cell_line_values <= -5]
+
+# Create a bar plot with the filtered data
+barplot(cell_line_values_filtered, 
+        main = paste("Treatment responses for", cell_line_to_investigate), 
+        xlab = "Treatment", 
+        ylab = "Response", 
+        las = 2,   # makes the x-axis labels vertical
+        cex.names = 0.5) # reduces the size of the x-axis labels
+
+
+
+```
+
+
+```{r}
+# Create a plotly object
+p <- plot_ly(df, x = ~treatment, y = ~response, type = 'bar', 
+             marker = list(color = 'turquoise')) %>%
+    layout(title = paste("Treatment responses for", cell_line_to_investigate),
+           xaxis = list(title = "Treatment"),
+           yaxis = list(title = "Response"))
+
+# Print the plot
+print(p)
+
+```
+
+
+
+
+
+
+
+
 
 
 
@@ -421,6 +473,40 @@ ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
   labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
 
 ```
+
+
+```{r}
+cell_line_to_investigate <- "ACH-000678"
+
+# Assuming the cell line names are in the row names of your data frame
+cell_line_row <- prism_gastric_cleaned_treatments[cell_line_to_investigate, ]
+
+# Now, 'cell_line_row' is a named vector where the names are the treatments
+# and the values are the responses
+
+# Convert the data frame row to a numeric vector
+cell_line_values <- as.numeric(cell_line_row)
+
+# Assign treatment names to the numeric vector
+names(cell_line_values) <- colnames(cell_line_row)
+
+# Filter the treatments based on the response
+cell_line_values_filtered <- cell_line_values[cell_line_values <= -7]
+
+# Create a bar plot with the filtered data
+barplot(cell_line_values_filtered, 
+        main = paste("Treatment responses for", cell_line_to_investigate), 
+        xlab = "Treatment", 
+        ylab = "Response", 
+        las = 2,   # makes the x-axis labels vertical
+        cex.names = 0.3) # reduces the size of the x-axis labels
+```
+
+
+
+
+
+
 
 
 ```{r}
@@ -950,9 +1036,20 @@ HIF1A_responses <- prism_gastric[gastric.cancer.celllines.v, rownames(HIF1A_trea
 
 # Generate the heatmap
 library(pheatmap)
-pheatmap(HIF1A_responses, color = colorRampPalette(c("white", "blue", "yellow"))(50))
+pheatmap(HIF1A_responses, color = colorRampPalette(c("blue", "white", "red"))(50), scale = "row", 
+         width = 20,  # Adjust as needed
+         height = 20,  # Adjust as needed
+         fontsize = 10,  # Adjust as needed
+         fontsize_row = 6,  # Adjust as needed
+         fontsize_col = 8  # Adjust as needed
+
+)
 
 ```
+
+
+
+
 
 
 
