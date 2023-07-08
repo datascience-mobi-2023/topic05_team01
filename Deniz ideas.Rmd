@@ -6,16 +6,20 @@ date: "2023-05-11"
 
 \<\<\<\<\<\<\< Updated upstream
 
+Load the dataframes
+
 ```{r}
 load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/cellline_datasets.rda")
 load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/prism_datasets.rda")
 ```
 
+Create a new data frame of prism ( data cleanup and data reduction)
+
 ```{r}
 View(prism)
 ```
 
-Step1 : Remove the NA values from the columns for the data reduction median value impute
+#Step1 : Remove the NA values from the columns for the data reduction median value impute
 
 ```{r}
 prism_cleaned <- prism
@@ -29,7 +33,7 @@ dim(prism_cleaned)
 View(prism_cleaned)
 ```
 
-Step 2: Visualize the data.frame for future data reduction
+#Step 2: Visualize the data.frame for future data reduction
 
 ```{r}
 class(prism_cleaned)
@@ -44,7 +48,7 @@ is.numeric(prism_cleaned)
 hist(prism_cleaned)
 ```
 
-Step 3: We want to remove the drugs, which have positive effect on the cell growth. We want to create a vector which includes more than 200 positive values as column(200 celllines have a postive growth number)
+#Step 3: We want to remove the drugs, which have positive effect on the cell growth. We want to create a vector which includes more than 200 positive values as column(200 celllines have a postive growth number)
 
 ```{r}
 positive_cols <- colSums(prism_cleaned > 0) > 200
@@ -53,27 +57,32 @@ num_positive_cols
 
 ```
 
-Step 4: We want to remove those columns
+#Step 4: We want to remove selected columns. Columns are the drugs.
 
 ```{r}
+#Remove the drugs which contribute to positive cell growth of cancer cell lines
 prism_cleaned <- prism_cleaned[, !positive_cols]
 positive_values <- colSums(prism_cleaned > 0) > 0
 ```
 
 ```{r}
+##dimension of the data
 dim(prism_cleaned)
 View(prism_cleaned)
 ```
+
+Data visualization of prism_cleaned data frame, which include only the columns(drugs) that influence the cell growth of the cancer cell lines negatively
 
 ```{r}
 heatmap(prism_cleaned)
 ```
 
-Step 1: Create 5 vectors for the 5 different cancer cell lines
+# General data visualization of selected 5 cancer cell lines
 
-Vector of breast cancer cell lines:
+# First create 5 vectors
 
 ```{r}
+# vector of breast cancer cell lines
 breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
 ```
 
@@ -81,9 +90,8 @@ breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
 View(breast.cancer.celllines)
 ```
 
-Vector of gastric cancer cell lines:
-
 ```{r}
+#Vector of gastric cancer cell lines
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
 ```
 
@@ -91,9 +99,8 @@ gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
 View(gastric.cancer.celllines)
 ```
 
-Vector of kidney cancer cell lines:
-
 ```{r}
+#vector of kidney cancer cell lines
 kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
 ```
 
@@ -101,9 +108,8 @@ kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
 View(kidney.cancer.celllines)
 ```
 
-Vector of liver cancer cell lines:
-
 ```{r}
+#Vector of liver cancer cell lines:
 liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
 ```
 
@@ -111,9 +117,8 @@ liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
 View(liver.cancer.celllines)
 ```
 
-Vector of bone cancer cell lines:
-
 ```{r}
+#Vector of bone cancer cell lines:
 bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
 ```
 
@@ -121,7 +126,7 @@ bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
 View(bone.cancer.celllines)
 ```
 
-Extract these IDs from prism
+#Create a new prism data frame with selected cancer cell lines ##Step 1: Extract the IDs from prism.cl and create a new data frame of prism
 
 ```{r}
 gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
@@ -172,7 +177,7 @@ View (prism_celllines)
 
 ```
 
-Step 2: NA Values Evgeniya idea version
+##Step 2: Remove the NA values
 
 ```{r}
 typeof(prism_celllines)
@@ -195,21 +200,36 @@ original_row_names <- rownames(prism_celllines)
 prism_celllines_matrix_filtered1 <- matrix(prism_celllines_numeric_2, nrow = nrow(prism_celllines), dimnames = list(rownames(prism_celllines), colnames(prism_celllines)))
 typeof(prism_celllines_matrix_filtered1)
 class(prism_celllines_matrix_filtered1)
-sum(is.na(prism_celllines_matrix_filtered1))###no missing values
+sum(is.na(prism_celllines_matrix_filtered1))
 ```
 
 ```{r}
+heatmap(prism_celllines_matrix_filtered1)
+```
+
+# Data reduction: PCA
+
+```{r}
+#PCA
+# Principal component scores (transformed data)
 pca_result_matrix_filtrated1 <- prcomp(prism_celllines_matrix_filtered1)
-pca_values <- pca_result_matrix_filtrated1$x # Principal component scores (transformed data)
-pca_variances <- pca_result_matrix_filtrated1$sdev^2  # Variance explained by each principal component
+pca_values <- pca_result_matrix_filtrated1$x
+```
+
+```{r}
+# Variance explained by each principal component
+pca_variances <- pca_result_matrix_filtrated1$sdev^2  
+# Variance explained by each principal component
 pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
 pca_loadings <- pca_result_matrix_filtrated1$rotation  # Loadings (coefficients) of each variable on each principal component
  plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
      main = "Scree Plot")
 plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
+```
 
+##PCA visualization
 
-###
+```{r}
 pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
 
 bone.cancer.celllines.group<- "red"
@@ -238,7 +258,7 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
-We want to apply pearson correlation on Principle components in order to eliminate the drugs in the PCs which have a positive R value to the cell growth
+# Get the dataframe ready for future anaysis
 
 ```{r}
 ##lets create a transposed matrix:
@@ -274,7 +294,7 @@ plot(pca_values_t[, 1], pca_values_t[, 2], xlab = "PC1", ylab = "PC2")
 
 ```
 
-PCA for drugs for our gastric cancer cellline:
+#PCA for drugs for our gastric cancer cellline:
 
 ```{r}
 prism_gastric_cleaned_treatments_t<- t(prism_gastric_cleaned_treatments)
@@ -292,7 +312,9 @@ plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_tr
 
 ```
 
-Now we calculate pearson correlation of the PCS of gastric cancer cell lines with the contribution of drugs to the cell growth
+# Pearson correlation of each PCs (drugs) for gastric cancer cell lines
+
+## Selection of PCs
 
 ```{r}
 #Select the principle components with high variance
@@ -305,14 +327,18 @@ correlation_gastric_cancercelllines_selected_PCs
 summary(correlation_gastric_cancercelllines_selected_PCs)
 ```
 
+### Visualization of PCs
+
 ```{r}
-#Visualize the pearson correlation of PCs with the gastric cancer cell lines
+#Visualize the pearson correlation of PCs with the gastric cancer cell lines (not so good, the next chunk is better)
 barplot(correlation_gastric_cancercelllines_selected_PCs, main = "Pearson Correlation of Principal Components with Gastric Cancer Cell Lines", 
         xlab = "Principle Components", ylab = "Pearson Correlation", 
         col = "steelblue", ylim = c(-1, 1))
 #create an intermediate object
 
 ```
+
+###Analysis for specific cell lines
 
 ```{r}
 gastric_cancer_cell_line1 <- prism_gastric_cleaned_treatments_t[, 1]
@@ -339,7 +365,7 @@ text(x = 1:7, y = correlation_values,
      labels = round(correlation_values, 2), pos = 3)
 ```
 
-# do it with other cell lines
+
 
 ```{r}
 # cell line 2
@@ -427,6 +453,8 @@ library(ggplot2)
 library(ggplot2)
 ```
 
+#Visualization of Pearson correlation of each PC(correct version)
+
 ```{r}
 # Create a data frame with the correlation values
 correlation_data <- data.frame(CellLine = 1:17,
@@ -452,10 +480,14 @@ ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLin
   theme_minimal()
 ```
 
+
+
+# Selection of the drugs which contribute positive to PC1
+
 ```{r}
-#PC1 is the one with negative correlation for each 17 gastric cancer cell line; 
-#Let's find the drugs which contribute more to PC1:
-# select the drugs which contribute positive to PC1
+#PC1 is the one with negative correlation for each 17 gastric cancer cell line:
+##Let's find the drugs which contribute more to PC1:
+###select the drugs which contribute positive to PC1
 pc1_positive_drugs <- rownames(pca_values_gastric_cleaned_treatments_t)[pca_values_gastric_cleaned_treatments_t[, "PC1"] > 0]
 pc1_positive_drugs
 
@@ -468,10 +500,12 @@ View(prism.snv)
 
 ```{r}
 mean(pca_loadings_gastric_cleaned_treatments_t[,1])
-# There are 678 drugs which contribute positive to the PC1. So lets select a threshold and find selected drugs.
+#### There are 678 drugs which contribute positive to the PC1. So lets select a threshold and find selected drugs.
 pc1_selected_drugs <- rownames(pca_values_gastric_cleaned_treatments_t)[pca_values_gastric_cleaned_treatments_t[, "PC1"] > 20]
 pc1_selected_drugs
 ```
+
+##Create a new data frame with selected drugs
 
 ```{r}
 # create a new data frame of prism.treat which include only those 66 drugs 
@@ -479,6 +513,7 @@ pc1_selected_drugs
 prism_treat_new <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs, ]
 prism_treat_new
 ```
+
 ```{r}
 View(prism_treat_new)
 ```
@@ -487,7 +522,8 @@ View(prism_treat_new)
 library(ggplot2)
 ```
 
-Do not click on this chunk: There is a problem
+####Do not click on this chunk: There is a problem
+
 ```{r}
 #visualize the mechanism of action (moa) of different drugs to specify which target is playing a major role by inhibiting the cell growth of gastric cancer cell lines
 
@@ -505,12 +541,14 @@ pie_chart <- ggplot(data = data.frame(mechanism = names(mechanism_counts), count
 print(pie_chart)
 
 ```
+
 ```{r}
 ggsave(filename = "pie_chart.png", plot = pie_chart, width = 12, height = 8, dpi = 300)
 
 ```
 
-Click on this chunk to see the distribution
+### Distribution of moa of selected drugs
+
 ```{r}
 library(ggplot2)
 
@@ -526,6 +564,9 @@ bar_chart <- ggplot(data = prism_treat_new, aes(x = moa)) +
 # Display the bar chart
 bar_chart
 ```
+
+###Distribution of targets from selected drugs
+
 ```{r}
 # Do the same with the targets
 
@@ -546,13 +587,13 @@ bar_chart
 ggsave("bar_chart.png", bar_chart, width = 20, height = 20, units = "cm")
 ```
 
-
 ```{r}
 # Seperate the strings of the column target
 big_string <- paste(prism_treat_new$target, collapse = ",")
 ```
 
 ```{r}
+# Create a vector with targets
 target_vector <- unlist(strsplit(big_string, ","))
 target_vector <- gsub(" ", "", target_vector)
 target_frequency <- as.data.frame(table(target_vector))
@@ -572,8 +613,6 @@ bar_plot <- ggplot(target_frequency, aes(x = target_vector, fill = target_vector
 print(bar_plot)
 ```
 
-
-
 ```{r}
 # Install and load the stringr package
 install.packages("stringr")
@@ -582,6 +621,7 @@ library(stringr)
 
 ```{r}
 # Create a bar plot using ggplot2
+target_frequency <- target_frequency[target_frequency$target_vector != "NA", ]
 bar_plot <- ggplot(target_frequency, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
   geom_bar(stat = "identity") +
   labs(x = "Target", y = "Frequency") +
@@ -594,6 +634,38 @@ bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x
 
 
 print(bar_plot)
+```
+
+```{r}
+target_frequency <- target_frequency[target_frequency$target_vector != "NA", ]
+bar_plot <- ggplot(target_frequency, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(size = 5 ,angle = 45, hjust = 1)) +
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+# Remove legend for x-axis
+bar_plot <- bar_plot + guides(fill = FALSE)
+
+print(bar_plot)
+```
+
+```{r}
+target_frequency <- target_frequency[target_frequency$target_vector != "NA", ]
+bar_plot <- ggplot(target_frequency, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_blank()) +
+  ylim(0, 15)  # Adjust the range as needed
+
+print(bar_plot)
+
+
 ```
 
 ```{r}
@@ -611,7 +683,6 @@ target_freq_dataframe_selected <- subset(target_frequency, Freq > 2)
 print(target_freq_dataframe_selected)
 ```
 
-
 ```{r}
 # Remove the row with "NA" in target_vector column
 target_freq_dataframe_selected <- target_freq_dataframe_selected[target_freq_dataframe_selected$target_vector != "NA", ]
@@ -619,6 +690,8 @@ target_freq_dataframe_selected <- target_freq_dataframe_selected[target_freq_dat
 # Print the updated dataframe
 print(target_freq_dataframe_selected)
 ```
+
+# Bar plot of targets
 
 ```{r}
 # Create a bar plot using ggplot2
@@ -635,6 +708,7 @@ bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x
 
 print(bar_plot)
 ```
+
 ```{r}
 #The same with moa
 # Seperate the strings of the column target
@@ -649,6 +723,7 @@ moa_frequency <- as.data.frame(table(moa_vector))
 moa_frequency
 View(moa_frequency)
 ```
+
 ```{r}
 # create a new dataframe of target frequency and select those which have more than 1 freq:
 
@@ -658,8 +733,11 @@ moa_freq_dataframe_selected <- subset(moa_frequency, Freq > 1)
 # Print the new dataframe
 print(moa_freq_dataframe_selected)
 ```
+
+#Bar plot of moa
+
 ```{r}
-# Create a bar plot using ggplot2
+# Create a bar plot of moa
 bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
   geom_bar(stat = "identity") +
   labs(x = "moa", y = "Frequency") +
@@ -667,7 +745,7 @@ bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, 
         axis.text.x = element_text(angle = 45, hjust = 1))+
   ylim(0, 15)  # Adjust the range as needed
 
-# Adjust the x-axis labels
+##Adjust the x-axis labels
 bar_plot_moa <- bar_plot_moa + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
 
 
@@ -676,10 +754,43 @@ print(bar_plot_moa)
 
 
 
+#Further anaysis
+## Find the mutation characteristics of most of the targets
 ```{r}
-var_sd <- apply(prism_celllines_matrix_filtered1, 2, sd)
-zero_sd_vars <- names(var_sd[var_sd == 0])
-prism_celllines_filtered <- prism_celllines_matrix_filtered1[, -which(colnames(prism_celllines_matrix_filtered1) %in% zero_sd_vars)]
-selected_pcs <- pca_values[, 1:8]
-pc_correlation <- cor(selected_pcs, prism_celllines_filtered)
+selected_genes <- c("HDAC1", "HDAC2", "HDAC3", "HDAC4", "HDAC5", "HDAC6", "HDAC7", "HDAC8", "HDAC9")
+
+selected_prism_snv <- prism.snv[prism.snv$Hugo_Symbol %in% selected_genes, ]
 ```
+
+
+```{r}
+selected_prism_snv
+```
+```{r}
+library(ggplot2)
+
+# Count the frequency of each mutation type
+mutation_counts <- table(prism.snv$Variant_Classification)
+
+# Create a data frame with mutation types and their counts
+mutation_data <- data.frame(Mutation_Type = names(mutation_counts),
+                            Count = as.numeric(mutation_counts))
+
+# Sort the data frame by mutation type counts in descending order
+mutation_data <- mutation_data[order(mutation_data$Count, decreasing = TRUE), ]
+
+# Plot the distribution of mutation types
+ggplot(mutation_data, aes(x = reorder(Mutation_Type, Count), y = Count)) +
+  geom_bar(stat = "identity", fill = "lightblue", color = "black") +
+  labs(title = "Distribution of Mutation Types",
+       x = "Mutation Type",
+       y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+```{r}
+
+```
+

@@ -362,12 +362,12 @@ name <- ""
 drug_names_prism <- sub("::.*", "", treatment_names)
 
 drug_matrices <- vector("list", length(treatment_names))
-
+#The goal of the code is to find a way to calculate the correlation between each cell line and each drug. I decided to separate each cell lines and to calculate the correlation for each of them with a code separately, but my question is, how to make the "loop" to stop after the end of each drug and to calculate the correlation for each drug
 # Loop over each drug
-for (j in 1:length(treatment_names)) {
-  drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))))
+for (j in 1:length(drug_names_prism)) {
+  drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grepl(drug_names_prism[j], colnames(prism_gastric_cleaned_treatments))))
   for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
-    drug_response_try <- prism_gastric_cleaned_treatments[i, grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))]
+    drug_response_try <- prism_gastric_cleaned_treatments[i, grepl(drug_names_prism[j], colnames(prism_gastric_cleaned_treatments))]
     drug_matrix[i, ] <- drug_response_try
   }
   drug_matrices[[j]] <- drug_matrix
@@ -817,6 +817,8 @@ plot(pca_values_prism.filtered1_drugs_variances[, 1], pca_values_prism.filtered1
 ###
 pca_data_prism.filtered1_drugs_variances <- data.frame(PC1 = pca_values_prism.filtered1_drugs_variances[, 1], PC2 = pca_values_prism.filtered1_drugs_variances[, 2],CellLine = rownames(pca_values_prism.filtered1_drugs_variances) )
 
+pca_data_prism.filtered1_drugs_variances_PC <- data.frame(PC1 = pca_values_prism.filtered1_drugs_variances[, 1], PC2 = pca_values_prism.filtered1_drugs_variances[, 2])
+
 bone.cancer.celllines.group<- "red"
 kidney.cancer.celllines.group <- "blue"
 liver.cancer.celllines.group <- "green"
@@ -830,6 +832,7 @@ pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_va
 pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
 pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
 
+library(ggplot2)
 ggplot(pca_data_prism.filtered1_drugs_variances, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
   scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group,"Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" =  gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
@@ -852,14 +855,14 @@ ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
   geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 
-#testing the right number og clusters:
+#testing the right number of clusters:
 library(cluster)
 library(factoextra)
 install.packages ("factoextra")
 
 
-fviz_nbclust(pc_scores_prism, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype=2)
-
+fviz_nbclust(pca_data_prism.filtered1_drugs_variances_PC, kmeans, method = "wss") + geom_vline(xintercept = 4, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
   
 
  
@@ -905,7 +908,7 @@ pam.res4 <- pam(pc_scores_prism, 4,  metric = "euclidean", stand = FALSE)
 fviz_cluster(pam.res4, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
 star.plot = TRUE, 
 repel = TRUE, 
-ggtheme = theme_minimal(), geom = "point" )
+ggtheme = theme_minimal(),geom = "point" )
 
 fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
 #In our case, an average silhouette width of 0.41 indicates a moderate to good separation of data points within their respective clusters. This suggests that the clustering result has some level of distinction and coherence, with a reasonably clear separation between the clusters
@@ -914,11 +917,21 @@ pam.res2 <- pam(pc_scores_prism, 2,  metric = "euclidean", stand = FALSE)
 fviz_cluster(pam.res2, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB"), ellipse.type = "euclid", 
 star.plot = TRUE, 
 repel = TRUE, 
-ggtheme = theme_minimal(), geom = "point" )
+ggtheme = theme_minimal())
 
-fviz_silhouette(pam.res2, palette = "jco", ggtheme = theme_classic())
+fviz_silhouette(pam.res5, palette = "jco", ggtheme = theme_classic())
 
 #here we have 0.49, which is even better
+
+pam.res6 <- pam(pc_scores_prism, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+ #it does not work with 6 because too few points to calculate an ellipse
+
+
+
 PCA of this reduced data frame: 
 ```{r}
 standardized_data.p <- scale(prism_cleaned)
