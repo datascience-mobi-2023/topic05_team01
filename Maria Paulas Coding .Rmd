@@ -316,7 +316,7 @@ cell_line_values <- as.numeric(cell_line_row)
 names(cell_line_values) <- colnames(cell_line_row)
 
 # Filter the treatments based on the response
-cell_line_values_filtered <- cell_line_values[cell_line_values <= -5]
+cell_line_values_filtered <- cell_line_values[cell_line_values <= -6]
 
 # Create a bar plot with the filtered data
 barplot(cell_line_values_filtered, 
@@ -324,7 +324,8 @@ barplot(cell_line_values_filtered,
         xlab = "Treatment", 
         ylab = "Response", 
         las = 2,   # makes the x-axis labels vertical
-        cex.names = 0.5) # reduces the size of the x-axis labels
+        cex.names = 0.5, # reduces the size of the x-axis labels
+        col = "turquoise") # changes the color of the bars to turquoise
 
 
 
@@ -332,6 +333,7 @@ barplot(cell_line_values_filtered,
 
 
 ```{r}
+
 # Create a plotly object
 p <- plot_ly(df, x = ~treatment, y = ~response, type = 'bar', 
              marker = list(color = 'turquoise')) %>%
@@ -350,7 +352,209 @@ print(p)
 
 
 
+```{r}
+# Other treatments you have
+other_treatments <- c("BRD-A28467416-002-01-0::10::HTS002",
+"BRD-A28970875-300-04-9::10::HTS002",
+"BRD-A66419424-001-02-4::10::HTS002",
+"BRD-A66419424-001-02-4::2.5::HTS002",
+"BRD-A68969091-001-12-7::10.2913::HTS002",
+"BRD-K00535541-001-06-3::10::HTS002",
+"BRD-K01683783-001-02-6::10::HTS002",
+"BRD-K06426971-001-02-7::10::HTS002",
+"BRD-K07955840-001-02-3::10::HTS002",
+"BRD-K07955840-001-02-3::2.5::HTS002",
+"BRD-K08109215-001-06-4::10::HTS002",
+"BRD-K08542803-001-03-1::3.18091::HTS002",
+"BRD-K08799216-001-05-3::10::HTS002",
+"BRD-K09443272-001-03-3::10::HTS002",
+"BRD-K12502280-001-08-0::10::HTS002",
+"BRD-K12787259-001-04-3::10::HTS002",
+"BRD-K12867552-001-04-7::10::HTS002",
+"BRD-K13167095-001-02-9::10::HTS002",
+"BRD-K13662825-001-07-5::10::HTS002",
+"BRD-K13810148-311-03-2::10::HTS002",
+"BRD-K17203476-001-01-9::10::HTS002",
+"BRD-K17705806-003-04-4::10::HTS002",
+"BRD-K17743125-001-08-4::10::HTS002",
+"BRD-K19034817-001-01-4::10::HTS002",
+"BRD-K20605374-001-05-4::10::HTS002",
+"BRD-K21361524-001-01-1::10::HTS002",
+"BRD-K23190681-001-01-1::10::HTS002",
+"BRD-K31866293-001-01-6::10::HTS002",
+"BRD-K32501161-300-06-2::10::HTS002",
+"BRD-K35329391-334-01-7::10::HTS002",
+"BRD-K36529613-001-02-6::10::HTS002",
+"BRD-K39484304-001-16-5::10::HTS002",
+"BRD-K39484304-001-16-5::2.5::HTS002",
+"BRD-K44227013-001-06-4::10::HTS002",
+"BRD-K51791723-003-01-7::10::HTS002",
+"BRD-K51911221-001-01-2::10::HTS002",
+"BRD-K51911221-001-01-2::2.5::HTS002",
+"BRD-K53417444-003-03-1::10::HTS002",
+"BRD-K53561341-001-07-5::10::HTS002",
+"BRD-K54395039-001-01-7::10::HTS002",
+"BRD-K56957086-001-06-3::10::HTS002",
+"BRD-K56957086-001-06-3::2.5::HTS002",
+"BRD-K57169635-001-04-5::10::HTS002",
+"BRD-K60446698-001-01-2::0.625::HTS002",
+"BRD-K60446698-001-01-2::10::HTS002",
+"BRD-K60446698-001-01-2::2.5::HTS002",
+"BRD-K61397605-001-03-4::10::HTS002",
+"BRD-K61397605-001-03-4::2.5::HTS002",
+"BRD-K64881305-001-03-7::10::HTS002",
+"BRD-K68532323-003-02-8::10::HTS002",
+"BRD-K71467466-001-02-3::10::HTS002",
+"BRD-K72951360-001-01-4::10::HTS002",
+"BRD-K73982490-001-02-9::10::HTS002",
+"BRD-K77841042-001-14-1::10::HTS002",
+"BRD-K77841042-001-14-1::2.5::HTS002",
+"BRD-K78055238-001-01-8::10::HTS002",
+"BRD-K78567475-001-01-4::10::HTS002",
+"BRD-K78659596-001-03-9::10::HTS002",
+"BRD-K78659596-001-03-9::2.5::HTS002",
+"BRD-K83988098-003-03-4::10::HTS002",
+"BRD-K86525559-001-07-8::10.0868::HTS002",
+"BRD-K87124298-001-03-4::10::HTS002",
+"BRD-K90497590-001-04-2::10::HTS002",
+"BRD-K94485812-001-02-9::10.2094::HTS002",
+"BRD-K96104201-001-01-5::10::HTS002",
+"BRD-K99475619-001-01-2::10::HTS002") # replace with your actual treatments
 
+# Find common treatments
+common_treatments <- intersect(names(cell_line_values_filtered), other_treatments)
+
+print(common_treatments)
+
+
+
+```
+
+
+
+
+
+```{r}
+hdac_treatments<- c("BRD-K12867552-001-04-7::10::HTS002", "BRD-K13167095-001-02-9::10::HTS002", "BRD-K13810148-311-03-2::10::HTS002", "BRD-K17743125-001-08-4::10::HTS002", "BRD-K56957086-001-06-3::2.5::HTS002", "BRD-K56957086-001-06-3::10::HTS002", "BRD-K61397605-001-03-4::2.5::HTS002", "BRD-K61397605-001-03-4::10::HTS002")
+
+# Find common treatments
+common_treatments_hdac <- intersect(names(cell_line_values_filtered), hdac_treatments)
+
+print(common_treatments_hdac)
+
+
+
+```
+
+
+
+
+```{r}
+# Convert the named vector to a data frame
+cell_line_df <- data.frame(treatment = names(cell_line_values_filtered),
+                           response = as.numeric(cell_line_values_filtered))
+
+# Define the treatments of interest
+treatments_of_interest <- c("BRD-K12867552-001-04-7::10::HTS002",  
+                            "BRD-K13167095-001-02-9::10::HTS002", 
+                            "BRD-K13810148-311-03-2::10::HTS002",  
+                            "BRD-K56957086-001-06-3::10::HTS002",
+                            "BRD-K56957086-001-06-3::2.5::HTS002",
+                            "BRD-K61397605-001-03-4::10::HTS002")
+
+# Add a new column to distinguish between the treatments of interest and the rest
+cell_line_df$group <- ifelse(cell_line_df$treatment %in% treatments_of_interest, 
+                             "Treatments of Interest", "Rest of Treatments")
+
+# Now, create a boxplot to compare the distribution of responses
+library(ggplot2)
+ggplot(cell_line_df, aes(x = group, y = response)) +
+  geom_boxplot(fill = "turquoise" ) +
+  labs(x = "Group", y = "Response", 
+       title = "Comparison of Responses: Treatments of Interest vs. Rest") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+
+
+
+
+```{r}
+cell_line_919 <- "ACH-000919"
+
+# Assuming the cell line names are in the row names of your data frame
+cell_line_row_919 <- prism_gastric_cleaned_treatments[cell_line_919, ]
+
+# Now, 'cell_line_row_919' is a named vector where the names are the treatments
+# and the values are the responses
+
+# Convert the data frame row to a numeric vector
+cell_line_values_919 <- as.numeric(cell_line_row_919)
+
+# Assign treatment names to the numeric vector
+names(cell_line_values_919) <- colnames(cell_line_row_919)
+
+# Filter the treatments based on the response
+cell_line_values_filtered_919 <- cell_line_values_919[cell_line_values_919 <= -7]
+
+# Create a bar plot with the filtered data
+barplot(cell_line_values_filtered_919, 
+        main = paste("Treatment responses for", cell_line_919 ), 
+        xlab = "Treatment", 
+        ylab = "Response", 
+        las = 2,   # makes the x-axis labels vertical
+        cex.names = 0.5, # reduces the size of the x-axis labels
+        col = "magenta") # changes the color of the bars to turquoise
+
+
+# Find common treatments
+common_treatments_919 <- intersect(names(cell_line_values_filtered_919), other_treatments)
+
+print(common_treatments_919)
+
+
+
+# Find common treatments
+common_treatments_hdac_919 <- intersect(names(cell_line_values_filtered_919), hdac_treatments)
+
+print(common_treatments_hdac_919)
+
+
+# Convert the named vector to a data frame
+cell_line_df_919 <- data.frame(treatment = names(cell_line_values_filtered_919),
+                           response = as.numeric(cell_line_values_filtered_919))
+
+# Define the treatments of interest
+treatments_of_interest <- c("BRD-K12867552-001-04-7::10::HTS002",  
+                            "BRD-K13167095-001-02-9::10::HTS002", 
+                            "BRD-K13810148-311-03-2::10::HTS002",  
+                            "BRD-K56957086-001-06-3::10::HTS002",
+                            "BRD-K56957086-001-06-3::2.5::HTS002",
+                            "BRD-K61397605-001-03-4::10::HTS002")
+
+# Add a new column to distinguish between the treatments of interest and the rest
+cell_line_df_919$group <- ifelse(cell_line_df_919$treatment %in% treatments_of_interest, 
+                             "Treatments of Interest", "Rest of Treatments")
+
+# Now, create a boxplot to compare the distribution of responses
+library(ggplot2)
+ggplot(cell_line_df_919, aes(x = group, y = response)) +
+  geom_boxplot(fill = "magenta") +
+  labs(x = "Group", y = "Response", 
+       title = "Comparison of Responses: Treatments of Interest vs. Rest") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+
+
+
+
+
+Check normality 
 
 
 
@@ -476,30 +680,69 @@ ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
 
 
 ```{r}
-cell_line_to_investigate <- "ACH-000678"
+cell_line_674 <- "ACH-000674"
 
 # Assuming the cell line names are in the row names of your data frame
-cell_line_row <- prism_gastric_cleaned_treatments[cell_line_to_investigate, ]
+cell_line_row_674 <- prism_gastric_cleaned_treatments[cell_line_674, ]
 
-# Now, 'cell_line_row' is a named vector where the names are the treatments
+# Now, 'cell_line_row_674' is a named vector where the names are the treatments
 # and the values are the responses
 
 # Convert the data frame row to a numeric vector
-cell_line_values <- as.numeric(cell_line_row)
+cell_line_values_674 <- as.numeric(cell_line_row_674)
 
 # Assign treatment names to the numeric vector
-names(cell_line_values) <- colnames(cell_line_row)
+names(cell_line_values_674) <- colnames(cell_line_row_674)
+
+
 
 # Filter the treatments based on the response
-cell_line_values_filtered <- cell_line_values[cell_line_values <= -7]
+cell_line_values_filtered_674 <- cell_line_values_674[cell_line_values_674 <= -7]
 
 # Create a bar plot with the filtered data
-barplot(cell_line_values_filtered, 
-        main = paste("Treatment responses for", cell_line_to_investigate), 
+barplot(cell_line_values_filtered_674, 
+        main = paste("Treatment responses for", cell_line_674 ), 
         xlab = "Treatment", 
         ylab = "Response", 
         las = 2,   # makes the x-axis labels vertical
-        cex.names = 0.3) # reduces the size of the x-axis labels
+        cex.names = 0.5, # reduces the size of the x-axis labels
+        col = "lightpink") # changes the color of the bars to turquoise
+
+
+# Find common treatments
+common_treatments_674 <- intersect(names(cell_line_values_filtered_674), other_treatments)
+
+print(common_treatments_674)
+
+
+
+# Find common treatments
+common_treatments_hdac_674 <- intersect(names(cell_line_values_filtered_674), hdac_treatments)
+
+print(common_treatments_hdac_674)
+
+
+# Convert the named vector to a data frame
+cell_line_df_674 <- data.frame(treatment = names(cell_line_values_filtered_674),
+                           response = as.numeric(cell_line_values_filtered_674))
+
+# Define the treatments of interest
+treatments_of_interest_674 <- c("BRD-K61397605-001-03-4::10::HTS002",  
+                            "BRD-K61397605-001-03-4::2.5::HTS002")
+
+# Add a new column to distinguish between the treatments of interest and the rest
+cell_line_df_674$group <- ifelse(cell_line_df_674$treatment %in% treatments_of_interest_674, 
+                             "Treatments of Interest", "Rest of Treatments")
+
+# Now, create a boxplot to compare the distribution of responses
+library(ggplot2)
+ggplot(cell_line_df_674, aes(x = group, y = response)) +
+  geom_boxplot(fill = "lightpink") +
+  labs(x = "Group", y = "Response", 
+       title = "Comparison of Responses: Treatments of Interest vs. Rest") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
 ```
 
 
@@ -509,18 +752,7 @@ barplot(cell_line_values_filtered,
 
 
 
-```{r}
-# Add a new column to indicate if the treatment is oncology or non-oncology
-fold_changes_df$type <- ifelse(fold_changes_df$cell_line %in% gastric_oncology_treatment_ids, "Oncology", "Non-Oncology")
 
-# Create the violin plot
-ggplot(fold_changes_df, aes(x = type, y = fold_change, fill = type)) +
-  geom_violin(scale = "width", trim = FALSE) +
-  geom_boxplot(width = 0.1, fill = "white") +
-  labs(x = "cell line", y = "Fold Change", title = "Distribution of Fold Changes by Treatment Type") +
-  theme_minimal()
-
-```
 
 
 ```{r}
@@ -733,6 +965,8 @@ qqnorm(avg_response_non_oncology, main = "Q-Q Plot for avg_response_non_oncology
 qqline(avg_response_non_oncology, col = "red", lwd = 2)
 
 ```
+
+
 
 
 
@@ -1003,6 +1237,7 @@ print(colMeans(hif1a_responses_gastric, na.rm = TRUE))
 
 ```
 
+
 ```{r}
 # Calculate the average response for each treatment
 hif1a_responses_avg <- colMeans(hif1a_responses_gastric, na.rm = TRUE)
@@ -1026,6 +1261,7 @@ ggplot(hif1a_responses_avg_df, aes(x = reorder(Treatment, -AverageResponse), y =
 ```
 
 
+
 ```{r}
 # Find treatments that target HIF1A
 HIF1A_treatments_df <- prism.treat[grep("HIF1A", prism.treat$target, ignore.case = TRUE), ]
@@ -1046,6 +1282,9 @@ pheatmap(HIF1A_responses, color = colorRampPalette(c("blue", "white", "red"))(50
 )
 
 ```
+
+
+
 
 
 
