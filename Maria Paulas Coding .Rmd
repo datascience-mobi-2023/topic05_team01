@@ -574,6 +574,9 @@ print(shapiro_test_non_oncology_gastric)
 # For avg_response_non_oncology_gastric, the p-value is 0.06901, which is greater than 0.05. -> normally distributed
 
 
+
+
+
 ```{r}
 # Load the necessary library
 library(ggplot2)
@@ -614,6 +617,39 @@ print(t_test_result)
 ```
 
 # This result suggests that there is a statistically significant difference in the responses of cell lines to non-oncology gastric treatments compared to oncology gastric treatments, as measured by the fold changes. P value < 0,05
+
+
+```{r}
+t.test(avg_response_oncology_gastric, avg_response_non_oncology_gastric, alternative = "less")
+
+```
+# The result of your one-sided t-test indicates that there's a significant difference in the means of your two groups (oncology and non-oncology gastric treatments). The t-value is -2.9536 and the p-value is 0.00337, which is less than 0.05, the common threshold for statistical significance. This means that you can reject the null hypothesis that the mean response of oncology treatments is equal to or greater than the mean response of non-oncology treatments.
+
+# The negative t-value suggests that the mean response of oncology treatments is less than the mean response of non-oncology treatments. Furthermore, the 95% confidence interval for the difference in means does not contain zero and is negative, providing additional evidence for this conclusion.
+
+
+
+
+
+```{r}
+# Convert average responses to data frames
+avg_response_oncology_gastric_df <- data.frame(response = avg_response_oncology_gastric, group = "Oncology")
+avg_response_non_oncology_gastric_df <- data.frame(response = avg_response_non_oncology_gastric, group = "Non-Oncology")
+
+# Combine the two data frames
+all_avg_responses <- rbind(avg_response_oncology_gastric_df, avg_response_non_oncology_gastric_df)
+
+# Create boxplot
+ggplot(all_avg_responses, aes(x = group, y = response, fill = group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Comparison of Average Oncology and Non-Oncology Gastric Treatment Responses",
+       x = "Group",
+       y = "Average Response",
+       fill = "Group") +
+  guides(fill=FALSE)  # This removes the legend
+
+```
 
 
 
@@ -834,6 +870,34 @@ print(t_test_result_2)
 
 # P value is shorter than 0,05 -> diference is significant 
 
+```{r}
+# Perform a one-sided t-test
+t_test_result_2_onesided <- t.test(avg_response_oncology_gastric, avg_response_non_oncology, alternative = "less")
+
+# Print the result
+print(t_test_result_2_onesided)
+
+```
+```{r}
+# Combine the oncology and non-oncology responses into one data frame
+combined_responses <- data.frame(
+  Treatment = c(rep("Oncology", length(avg_response_oncology_gastric)), 
+                rep("Non-Oncology", length(avg_response_non_oncology))),
+  Response = c(avg_response_oncology_gastric, avg_response_non_oncology)
+)
+
+# Load the necessary library
+library(ggplot2)
+
+# Create the boxplot
+ggplot(combined_responses, aes(x = Treatment, y = Response)) +
+  geom_boxplot() +
+  labs(x = "Treatment Type", y = "Response", title = "Response by Treatment Type")
+
+```
+
+
+
 
 ```{r}
 # Perform the Mann-Whitney U Test
@@ -844,6 +908,7 @@ print(mann_whitney_test_result_2)
 
 ```
 # P value is shorter than 0,05 -> diference is significant 
+
 
 
 
@@ -928,6 +993,37 @@ print(t_test_result_3 )
 ```
 
 # P value is shorter than 0,05 -> diference is significant 
+
+```{r}
+# Perform a one-sided t-test
+t_test_result_general_onesided <- t.test(avg_response_oncology, avg_response_non_oncology, alternative = "less")
+
+# Print the result
+print(t_test_result_general_onesided)
+
+```
+
+```{r}
+# Combine the data into a single dataframe
+combined_data <- data.frame(
+  group = c(rep("Oncology", length(avg_response_oncology)), rep("Non-Oncology", length(avg_response_non_oncology))),
+  response = c(avg_response_oncology, avg_response_non_oncology)
+)
+
+# Load the necessary library
+library(ggplot2)
+
+# Create the boxplot
+ggplot(combined_data, aes(x = group, y = response, fill = group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot of Average Responses: Oncology vs Non-Oncology",
+       x = "Group",
+       y = "Average Response") 
+
+```
+
+
 
 
 ```{r}
