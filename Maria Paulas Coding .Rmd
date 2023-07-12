@@ -623,9 +623,7 @@ print(t_test_result)
 t.test(avg_response_oncology_gastric, avg_response_non_oncology_gastric, alternative = "less")
 
 ```
-# The result of your one-sided t-test indicates that there's a significant difference in the means of your two groups (oncology and non-oncology gastric treatments). The t-value is -2.9536 and the p-value is 0.00337, which is less than 0.05, the common threshold for statistical significance. This means that you can reject the null hypothesis that the mean response of oncology treatments is equal to or greater than the mean response of non-oncology treatments.
-
-# The negative t-value suggests that the mean response of oncology treatments is less than the mean response of non-oncology treatments. Furthermore, the 95% confidence interval for the difference in means does not contain zero and is negative, providing additional evidence for this conclusion.
+# Based on the results of the one-sided t-test, there is statistically significant evidence to suggest that the oncology gastric treatments are more effective than the non-oncology gastric treatments. The mean response for the oncology treatments is more negative (-0.5892394), which in this context indicates higher effectiveness, compared to the mean response of the non-oncology treatments (-0.3602795). This conclusion is supported by a p-value of 0.00337, indicating that the observed difference is highly unlikely to have occurred due to chance, but rather indicates a genuine difference in effectiveness between the two groups. The negative t-value of -2.9536 further confirms that the oncology treatments are more effective on average than the non-oncology treatments.
 
 
 
@@ -785,12 +783,6 @@ ggplot(cell_line_df_674, aes(x = group, y = response)) +
 
 
 
-
-
-
-
-
-
 ```{r}
 library(ggplot2)
 ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
@@ -878,6 +870,14 @@ t_test_result_2_onesided <- t.test(avg_response_oncology_gastric, avg_response_n
 print(t_test_result_2_onesided)
 
 ```
+
+# Based on the results of the one-sided t-test, there is statistically significant evidence to suggest that the oncology gastric treatments are more effective than the non-oncology treatments in general. The mean response for the oncology gastric treatments is more negative (-0.5892394), indicating higher effectiveness, compared to the mean response of the non-oncology treatments (-0.2934893). The t-value is -4.3491, which again indicates that the oncology gastric treatments have a higher average effectiveness. This conclusion is strongly supported by the very small p-value of 0.0002401, which means that the observed difference in effectiveness is extremely unlikely to have occurred due to random chance
+
+
+
+
+
+
 ```{r}
 # Combine the oncology and non-oncology responses into one data frame
 combined_responses <- data.frame(
@@ -1002,6 +1002,8 @@ t_test_result_general_onesided <- t.test(avg_response_oncology, avg_response_non
 print(t_test_result_general_onesided)
 
 ```
+#Based on the results of the one-sided t-test, there is statistically significant evidence to suggest that the oncology gastric treatments are more effective than the non-oncology treatments in general. The mean response for the oncology gastric treatments is more negative (-0.5892394), indicating higher effectiveness, compared to the mean response of the non-oncology treatments (-0.2934893). The t-value is -4.3491, which again indicates that the oncology gastric treatments have a higher average effectiveness. This conclusion is strongly supported by the very small p-value of 0.0002401, which means that the observed difference in effectiveness is extremely unlikely to have occurred due to random chance.
+
 
 ```{r}
 # Combine the data into a single dataframe
@@ -1066,6 +1068,38 @@ qqline(avg_response_non_oncology, col = "red", lwd = 2)
 
 
 
+```{r}
+# Count the number of oncology and non-oncology treatments
+num_oncology_treatments <- nrow(oncology_treatments)
+num_non_oncology_treatments <- nrow(non_oncology_treatments)
+
+# Combine the counts into a single dataframe
+treatment_counts <- data.frame(
+  treatment_type = c("Oncology", "Non-Oncology"),
+  count = c(num_oncology_treatments, num_non_oncology_treatments)
+)
+
+# Calculate percentages
+treatment_counts$percentage <- (treatment_counts$count / sum(treatment_counts$count)) * 100
+
+# Create the barplot
+ggplot(treatment_counts, aes(x = "", y = count, fill = treatment_type)) +
+  geom_bar(stat = "identity", width = 0.1, aes(fill = factor(treatment_type))) +
+  geom_text(aes(label = paste(round(percentage, 1), "%"), y = count), 
+            position = position_stack(vjust = 0.5), 
+            color = "white") +
+  scale_fill_manual(values = c("purple", "pink")) +
+  theme_minimal() +
+  labs(title = "Percentage of Oncology vs Non-Oncology Treatments",
+       x = "",
+       y = "Count") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom")
+
+
+
+```
 
 
 
@@ -1427,6 +1461,33 @@ str(prism.snv)
 
 
 
+```{r}
+# Assuming 'fold_changes' is the vector containing fold changes for each cell line
+# Define cutoff for high and low responders
+cutoff <- median(fold_changes)  # or any other threshold you find appropriate
+
+# Categorize cell lines based on their fold change
+high_responders <- names(fold_changes)[fold_changes > cutoff]
+low_responders <- names(fold_changes)[fold_changes <= cutoff]
+
+# Subset the CNV data for high and low responders
+# Assuming 'prism.cnv' is your data frame containing the CNV data
+high_responders_cnv <- prism.cnv_gastric[, colnames(prism.cnv) %in% high_responders]
+low_responders_cnv <- prism.cnv_gastric[, colnames(prism.cnv) %in% low_responders]
+
+# Calculate average CNV per gene for high and low responders
+avg_high_cnv <- rowMeans(high_responders_cnv, na.rm = TRUE)
+avg_low_cnv <- rowMeans(low_responders_cnv, na.rm = TRUE)
+
+# Combine the averages into a data frame for comparison
+avg_cnv <- data.frame(gene = rownames(prism.cnv_gastric), 
+                      avg_high = avg_high_cnv, 
+                      avg_low = avg_low_cnv)
+
+# View the result
+print(avg_cnv)
+
+```
 
 
 
