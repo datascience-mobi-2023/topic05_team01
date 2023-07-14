@@ -1147,6 +1147,7 @@ genes_variance.V <- c(G.column_names,K.column_names,L.column_names,B.column_name
 ```
 
 ```{r}
+
 prism.filtered1_drugs_variances <- prism_celllines_matrix_filtered1[,colnames( prism_celllines_matrix_filtered1) %in% genes_variance.V ]
 
 
@@ -1275,11 +1276,90 @@ star.plot = TRUE,
 repel = TRUE, 
 ggtheme = theme_minimal(), geom = "point")
  #it does not work with 6 because too few points to calculate an ellipse
+```
+
+```{r, set.seed(333)}
+knitr::opts_chunk$set(cache = T)
+
+#testing the right number of clusters:
+library(cluster)
+library(factoextra)
+install.packages ("factoextra")
+
+
+fviz_nbclust(pca_data_prism.filtered1_drugs_variances_PC, kmeans, method = "wss") + geom_vline(xintercept = 2, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
+  
+
+View(prism.filtered1_drugs_variances)
+#trying things
+install.packages("NbClust")
+library(NbClust)
+clusternum <- NbClust ((pc_scores_prism), distance="euclidean", method="kmeans")
+
+pam.res5 <- pam(pc_scores_prism, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+install.packages("tidyverse")
+library(purrr)
+
+fviz_silhouette(pam.res5, palette = "jco", ggtheme = theme_classic())
+#higher values indicates a better clustering
+avg_sil <- function(k) {
+  km.res <- kmeans(pc_scores_prism, centers = 5, nstart = 25)
+  ss <- silhouette(km.res$cluster, dist(pc_scores_prism))
+  mean(ss[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values <- map_dbl(k.values, avg_sil)
+
+plot(k.values, avg_sil_values,
+       type = "b", pch = 19, frame = FALSE, 
+       xlab = "Number of clusters K",
+       ylab = "Average Silhouettes")
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism, kmeans, method = "silhouette")
 
 
 
 
+pam.res4 <- pam(pc_scores_prism, 4,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(),geom = "point" )
 
+fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
+#In our case, an average silhouette width of 0.41 indicates a moderate to good separation of data points within their respective clusters. This suggests that the clustering result has some level of distinction and coherence, with a reasonably clear separation between the clusters
+ #trying with other numbers:
+pam.res2 <- pam(pc_scores_prism, 2,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res2, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+
+fviz_silhouette(pam.res2, palette = "jco", ggtheme = theme_classic())
+
+#here we have 0.49, which is even better
+
+pam.res6 <- pam(pc_scores_prism, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+ #it does not work with 6 because too few points to calculate an ellipse
+
+```
+
+```{r,set.seed(333)}
+knitr::opts_chunk$set(cache = T)
 #the same for the transposed matrix:
 prism.filtered1_drugs_variances_t <- t(prism.filtered1_drugs_variances)
 pca_result_prism.filtered1_drugs_variances_t <- prcomp(prism.filtered1_drugs_variances_t)
@@ -1290,6 +1370,115 @@ pca_loadings_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_dru
  plot(1:length(pca_variances_prism.filtered1_drugs_variances_t), pca_variances_prism.filtered1_drugs_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
      main = "Scree Plot")
 plot(pca_values_prism.filtered1_drugs_variances_t[, 1], pca_values_prism.filtered1_drugs_variances_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+
+pc_scores_prism_t <- as.data.frame(pca_result_prism.filtered1_drugs_variances_t$x[, 1:2])
+kmeans_result_prism_t <- kmeans(pc_scores_prism_t, centers = 4)
+
+# Add cluster labels to the PC scores
+pc_scores_prism_t$cluster <- as.factor(kmeans_result_prism_t$cluster)
+
+# Plot the clustered data
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
+
+cluster_centers_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), mean)
+cluster_radii_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
+
+
+library(cluster)
+library(factoextra)
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "wss") + geom_vline(xintercept = 3, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
+  
+
+View(prism.filtered1_drugs_variances)
+#trying things
+install.packages("NbClust")
+library(NbClust)
+clusternum <- NbClust ((pc_scores_prism), distance="euclidean", method="kmeans")
+
+pam.res5_t <- pam(pc_scores_prism_t, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+install.packages("tidyverse")
+library(purrr)
+
+fviz_silhouette(pam.res5_t, palette = "jco", ggtheme = theme_classic())
+#higher values indicates a better clustering
+avg_sil_t <- function(k) {
+  km.res_t <- kmeans(pc_scores_prism_t, centers = 5, nstart = 25)
+  ss_t <- silhouette(km.res_t$cluster, dist(pc_scores_prism_t))
+  mean(ss_t[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values_t <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values_t <- map_dbl(k.values_t, avg_sil_t)
+
+plot(k.values_t, avg_sil_values_t,
+       type = "b", pch = 19, frame = FALSE, 
+       xlab = "Number of clusters K",
+       ylab = "Average Silhouettes")
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "silhouette")
+
+
+
+
+pam.res4_t <- pam(pc_scores_prism_t, 4,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(),geom = "point" )
+
+fviz_silhouette(pam.res4_t, palette = "jco", ggtheme = theme_classic())
+pam.res6_t <- pam(pc_scores_prism_t, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res6_t, palette = "jco", ggtheme = theme_classic())
+
+
+pam.res3_t <- pam(pc_scores_prism_t, 3,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res3_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res3_t, palette = "jco", ggtheme = theme_classic())
+
+```
+
+
+
+```
+
+
+
+```{r, set.seed(333)}
+knitr::opts_chunk$set(cache = T) 
+#the same for the transposed matrix:
+prism.filtered1_drugs_variances_t <- t(prism.filtered1_drugs_variances)
+pca_result_prism.filtered1_drugs_variances_t <- prcomp(prism.filtered1_drugs_variances_t)
+pca_values_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $x # Principal component scores (transformed data)
+pca_variances_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $sdev^2  # Variance explained by each principal component
+pca_proportions_prism.filtered1_drugs_variance_t <- pca_variances_prism.filtered1_drugs_variances_t / sum(pca_variances_prism.filtered1_drugs_variances_t)  # Proportion of variance explained by each principal component
+pca_loadings_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances_prism.filtered1_drugs_variances_t), pca_variances_prism.filtered1_drugs_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values_prism.filtered1_drugs_variances_t[, 1], pca_values_prism.filtered1_drugs_variances_t[, 2], xlab = "PC1", ylab = "PC2")
+
 
 
 pc_scores_prism_t <- as.data.frame(pca_result_prism.filtered1_drugs_variances_t$x[, 1:2])
@@ -1378,6 +1567,203 @@ ggtheme = theme_minimal(), geom = "point")
 fviz_silhouette(pam.res3_t, palette = "jco", ggtheme = theme_classic())
 
 
+```{r}
+
+```
+
+```{r}
+#trying something
+rows_with_CDH1 <- subset(prism.snv, Hugo_Symbol == "CDH1")
+print(rows_with_CDH1)
+CDH1_DepMap_ID <- rows_with_CDH1$DepMap_ID
+
+
+HDAC_inhibitor_df_all <- prism_celllines[, grepl(paste(HDAC_names_prism_new, collapse = "|"), colnames(prism_celllines))]
+
+
+HDAC_names_new_selected_all <- colnames(HDAC_inhibitor_df_all)
+
+HDAC_concentration <- sub(".*::(.*?)::.*", "\\1", HDAC_names_new_selected)
+HDAC_concentration <- as.numeric(HDAC_concentration)
+
+
+```
+
+```{r}
+prism_breast <- prism[rownames(prism) %in% breast.cancer.celllines.v, ]
+View (prism_breast)
+```
+```{r}
+typeof(prism_breast)
+prism_breast_numeric_2 <- (
+  sapply(prism_breast, as.numeric)
+)
+is.numeric(prism_breast_numeric_2)
+###removing all columns that have only missing values
+prism_breast_matrix_filtered <- prism_breast_numeric_2[, colSums(is.na(prism_breast_numeric_2)) < nrow(prism_breast_numeric_2)]
+###save the names of the rows so we can restore them after that
+original_row_names_breast <- rownames(prism_breast)
+###replacing the NAs by median of the columns
+prism_breast_numeric_2[is.na(prism_breast_numeric_2)] <-median(prism_breast_numeric_2,na.rm =TRUE)
+
+sum(is.na(prism_breast_numeric_2))
+original_row_names_breast <- rownames(prism_breast)
+###restoring the row names
+prism_breast_matrix_filtered1 <- matrix(prism_breast_numeric_2, nrow = nrow(prism_breast), dimnames = list(rownames(prism_breast), colnames(prism_breast)))
+original_row_names_breast <- rownames(prism_breast)
+prism_breast_matrix_filtered1 <- matrix(prism_breast_numeric_2, nrow = nrow(prism_breast), dimnames = list(rownames(prism_breast), colnames(prism_breast)))
+typeof(prism_breast_matrix_filtered1)
+class(prism_breast_matrix_filtered1)
+sum(is.na(prism_breast_matrix_filtered1))###no missing values
+####till here is important####
+
+
+prism_breast_cleaned_treatments <- prism_breast[, colSums(is.na(prism_breast)) == 0]
+
+```
+```{r}
+prism_breast_cleaned_treatments_t<- t(prism_breast_cleaned_treatments)
+sum(is.na(prism_breast_cleaned_treatments_t))
+is.numeric(prism_breast_cleaned_treatments_t)
+pca_result_breast_cleaned_treatments_t<- prcomp(prism_breast_cleaned_treatments_t)
+pca_values_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$x # Principal component scores (transformed data)
+pca_variances_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$sdev^2  # Variance explained by each principal component
+pca_proportions_breast_cleaned_treatment_t <- pca_variances_breast_cleaned_treatments_t / sum(pca_variances_breast_cleaned_treatments_t)  # Proportion of variance explained by each principal component
+pca_loadings_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_breast_cleaned_treatments_t), pca_variances_breast_cleaned_treatments_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_breast_cleaned_treatments_t[, 1], pca_values_breast_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2")
+```
+```{r}
+pc1_positive_drugs_breast <- rownames(pca_values_breast_cleaned_treatments_t)[pca_values_breast_cleaned_treatments_t[, "PC1"] > 0]
+mean(pca_loadings_breast_cleaned_treatments_t[,1]) #very similar to gastric here
+#### There are 678 drugs which contribute positive to the PC1. So lets select a threshold and find selected drugs.
+pc1_selected_drugs_breast <- rownames(pca_values_breast_cleaned_treatments_t)[pca_values_breast_cleaned_treatments_t[, "PC1"] > 20]
+View(pc1_selected_drugs_breast)
+prism_treat_new_breast <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs_breast, ]
+prism_treat_new_breast <- subset(prism_treat_new_breast, dose > 3 )
+View(prism_treat_new_breast)
+```
+```{r}
+bar_chart_breast <- ggplot(data = prism_treat_new_breast, aes(x = target)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Target Distribution", x = "Target", y = "Count") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 10)  # Adjust the range as needed
+
+# Display the bar chart
+bar_chart_breast
+
+
+```
+```{r}
+big_string_breast <- paste(prism_treat_new_breast$target, collapse = ",")
+target_vector_breast <- unlist(strsplit(big_string_breast, ","))
+target_vector_breast <- gsub(" ", "", target_vector_breast)
+target_frequency_breast <- as.data.frame(table(target_vector_breast))
+target_frequency_breast
+View(target_frequency_breast)
+target_freq_dataframe_selected_breast <- subset(target_frequency_breast, Freq > 2)
+
+target_freq_dataframe_selected_breast <- target_freq_dataframe_selected_breast[target_freq_dataframe_selected_breast$target_vector_breast != "NA", ]
+
+bar_plot_breast <- ggplot(target_freq_dataframe_selected_breast, aes(x = reorder(target_vector_breast, -Freq), y = Freq, fill = target_vector_breast)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot_breast <- bar_plot_breast + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot_breast)
+
+
+```
+```{r}
+#The same with moa
+# Seperate the strings of the column target
+big_string_breast <- paste(prism_treat_new_breast$moa, collapse = ",")
+
+```
+
+```{r}
+moa_vector_breast <- unlist(strsplit(big_string_breast, ","))
+moa_vector_breast <- gsub(" ", "", moa_vector_breast)
+moa_frequency_breast <- as.data.frame(table(moa_vector_breast))
+moa_frequency_breast
+View(moa_frequency_breast)
+```
+
+```{r}
+# create a new dataframe of target frequency and select those which have more than 1 freq:
+
+moa_freq_dataframe_selected_breast <- subset(moa_frequency_breast, Freq > 1)
+
+
+# Print the new dataframe
+print(moa_freq_dataframe_selected)
+```
+
+#Bar plot of moa
+
+```{r}
+# Create a bar plot of moa
+bar_plot_moa_breast <- ggplot(moa_freq_dataframe_selected_breast, aes(x = reorder(moa_vector_breast, -Freq), y = Freq, fill = moa_vector_breast)) +
+  geom_bar(stat = "identity") +
+  labs(x = "moa", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+##Adjust the x-axis labels
+bar_plot_moa_breast <- bar_plot_moa_breast + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot_moa_breast)
+```
+```{r}
+
+pca_result_gastric_cleaned_treatments<- prcomp(prism_gastric_cleaned_treatments)
+pca_values_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$x # Principal component scores (transformed data)
+pca_variances_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$sdev^2  # Variance explained by each principal component
+pca_proportions_gastric_cleaned_treatment <- pca_variances_gastric_cleaned_treatments / sum(pca_variances_gastric_cleaned_treatments)  # Proportion of variance explained by each principal component
+pca_loadings_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$rotation  # Loadings (coefficients) of each variable on each principal component
+ggplot(1:length(pca_variances_gastric_cleaned_treatments), pca_variances_gastric_cleaned_treatments, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_gastric_cleaned_treatments[, 1], pca_values_gastric_cleaned_treatments[, 2], xlab = "PC1", ylab = "PC2")
+
+
+scree_plot_g <- ggplot(data = data.frame(Principal_Component = 1:length(pca_variances_gastric_cleaned_treatments),
+                                       Variance_Explained = pca_variances_gastric_cleaned_treatments),
+                     aes(x = Principal_Component, y = Variance_Explained)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 3) +
+  labs(x = "Principal Component", y = "Variance Explained", title = "Scree Plot") +
+  theme_minimal()
+
+
+
+pca_df_g <- data.frame(PC1 = pca_values_gastric_cleaned_treatments[, 1],
+                     PC2 = pca_values_gastric_cleaned_treatments[, 2])
+
+# Scatter plot using ggplot2
+scatter_plot_gg <- ggplot(data = pca_df_g, aes(x = PC1, y = PC2)) +
+  geom_point(color = "blue", size = 3) +
+  labs(x = "PC1", y = "PC2") +
+  ggtitle("Scatter Plot") +
+  theme_minimal()
+print(scatter_plot_gg)
+# Combine the plots
+combined_plot_g <- cowplot::plot_grid(scree_plot_g, scatter_plot_gg, nrow = 1)
+
+# Display the combined plot
+print(combined_plot_g)
+print(scree_plot_g)
+print(scatter_plot_gg)
+```
 
 
 PCA of this reduced data frame: 
