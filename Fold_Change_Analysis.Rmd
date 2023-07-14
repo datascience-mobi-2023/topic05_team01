@@ -1,0 +1,496 @@
+---
+title: "Fold change Analysis Report"
+author: "Maria Paula Fuentes"
+date: "2023-07-13"
+output: html_document
+---
+
+
+
+# Fold changes analysis between non-Oncology gastric Treatments Relative to Oncology gastric Treatments
+```{r}
+# Filter for oncology treatments related to gastric or gastrointestinal cancer
+contains_gastric_or_gastrointestinal <- grepl("gastric|gastrointestinal", prism.treat$indication, ignore.case = TRUE)
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
+
+gastric_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & contains_oncology, ]
+
+# Extract treatment IDs for gastric/gastrointestinal oncology treatments
+gastric_oncology_treatment_ids <- rownames(gastric_oncology_treatments)
+
+# Filter prism data for these treatment IDs
+gastric_oncology_responses <- prism_gastric[, colnames(prism_gastric) %in% gastric_oncology_treatment_ids]
+
+# Impute NA values with column means
+gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
+
+
+
+# Matches "gastroenterology" in the "disease.area" column
+contains_gastroenterology <- grepl("gastroenterology", prism.treat$disease.area, ignore.case = TRUE)
+
+gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & (contains_gastroenterology | !contains_oncology), ]
+
+# Extract treatment IDs for gastric/gastrointestinal non-oncology treatments
+gastric_non_oncology_treatment_ids <- rownames(gastric_non_oncology_treatments) # Fixed this line
+
+# Filter prism data for these treatment IDs
+gastric_non_oncology_responses <- prism_gastric[, colnames(prism) %in% gastric_non_oncology_treatment_ids]
+
+
+# Impute NA values with column means
+gastric_non_oncology_responses <- as.data.frame(lapply(gastric_non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_non_oncology_gastric <- rowMeans(gastric_non_oncology_responses)
+
+# Calculate the fold change for each cell line
+pseudo_count <- 1e-9
+fold_changes_oncological_1 <- (avg_response_non_oncology_gastric + pseudo_count) / (avg_response_oncology_gastric + pseudo_count)
+
+names(avg_response_oncology_gastric) <- gastric.cancer.celllines.v 
+
+
+# Check the lengths of fold_changes_oncological and its names
+print(length(fold_changes_oncological_1))
+print(length(names(fold_changes_oncological_1)))
+
+# Check if avg_response_oncology_gastric and avg_response_non_oncology_gastric have names
+print(length(names(avg_response_oncology_gastric)))
+print(length(names(avg_response_non_oncology_gastric)))
+
+
+# checks whether the length of the names attribute of avg_response_oncology_gastric is equal to the length of fold_changes_oncological_1. If they are equal, -> assign the names of avg_response_oncology_gastric to the variable cell_lines.
+
+if (length(names(avg_response_oncology_gastric)) == length(fold_changes_oncological_1)) {
+  cell_lines <- names(avg_response_oncology_gastric)
+} else {
+  # Provide a default value, or handle this case as needed
+  cell_lines <- 1:length(fold_changes_oncological)
+}
+
+
+# Create the data frame using cell_lines for the cell_line column
+fold_changes_gastric_df_1 <- data.frame(cell_line = cell_lines, fold_change = fold_changes_oncological_1)
+
+# Sort the dataframe by fold_change 
+fold_changes_gastric_df_1 <- fold_changes_gastric_df_1[order(fold_changes_gastric_df_1$fold_change, decreasing = TRUE), ]
+
+
+library(ggplot2)
+
+# Using ggplot2
+ggplot(fold_changes_gastric_df_1, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = fold_change)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "orange", high = "red") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Fold Changes Non-Oncology Gastric Treatments\n Relative to Oncology gastric Treatments",
+       x = "Cell Lines",
+       y = "Fold Change",
+       fill = "Fold Change") +
+  guides(fill=FALSE) 
+
+
+
+
+
+
+```
+
+
+
+
+Check for normality
+
+```{r}
+
+# Check if the data is normally distributed
+shapiro_test_oncology_gastric <- shapiro.test(avg_response_oncology_gastric)
+shapiro_test_non_oncology_gastric <- shapiro.test(avg_response_non_oncology_gastric)
+
+# Print the results
+print(shapiro_test_oncology_gastric)
+print(shapiro_test_non_oncology_gastric)
+
+```
+
+
+
+
+```{r}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="lightblue") +
+  labs(title="Oncology gastric treatments", x="Values", y="Frequency")
+
+# For avg_response_non_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_non_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="lightgreen") +
+  labs(title=" Non oncology gastric treatments", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology_gastric
+qqnorm(avg_response_oncology_gastric, main = "Q-Q Plot- Oncology gastric treatments")
+qqline(avg_response_oncology_gastric, col = "lightblue", lwd = 3)
+
+# For avg_response_non_oncology_gastric
+qqnorm(avg_response_non_oncology_gastric, main = "Q-Q Plot - Non oncology gastric treatments")
+qqline(avg_response_non_oncology_gastric, col = "lightgreen", lwd = 3)
+
+```
+
+
+
+
+TWO SIDED T-TEST 
+
+```{r}
+t_test_result_1_twosided <- t.test(avg_response_oncology_gastric, avg_response_non_oncology_gastric)
+
+# Print the result
+print(t_test_result_1_twosided)
+
+```
+
+
+ONE SIDED
+
+```{r}
+
+t_test_result_1_onesided <- t.test(avg_response_oncology_gastric, avg_response_non_oncology_gastric, alternative = "less")
+
+
+# Print the result
+print(t_test_result_1_onesided)
+
+```
+
+
+```{r}
+all_avg_responses_1 <- data.frame(
+  Treatment = c(rep("Oncology", length(avg_response_oncology_gastric)), 
+                rep("Non-Oncology", length(avg_response_non_oncology_gastric))),
+  Response = c(avg_response_oncology_gastric,avg_response_non_oncology_gastric )
+)
+
+
+# Create the boxplot
+ggplot(all_avg_responses_1, aes(x = Treatment, y = Response, fill = Treatment)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("Oncology" = "lightblue", "Non-Oncology" = "lightgreen")) +
+  theme_minimal() +
+  labs(title = "Comparison of Average Oncology\n and Non-Oncology Gastric Treatment Responses",
+       x = "Treatment Group",
+       y = "Average Response",
+       fill = "Treatment Group") +
+  guides(fill=FALSE) 
+
+
+```
+
+
+
+
+
+
+# Fold changes analysis between non-Oncology Treatments Relative to Oncology gastric Treatments
+
+```{r}
+# Filter for oncology treatments already in analysis 1: avg_response_oncology_gastric
+
+
+#Repeat steps 2 and 3 for non-oncology treatments in general 
+
+non_oncology_treatments <- prism.treat[!contains_oncology, ]
+non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+non_oncology_responses <- prism_gastric[, colnames(prism_gastric) %in% non_oncology_treatment_ids]
+non_oncology_responses_imputed <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_non_oncology <- rowMeans(non_oncology_responses_imputed, na.rm = TRUE)
+
+
+# Calculate the fold changes
+pseudo_count <- 1e-9
+fold_changes_2 <- (avg_response_non_oncology + pseudo_count) / (avg_response_oncology_gastric + pseudo_count)
+cell_lines <- rownames(prism_gastric)  # Assuming row names represent the cell lines
+
+# Plot the fold changes
+fold_changes_df_2 <- data.frame(cell_line = cell_lines, fold_change = fold_changes_2)
+
+# Load the necessary library
+library(ggplot2)
+
+# Create the plot
+ggplot(fold_changes_df_2, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = fold_change)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "pink", high = "purple") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold Changes of Cell Line Responses")
+
+
+```
+
+
+```{r}
+# Check if the data is normally distributed
+shapiro_test_oncology_gastric <- shapiro.test(avg_response_oncology_gastric)
+shapiro_test_non_oncology_general <- shapiro.test(avg_response_non_oncology)
+
+# Print the results
+print(shapiro_test_oncology_gastric)
+print(shapiro_test_non_oncology_general)
+
+```
+
+
+
+```{r}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology_gastric
+ggplot(data=NULL, aes(x=avg_response_oncology_gastric)) +
+  geom_histogram(bins = 30, color="black", fill="lightblue") +
+  labs(title="Histogram- Responses oncology gastric treatments", x="Values", y="Frequency")
+
+# For avg_response_non_oncology
+ggplot(data=NULL, aes(x=avg_response_non_oncology)) +
+  geom_histogram(bins = 30, color="black", fill="pink") +
+  labs(title="Histogram- Responses non oncology gastric treatments ", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology_gastric
+qqnorm(avg_response_oncology_gastric, main = "Q-Q Plot - Responses oncology gastric treatments")
+qqline(avg_response_oncology_gastric, col = "lightblue", lwd = 2)
+
+# For avg_response_non_oncology
+qqnorm(avg_response_non_oncology, main = "Q-Q Plot - Responses non oncology gastric treatments")
+qqline(avg_response_non_oncology, col = "pink", lwd = 2)
+
+```
+
+
+
+```{r}
+t_test_result_2_twosided <- t.test(avg_response_oncology_gastric, avg_response_non_oncology)
+
+# Print the result
+print(t_test_result_2_twosided)
+
+```
+
+
+```{r}
+# Perform a one-sided t-test
+t_test_result_2_onesided <- t.test(avg_response_oncology_gastric, avg_response_non_oncology, alternative = "less")
+
+# Print the result
+print(t_test_result_2_onesided)
+
+```
+
+
+
+```{r}
+# Combine the oncology and non-oncology responses into one data frame
+all_avg_responses_2 <- data.frame(
+  Treatment = c(rep("Oncology", length(avg_response_oncology_gastric)), 
+                rep("Non-Oncology", length(avg_response_non_oncology))),
+  Response = c(avg_response_oncology_gastric, avg_response_non_oncology)
+)
+
+# Load the necessary library
+library(ggplot2)
+
+# Create the boxplot
+ggplot(all_avg_responses_2, aes(x = Treatment, y = Response, fill = Treatment)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("Oncology" = "pink", "Non-Oncology" = "lightblue")) +
+  theme_minimal() +
+  labs(title = "Comparison of Average Oncology\n and Non-Oncology Gastric Treatment Responses",
+       x = "Treatment Group",
+       y = "Average Response",
+       fill = "Treatment Group") +
+  guides(fill=FALSE) 
+
+
+```
+
+
+
+
+General Analysis
+
+
+```{r}
+# Count the number of oncology and non-oncology treatments
+num_oncology_treatments <- nrow(oncology_treatments)
+num_non_oncology_treatments <- nrow(non_oncology_treatments)
+
+# Combine the counts into a single dataframe
+treatment_counts_0 <- data.frame(
+  treatment_type = c("Oncology", "Non-Oncology"),
+  count = c(num_oncology_treatments, num_non_oncology_treatments)
+)
+
+# Calculate percentages
+treatment_counts_0$percentage <- (treatment_counts_0$count / sum(treatment_counts_0$count)) * 100
+
+# Create the barplot
+ggplot(treatment_counts_0, aes(x = "", y = count, fill = treatment_type)) +
+  geom_bar(stat = "identity", width = 0.1, aes(fill = factor(treatment_type))) +
+  geom_text(aes(label = paste(round(percentage, 1), "%"), y = count), 
+            position = position_stack(vjust = 0.5), 
+            color = "white") +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() +
+  labs(title = "Percentage of Oncology vs Non-Oncology Treatments",
+       x = "",
+       y = "Count") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = "bottom")
+
+
+
+```
+
+
+
+
+
+```{r}
+# Filter for oncology treatments
+contains_oncology <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
+oncology_treatments <- prism.treat[contains_oncology, ]
+oncology_treatment_ids <- rownames(oncology_treatments)
+oncology_responses <- prism[, colnames(prism) %in% oncology_treatment_ids]
+oncology_responses_imputed <- as.data.frame(lapply(oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_oncology_general <- rowMeans(oncology_responses_imputed, na.rm = TRUE)
+
+# Analysis 2 -> avg_response_non_oncology
+
+non_oncology_treatments <- prism.treat[!contains_oncology, ]
+non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+non_oncology_responses <- prism[, colnames(prism) %in% non_oncology_treatment_ids]
+non_oncology_responses_imputed <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_non_oncology_general <- rowMeans(non_oncology_responses_imputed, na.rm = TRUE)
+
+
+# Calculate the fold changes
+pseudo_count <- 1e-9
+fold_changes_0 <- (avg_response_non_oncology_general + pseudo_count) / (avg_response_oncology_general + pseudo_count)
+cell_lines <- rownames(prism)  # Assuming row names represent the cell lines
+
+
+# Plot the fold changes
+fold_changes_df_0 <- data.frame(cell_line = cell_lines, fold_change = fold_changes_0)
+
+# Load the necessary library
+library(ggplot2)
+
+# Using ggplot2
+ggplot(fold_changes_df_0, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank()) + # This hides the x-axis labels
+  labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
+       x = "Cell Lines",
+       y = "Fold Change") 
+```
+
+
+
+```{r}
+# Check if the data is normally distributed
+shapiro_test_oncology_general <- shapiro.test(avg_response_oncology_general)
+shapiro_test_non_oncology_general <- shapiro.test(avg_response_non_oncology_general)
+
+# Print the results
+print(shapiro_test_oncology_general)
+print(shapiro_test_non_oncology_general)
+
+```
+
+
+
+```{r}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology
+ggplot(data=NULL, aes(x=avg_response_oncology_general)) +
+  geom_histogram(bins = 30, color="black", fill="blue") +
+  labs(title="Histogram for avg_response_oncology", x="Values", y="Frequency")
+
+# For avg_response_non_oncology
+ggplot(data=NULL, aes(x=avg_response_non_oncology_general)) +
+  geom_histogram(bins = 30, color="black", fill="red") +
+  labs(title="Histogram for avg_response_non_oncology", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology
+qqnorm(avg_response_oncology_general, main = "Q-Q Plot for avg_response_oncology")
+qqline(avg_response_oncology_general, col = "blue", lwd = 2)
+
+# For avg_response_non_oncology
+qqnorm(avg_response_non_oncology_general, main = "Q-Q Plot for avg_response_non_oncology")
+qqline(avg_response_non_oncology_general, col = "red", lwd = 2)
+
+```
+
+
+
+
+
+TWOSIDED
+```{r}
+t_test_result_0_twosided <- t.test(avg_response_oncology_general, avg_response_non_oncology_general)
+
+# Print the result
+print(t_test_result_0_twosided)
+
+```
+
+
+
+```{r}
+# Perform a one-sided t-test
+t_test_result_0_onesided <- t.test(avg_response_oncology_general, avg_response_non_oncology_general, alternative = "less")
+
+# Print the result
+print(t_test_result_0_onesided)
+
+```
+
+
+
+
+```{r}
+# Combine the data into a single dataframe
+all_avg_responses_0 <- data.frame(
+  group = c(rep("Oncology", length(avg_response_oncology_general)), rep("Non-Oncology", length(avg_response_non_oncology_general))),
+  response = c(avg_response_oncology_general, avg_response_non_oncology_general)
+)
+
+# Load the necessary library
+library(ggplot2)
+
+# Create the boxplot
+ggplot(all_avg_responses_0, aes(x = group, y = response, fill = group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot of Average Responses: Oncology vs Non-Oncology",
+       x = "Group",
+       y = "Average Response") 
+```
+
+
+
