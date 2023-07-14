@@ -992,6 +992,7 @@ print(t_test_result_3 )
 
 ```
 
+
 # P value is shorter than 0,05 -> diference is significant 
 
 ```{r}
@@ -1489,7 +1490,52 @@ print(avg_cnv)
 
 ```
 
+```{r}
+# Calculate the difference in responses
+response_diff_general <- avg_response_non_oncology - avg_response_oncology
+
+# Generate the data frame for plotting
+response_diff_df_general <- data.frame(cell_line = cell_lines, response_diff = response_diff_general)
+
+# Load the necessary library
+library(ggplot2)
+
+# Using ggplot2
+ggplot(response_diff_df_general, aes(x = reorder(cell_line, -response_diff), y = response_diff)) +
+  geom_bar(stat = "identity", fill = "purple") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank()) + # This hides the x-axis labels
+  labs(title = "Response Differences: Non-Oncology vs. Oncology Treatments",
+       x = "Cell Lines",
+       y = "Response Difference") 
+
+```
 
 
+```{r}
+# Take the absolute value of responses before calculating fold change
+avg_response_oncology_abs <- abs(avg_response_oncology)
+avg_response_non_oncology_abs <- abs(avg_response_non_oncology)
 
+# Calculate the fold changes
+pseudo_count <- 1e-9
+fold_changes_general <- (avg_response_non_oncology_abs + pseudo_count) / (avg_response_oncology_abs + pseudo_count)
+cell_lines <- rownames(prism)  # Assuming row names represent the cell lines
+
+# Plot the fold changes
+fold_changes_df_general <- data.frame(cell_line = cell_lines, fold_change = fold_changes_general)
+
+# Load the necessary library
+library(ggplot2)
+
+# Using ggplot2
+ggplot(fold_changes_df_general, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
+  geom_bar(stat = "identity", fill = "purple") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank()) + # This hides the x-axis labels
+  labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
+       x = "Cell Lines",
+       y = "Fold Change") 
+
+```
 
