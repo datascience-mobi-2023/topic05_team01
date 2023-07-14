@@ -702,7 +702,7 @@ heatmap.2(correlation_matrix,
 help("heatmap.2")
 heatmap.2(correlation_matrix,
           col = colors,
-          main = "Correlation Heatmap",
+          main = "Correlation of drug concentration and drug response",
           xlab = "Drug",
           ylab = "Cell",
           trace = "none",
