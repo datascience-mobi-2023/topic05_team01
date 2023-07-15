@@ -1292,20 +1292,6 @@ fviz_silhouette(pam.res2, palette = "jco", ggtheme = theme_classic())
 
 ```
 
-```{r}
-#here we have 0.49, which is even better
-#PCA of this reduced data frame: 
-
-standardized_data.p <- scale(prism_cleaned)
-pca_result.p <- prcomp(standardized_data.p, scale. = FALSE)
-View(pca_result.p)
-pcs <- pca_result.p$x
-variance_explained <- pca_result.p$sdev^2 / sum(pca_result.p$sdev^2)
-
-loadings <- pca_result.p$rotation
-scree_plot <- plot(1:length(variance_explained), variance_explained, type = "b",  xlab = "Principal Component", ylab = "Variance Explained")
-```
-
 ## **Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
 
 Calculating correlation as an example of treatment response to the gene expression of the target of that treatment in the celllines as an example:
