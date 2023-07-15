@@ -6,10 +6,6 @@ date: "2023-05-14"
 
 # Hanna's random ideas
 
-```{r}
-tinytex::install_tinytex()
-```
-
 **Plotting a drug response against a gene that is overexpressed in prism.exp_gastric:**
 
 ```{r}
@@ -1423,6 +1419,95 @@ hist(valuesb, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab =
 
 ```
 
+```{r}
+# Get the common row names
+common_rows <- intersect(row.names(cor_prism_gastric), row.names(prism.exp_gastric)) #prism;prism.achilles
+
+# Create new dataframes with common rows
+new_prism.exp.gaa <- prism.exp_gastric[common_rows, ]
+new_prismgaa <- cor_prism_gastric[common_rows, ]
+# Get the common row names
+common_rows <- intersect(row.names(prism_gastric), row.names(prism.exp_gastric)) #prism;prism.achilles
+
+# Create new dataframes with common rows
+new_prism.exp.gaaa <- prism.exp_gastric[common_rows, ]
+new_prismgaaa <- prism_gastric[common_rows, ]
+```
+
+```{r}
+# Create an empty list to store the correlation results
+correlation_results20 <- list()
+
+# Loop through each column of df2 = cor_prism_gastric
+for (col in colnames(new_prismgaa)) {
+  # Get the corresponding row name from df2
+  row_name <- col
+
+  # Get the variable (string) from the specified column in df1 = prism.treat
+  variable <- as.character(prism.treat[row_name, "target"])
+
+  # Check if the variable exists and is a string
+  if (!is.na(variable) && is.character(variable)) {
+    # Split the variable into separate strings
+    variables <- strsplit(variable, ",")[[1]]
+
+    # Loop through each individual string
+    for (var in variables) {
+      # Trim leading/trailing whitespace
+      var <- trimws(var)
+
+      # Check if the trimmed string is empty
+      if (nchar(var) > 0) {
+        # Find the matching column name in df3
+        df3_col <- var
+
+        # Check if the column name exists in df3 = prism.cnv_gastric
+        if (df3_col %in% colnames(new_prism.exp.gaa)) {
+          # Subset the columns from df2 and df3
+          subset_df2 <- new_prismgaa[, col]
+          subset_df3 <- new_prism.exp.gaa[, df3_col]
+
+          # Calculate the correlation
+          correlation <- cor(subset_df2, subset_df3)
+
+          # Store the correlation result with a descriptive name
+          correlation_results20[[paste("Correlation between", col, "and", df3_col)]] <- correlation
+        }
+      }
+    }
+  }
+}
+
+# Access the correlation results
+print(correlation_results20)
+```
+
+```{r}
+# Werte aus der Liste als Vektor extrahieren
+valuesb<- unlist(correlation_results20)
+
+# Histogramm erstellen
+hist(valuesb, col = "blue", main = "Histogramm der Werte", xlab = "Wert", ylab = "Häufigkeit")
+
+```
+
+```{r}
+# Flatten the list to a numeric vector
+flat_list <- unlist(correlation_results20)
+
+# Calculate the absolute values of the flat list
+abs_values <- abs(flat_list)
+
+# Sort the absolute values in descending order
+sorted_abs_values <- sort(abs_values, decreasing = TRUE)
+
+# Extract the 10 absolute highest values
+highest_abs_values <- sorted_abs_values[1:10]
+
+# Print the 10 absolute highest values
+print(highest_abs_values)
+```
+
 Dataframe used: Prism with just gastric celllines and all drugs ; Prism.cnv just gastric cellines
 
 ```{r}
@@ -1944,19 +2029,26 @@ print(highest_abs_values)
 ```
 
 ```{r}
-# Select all row names of the dataframe
-all_row_names <- row.names(prism.achilles_gastric)
-# Filter the dataframe based on the matching row names
-filtered_df <- prism_gastric[row.names(prism_gastric) %in% all_row_names, ]
+# Get the common row names
+common_rows <- intersect(row.names(prism.achilles_gastric), row.names(prism_gastric_cleaned_treatments)) #prism;prism.achilles
 
+# Create new dataframes with common rows
+new_prism.ach.ga <- prism.achilles_gastric[common_rows, ]
+new_prismga <- prism_gastric_cleaned_treatments[common_rows, ]
+# Get the common row names
+common_rows1 <- intersect(row.names(prism.exp_gastric), row.names(prism_gastric_cleaned_treatments)) #prism;prism.achilles
 
+# Create new dataframes with common rows
+new_prism.exp.ga <- prism.exp_gastric[common_rows1, ]
+new_prismga1 <- prism_gastric_cleaned_treatments[common_rows1, ]
 ```
 
 ```{r}
 # Select a column by its name and store it in a vector
 column_name <- "BCR"
 vector50 <- prism.cnv_gastric[[column_name]]
-vector55 <- prism.achilles_gastric[[column_name]]
+vector53 <- new_prism.exp.gaa[[column_name]]
+vector55 <- new_prism.ach.ga[[column_name]]
 # Select a column by its name and store it in a vector
 column_name <- "BRD-K35329391-334-01-7::10::HTS002"
 vector51 <- prism_gastric[[column_name]]
@@ -1964,9 +2056,16 @@ plot(vector50, vector51, type = "p", pch = 16, col = "blue",
      xlab = "BCR", ylab = "BRD-K35329391-334-01-7::10::HTS002", main = "Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002")
 # Select a column by its name and store it in a vector
 column_name <- "BRD-K35329391-334-01-7::10::HTS002"
-vector52 <- filtered_df[[column_name]]
+vector52 <- new_prismga[[column_name]]
 plot(vector55, vector52, type = "p", pch = 16, col = "blue",
      xlab = "BCR", ylab = "BRD-K35329391-334-01-7::10::HTS002", main = "Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002")
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K35329391-334-01-7::10::HTS002"
+vector54 <- new_prismgaa[[column_name]]
+plot(vector53, vector54, type = "p", pch = 16, col = "blue",
+     xlab = "BCR", ylab = "BRD-K35329391-334-01-7::10::HTS002", main = "Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002")
+corelatiooon<- cor(vector54, vector53)
+print(corelatiooon)
 
 # Select a column by its name and store it in a vector
 column_name <- "JAK2"
@@ -1987,10 +2086,103 @@ plot(vector30, vector31, type = "p", pch = 16, col = "blue",
 ```
 
 ```{r}
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector200 <- prism.cnv_gastric[[column_name]]
+vector220 <- new_prism.exp.gaaa[[column_name]]
+vector222 <- new_prism.ach.ga[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K56957086-001-06-3::10::HTS002"
+vector201 <-prism_gastric[[column_name]]
+plot(vector200, vector201, type = "p", pch = 16, col = "blue",
+     xlab = "HDAC1", ylab = "BRD-K56957086-001-06-3::10::HTS002", main = "Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002")
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K56957086-001-06-3::2.5::HTS002"
+vector221 <- new_prismgaaa[[column_name]]
+plot(vector220, vector221, type = "p", pch = 16, col = "blue",
+     xlab = "HDAC1", ylab = "BRD-K56957086-001-06-3::10::HTS002", main = "Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002")
+cor(vector200, vector201)
+cor(vector220, vector221)
+```
+
+```{r}
+#Scatter plot of all the concentrations of drug prism_gastric BRD-K84564571-001-02-4 and prism.cnv_gastric gene expression of KDR
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K56957086-001-06-3::0.00061034::HTS002"
+vector0.00061034 <- prism_gastric[[column_name0]]
+column_name1 <- "BRD-K56957086-001-06-3::0.0024414::HTS002"
+vector0.0024414 <- prism_gastric[[column_name1]]
+column_name2 <- "BRD-K56957086-001-06-3::0.00976562::HTS002"
+vector0.00976562 <- prism_gastric[[column_name2]]
+column_name3<- "BRD-K56957086-001-06-3::0.0390625::HTS002"
+vector0.0390625 <- prism_gastric[[column_name3]]
+column_name4 <- "BRD-K56957086-001-06-3::0.15625::HTS002"
+vector0.15625 <- prism_gastric[[column_name4]]
+column_name5 <- "BRD-K56957086-001-06-3::0.625::HTS002"
+vector0.625 <- prism_gastric[[column_name5]]
+column_name6 <- "BRD-K56957086-001-06-3::2.5::HTS002"
+vector2.5 <- prism_gastric[[column_name6]]
+column_name7 <- "BRD-K56957086-001-06-3::10::HTS002"
+vector10<- prism_gastric[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector0.00061034, vector0.0024414, vector0.00976562 , vector0.0390625, vector0.15625,vector0.625, vector2.5 , vector10)
+par(mar = c(5, 5, 4, 7))
+# Plot the vectors
+matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+        xlab = " CNVs of HDAC1", ylab = "BRD-K56957086-001-06-3")
+# Get the coordinates for the legend
+legend_x <- 1.2 # Adjust the value as needed
+legend_y <- 0.5
+# Add a legend
+legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+cor(vector, vectors)
+```
+
+```{r}
+#Scatter plot of all the concentrations of drug prism_gastric BRD-K84564571-001-02-4 and prism.cnv_gastric gene expression of KDR
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector <- new_prism.exp.gaaa[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K56957086-001-06-3::0.00061034::HTS002"
+vector1 <- new_prismgaaa[[column_name0]]
+column_name1 <- "BRD-K56957086-001-06-3::0.0024414::HTS002"
+vector2 <- new_prismgaaa[[column_name1]]
+column_name2 <- "BRD-K56957086-001-06-3::0.00976562::HTS002"
+vector3 <- new_prismgaaa[[column_name2]]
+
+column_name4 <- "BRD-K56957086-001-06-3::0.15625::HTS002"
+vector5 <- new_prismgaaa[[column_name4]]
+column_name5 <- "BRD-K56957086-001-06-3::0.625::HTS002"
+vector6 <- new_prismgaaa[[column_name5]]
+column_name6 <- "BRD-K56957086-001-06-3::2.5::HTS002"
+vector7 <- new_prismgaaa[[column_name6]]
+column_name7 <- "BRD-K56957086-001-06-3::10::HTS002"
+vector8<- new_prismgaaa[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector1, vector2, vector3,  vector5,vector6, vector7, vector8)
+par(mar = c(5, 5, 4, 7))
+# Plot the vectors
+matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green",  "purple", "pink", "brown", "black"),
+        xlab = "TPM values of HDAC1", ylab = "BRD-K56957086-001-06-3")
+# Get the coordinates for the legend
+legend_x <- 9.11  # Adjust the value as needed
+legend_y <- 0.5
+# Add a legend
+legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+cor(vector, vectors)
+```
+
+```{r}
 # Set up a color palette
 library(RColorBrewer)
 colors <- brewer.pal(8, "Set1")
-
+regression_model4 <- lm(vector51 ~ vector50)
 # Plot the scatter plot with enhanced features
 plot(vector50, vector51, type = "p", pch = 16, col = colors[1], 
      xlab = "B-cell Domain Receptor (BCR) Expression Level", 
@@ -2004,7 +2196,7 @@ plot(vector50, vector51, type = "p", pch = 16, col = colors[1],
 grid(lty = 2, col = "gray")
 
 # Add the linear regression line
-abline(regression_model, col = "red")
+abline(regression_model4, col = "red")
 
 # Customize point colors and sizes
 points(vector50, vector51, pch = 16, col = colors[1], cex = 1.5)
@@ -2029,6 +2221,176 @@ ggplot(data, aes(x = KDR, y = HTS002)) +
        y = "BRD-K35329391-334-01-7::10::HTS002",
        title = "Scatter Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002") +
   theme_minimal()
+summary(regression_model4)
+
+# Set up a color palette
+library(RColorBrewer)
+colors <- brewer.pal(8, "Set1")
+regression_model4 <- lm(vector111 ~ vector110)
+# Plot the scatter plot with enhanced features
+plot(vector110, vector111, type = "p", pch = 16, col = colors[1], 
+     xlab = "B-cell Domain Receptor (BCR) Expression Level", 
+     ylab = "BRD-K35329391-334-01-7::10::HTS002", 
+     main = "Scatter Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002",
+     xlim = c(min(vector110), max(vector110)), 
+     ylim = c(min(vector111), max(vector111)),
+     xaxt = "n", yaxt = "n", bty = "n", frame.plot = FALSE)
+
+# Add grid lines
+grid(lty = 2, col = "gray")
+
+# Add the linear regression line
+abline(regression_model4, col = "red")
+
+# Customize point colors and sizes
+points(vector110, vector111, pch = 16, col = colors[1], cex = 1.5)
+
+# Add a legend
+legend("bottomright", legend = "Group A", pch = 16, col = colors[1], bty = "n")
+
+# Adjust margins and plot dimensions
+par(mar = c(5, 5, 4, 4) + 0.1)
+
+library(ggplot2)
+
+# Create a data frame with the variables
+data <- data.frame(KDR = vector110, 
+                   HTS002 = vector111)
+
+# Create the scatter plot using ggplot2
+ggplot(data, aes(x = KDR, y = HTS002)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(x = "B-cell Domain Receptor (BCR) Expression Level", 
+       y = "BRD-K35329391-334-01-7::10::HTS002",
+       title = "Scatter Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002") +
+  theme_minimal()
+summary(regression_model4)
+```
+
+```{r}
+# Set up a color palette
+library(RColorBrewer)
+colors <- brewer.pal(8, "Set1")
+regression_model3 <- lm(vector201 ~ vector200)
+# Plot the scatter plot with enhanced features
+plot(vector200, vector201, type = "p", pch = 16, col = colors[1], 
+     xlab = "HDAC1 Expression Level", 
+     ylab = "BRD-K56957086-001-06-3::10::HTS002", 
+     main = "Scatter Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002",
+     xlim = c(min(vector200), max(vector200)), 
+     ylim = c(min(vector201), max(vector201)),
+     xaxt = "n", yaxt = "n", bty = "n", frame.plot = FALSE)
+
+# Add grid lines
+grid(lty = 2, col = "gray")
+
+# Add the linear regression line
+abline(regression_model3, col = "red")
+
+# Customize point colors and sizes
+points(vector200, vector201, pch = 16, col = colors[1], cex = 1.5)
+
+# Add a legend
+legend("bottomright", legend = "Group A", pch = 16, col = colors[1], bty = "n")
+
+# Adjust margins and plot dimensions
+par(mar = c(5, 5, 4, 4) + 0.1)
+
+library(ggplot2)
+
+# Create a data frame with the variables
+data <- data.frame(KDR = vector200, 
+                   HTS002 = vector201)
+
+# Create the scatter plot using ggplot2
+ggplot(data, aes(x = KDR, y = HTS002)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(x = "HDAC1 Expression Level", 
+       y = "BRD-K56957086-001-06-3::10::HTS002",
+       title = "Scatter Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002") +
+  theme_minimal()
+summary(regression_model3)
+# Set up a color palette
+library(RColorBrewer)
+colors <- brewer.pal(8, "Set1")
+regression_model4 <- lm(vector331 ~ vector330)
+# Plot the scatter plot with enhanced features
+plot(vector330, vector331, type = "p", pch = 16, col = colors[1], 
+     xlab = "HDAC1 Expression Level", 
+     ylab = "BRD-K56957086-001-06-3::10::HTS002", 
+     main = "Scatter Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002",
+     xlim = c(min(vector330), max(vector330)), 
+     ylim = c(min(vector331), max(vector331)),
+     xaxt = "n", yaxt = "n", bty = "n", frame.plot = FALSE)
+
+# Add grid lines
+grid(lty = 2, col = "gray")
+
+# Add the linear regression line
+abline(regression_model4, col = "red")
+
+# Customize point colors and sizes
+points(vector330, vector331, pch = 16, col = colors[1], cex = 1.5)
+
+# Add a legend
+legend("bottomright", legend = "Group A", pch = 16, col = colors[1], bty = "n")
+
+# Adjust margins and plot dimensions
+par(mar = c(5, 5, 4, 4) + 0.1)
+
+library(ggplot2)
+
+# Create a data frame with the variables
+data <- data.frame(KDR = vector330, 
+                   HTS002 = vector331)
+
+# Create the scatter plot using ggplot2
+ggplot(data, aes(x = KDR, y = HTS002)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(x = "HDAC1 Expression Level", 
+       y = "BRD-K56957086-001-06-3::10::HTS002",
+       title = "Scatter Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002") +
+  theme_minimal()
+summary(regression_model4)
+```
+
+```{r}
+# Calculate the correlation between the limited vectors
+limited_correlation <- cor(vector50, vector51)
+
+# Specify the threshold for correlation change
+threshold <- 0.15 # Adjust the threshold as needed
+
+# Initialize an empty vector to store selected elements
+selected_elements <- numeric(0)
+
+# Iterate over the elements of the larger vector90
+for (i in 1:length(vector100)) {
+  modified_vector50 <- c(vector50, vector100[i])
+  modified_vector51 <- c(vector51, vector101[i])
+  modified_correlation <- cor(modified_vector50, modified_vector51)
+  correlation_change <- abs(modified_correlation - limited_correlation)
+  
+  # Check if the correlation change is below the threshold
+  if (correlation_change <= threshold) {
+    selected_elements <- c(selected_elements, i)
+  } else {
+    break  # Exit the loop if correlation change exceeds the threshold
+  }
+}
+
+# Add the selected elements to the limited vectors
+updated_vector50 <- c(vector50, vector100[selected_elements])
+updated_vector51 <- c(vector51, vector101[selected_elements])
+```
+
+```{r}
+plot(updated_vector50,updated_vector51, type = "p", pch = 16, col = "blue",
+     xlab = "BCR", ylab = "BRD-K35329391-334-01-7::10::HTS002", main = "Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002")
+cor(updated_vector50,updated_vector51)
 ```
 
 ```{r}
@@ -2058,9 +2420,9 @@ vectors <- cbind(vector1, vector2, vector3, vector4, vector5,vector6, vector7, v
 par(mar = c(5, 5, 4, 7))
 # Plot the vectors
 matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
-        xlab = "BCR", ylab = "BRD-K35329391-334-01-7")
+        xlab = "CNVs of BCR", ylab = "BRD-K35329391-334-01-7")
 # Get the coordinates for the legend
-legend_x <- 1.11  # Adjust the value as needed
+legend_x <- 1.31  # Adjust the value as needed
 legend_y <- 0.5
 # Add a legend
 legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
@@ -2107,52 +2469,42 @@ print(correlations)
 ```
 
 ```{r}
+
+#Scatter plot of all the concentrations of drug prism_gastric BRD-K84564571-001-02-4 and prism.cnv_gastric gene expression of KDR
+# Select a column by its name and store it in a vector
+column_name <- "BCR"
+vector <- new_prism.exp.gaaa[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K35329391-334-01-7::0.00061034::HTS002"
+vector1 <- new_prismgaaa[[column_name0]]
+column_name1 <- "BRD-K35329391-334-01-7::0.0024414::HTS002"
+vector2 <- new_prismgaaa[[column_name1]]
+column_name2 <- "BRD-K35329391-334-01-7::0.00976562::HTS002"
+vector3 <- new_prismgaaa[[column_name2]]
+column_name3<- "BRD-K35329391-334-01-7::0.0390625::HTS002"
+vector4 <- new_prismgaaa[[column_name3]]
+column_name4 <- "BRD-K35329391-334-01-7::0.15625::HTS002"
+vector5 <- new_prismgaaa[[column_name4]]
+column_name5 <- "BRD-K35329391-334-01-7::0.625::HTS002"
+vector6 <- new_prismgaaa[[column_name5]]
+column_name6 <- "BRD-K35329391-334-01-7::2.5::HTS002"
+vector7 <- new_prismgaaa[[column_name6]]
+column_name7 <- "BRD-K35329391-334-01-7::10::HTS002"
+vector8<- new_prismgaaa[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector1, vector2, vector3, vector4, vector5,vector6, vector7, vector8)
 par(mar = c(5, 5, 4, 7))
-
 # Plot the vectors
-matplot(vector, vectors, type = "p", pch = 16,
-        col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
-        xlab = "BCR", ylab = "BRD-K35329391-334-01-7",
-        main = "Plot of BCR vs BRD-K35329391-334-01-7")
-
-# Increase font size
-cex.axis <- 1.2
-cex.lab <- 1.4
-cex.main <- 1.6
-
-# Add axis labels and adjust font size
-x_axis_label <- "BCR"
-y_axis_label <- "BRD-K35329391-334-01-7"
-xlab(x_axis_label)
-ylab(y_axis_label)
-
-# Add a title and adjust font size
-plot_title <- "Correlation of Vectors"
-title(main = plot_title, cex.main = cex.main)
-
+matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+        xlab = "TPM values of BCR", ylab = "BRD-K35329391-334-01-7")
 # Get the coordinates for the legend
-legend_x <- max(vector) + 0.1
-legend_y <- max(vectors) - 0.2
-
+legend_x <- 5.6  # Adjust the value as needed
+legend_y <- 0.5
 # Add a legend
 legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
-       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16, cex = cex.axis,
-       xpd = TRUE, bty = "n")
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+cor(vector, vectors)
 
-# Perform linear regression for each pair of vectors
-regression_models <- lapply(1:ncol(vectors), function(i) {
-  regression_model <- lm(vectors[, i] ~ vector)
-  return(regression_model)
-})
-
-# Display the regression results
-for (i in 1:length(regression_models)) {
-  model <- regression_models[[i]]
-  vector_name <- colnames(vectors)[i]
-  cat("Linear Regression for", vector_name, ":\n")
-  print(summary(model))
-  cat("\n")
-}
 ```
 
 ```{r}
@@ -2181,13 +2533,13 @@ cor(concentrations, correlations)
 ```{r}
 # Select a column by its name and store it in a vector
 column_name <- "BCR"
-vector100 <- prism.cnv[[column_name]]
+vector110 <- prism.cnv[[column_name]]
 # Select a column by its name and store it in a vector
 column_name <- "BRD-K35329391-334-01-7::10::HTS002"
-vector101 <- new_df[[column_name]]
-plot(vector100, vector101, type = "p", pch = 16, col = "blue",
+vector111 <- new_df[[column_name]]
+plot(vector110, vector111, type = "p", pch = 16, col = "blue",
      xlab = "BCR", ylab = "BRD-K35329391-334-01-7::10::HTS002", main = "Plot of BCR vs BRD-K35329391-334-01-7::10::HTS002")
-cor(vector100,vector101)
+cor(vector110,vector111)
 
 # Select a column by its name and store it in a vector
 column_name <- "JAK2"
@@ -2198,6 +2550,15 @@ vector101 <- new_df[[column_name]]
 plot(vector100, vector101, type = "p", pch = 16, col = "blue",
      xlab = "JAK2", ylab = "BRD-K12502280-001-08-0::10::HTS002", main = "Plot of JAK2 vs BRD-K12502280-001-08-0::10::HTS002")
 cor(vector100,vector101)
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector330 <- prism.cnv[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K56957086-001-06-3::10::HTS002"
+vector331 <- new_df[[column_name]]
+plot(vector330, vector331, type = "p", pch = 16, col = "blue",
+     xlab = "HDAC1", ylab = "BRD-K56957086-001-06-3::10::HTS002", main = "Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002")
+cor(vector330,vector331)
 
 # Select a column by its name and store it in a vector
 column_name <- "RPL10L"
