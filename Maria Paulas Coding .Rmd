@@ -4,61 +4,6 @@ output: html_document
 date: "2023-05-29"
 ---
 
-# **Dataframe gastric Cancer: Prism**
-
-**Step1:** Filter Gastric cancer cell lines from Prism.cl into new dataframe called gastric.cancer.celllines
-
-```{r}
-
-gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
-
-View(gastric.cancer.celllines)
-
-
-```
-
-**Step2:** Creating a vector including the DepMap ID from the gastric cancer cell lines as elements of the vector
-
-```{r}
-gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
-
-View(gastric.cancer.celllines.v)
-
-```
-
-**Step3:** Creating a new dataframe by extracting just the gastric cancer cell lines shown in the vector created in step 2
-
-```{r}
-prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
-View (prism_gastric)
-
-
-
-```
-
-```{r}
-sum (is.na (prism_gastric)) 
-```
-
-Removing treatments with NA-values to clean the created data frame
-
-```{r}
-prism_gastric_cleaned_treatments <- prism_gastric[, colSums(is.na(prism_gastric)) == 0]
-View (prism_gastric_cleaned_treatments)
-
-```
-
-```{r}
-pheatmap(prism_gastric_cleaned_treatments)
-```
-
-
-
-
-
-
-
-
 # MY AIM: The overall objective is to investigate whether there's a relationship between genetic variations in different cancer cell lines and their response to various treatments.
 
 ```{r}
@@ -206,7 +151,6 @@ barplot(fold_changes_gastric_df$fold_change, names.arg = fold_changes_gastric_df
 
 
 
-
 # Fold changes analysis between non-Oncology gastric Treatments Relative to Oncology gastric Treatments
 ```{r}
 # Filter for oncology treatments related to gastric or gastrointestinal cancer
@@ -227,11 +171,8 @@ gastric_oncology_responses <- as.data.frame(lapply(gastric_oncology_responses, f
 avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses)
 
 
-
-# Matches "gastroenterology" in the "disease.area" column
-contains_gastroenterology <- grepl("gastroenterology", prism.treat$disease.area, ignore.case = TRUE)
-
-gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & (contains_gastroenterology | !contains_oncology), ]
+# Filter for non-oncology treatments related to gastric or gastrointestinal cancer
+gastric_non_oncology_treatments <- prism.treat[contains_gastric_or_gastrointestinal & !contains_oncology, ]
 
 # Extract treatment IDs for gastric/gastrointestinal non-oncology treatments
 gastric_non_oncology_treatment_ids <- rownames(gastric_non_oncology_treatments) # Fixed this line
@@ -299,262 +240,6 @@ ggplot(fold_changes_gastric_df, aes(x = reorder(cell_line, -fold_change), y = fo
 ```
 
 
-```{r}
-
-cell_line_to_investigate <- "ACH-000427"
-
-# Assuming the cell line names are in the row names of your data frame
-cell_line_row <- prism_gastric_cleaned_treatments[cell_line_to_investigate, ]
-
-# Now, 'cell_line_row' is a named vector where the names are the treatments
-# and the values are the responses
-
-# Convert the data frame row to a numeric vector
-cell_line_values <- as.numeric(cell_line_row)
-
-# Assign treatment names to the numeric vector
-names(cell_line_values) <- colnames(cell_line_row)
-
-# Filter the treatments based on the response
-cell_line_values_filtered <- cell_line_values[cell_line_values <= -6]
-
-# Create a bar plot with the filtered data
-barplot(cell_line_values_filtered, 
-        main = paste("Treatment responses for", cell_line_to_investigate), 
-        xlab = "Treatment", 
-        ylab = "Response", 
-        las = 2,   # makes the x-axis labels vertical
-        cex.names = 0.5, # reduces the size of the x-axis labels
-        col = "turquoise") # changes the color of the bars to turquoise
-
-
-
-```
-
-
-```{r}
-
-# Create a plotly object
-p <- plot_ly(df, x = ~treatment, y = ~response, type = 'bar', 
-             marker = list(color = 'turquoise')) %>%
-    layout(title = paste("Treatment responses for", cell_line_to_investigate),
-           xaxis = list(title = "Treatment"),
-           yaxis = list(title = "Response"))
-
-# Print the plot
-print(p)
-
-```
-
-
-
-
-
-
-
-```{r}
-# Other treatments you have
-other_treatments <- c("BRD-A28467416-002-01-0::10::HTS002",
-"BRD-A28970875-300-04-9::10::HTS002",
-"BRD-A66419424-001-02-4::10::HTS002",
-"BRD-A66419424-001-02-4::2.5::HTS002",
-"BRD-A68969091-001-12-7::10.2913::HTS002",
-"BRD-K00535541-001-06-3::10::HTS002",
-"BRD-K01683783-001-02-6::10::HTS002",
-"BRD-K06426971-001-02-7::10::HTS002",
-"BRD-K07955840-001-02-3::10::HTS002",
-"BRD-K07955840-001-02-3::2.5::HTS002",
-"BRD-K08109215-001-06-4::10::HTS002",
-"BRD-K08542803-001-03-1::3.18091::HTS002",
-"BRD-K08799216-001-05-3::10::HTS002",
-"BRD-K09443272-001-03-3::10::HTS002",
-"BRD-K12502280-001-08-0::10::HTS002",
-"BRD-K12787259-001-04-3::10::HTS002",
-"BRD-K12867552-001-04-7::10::HTS002",
-"BRD-K13167095-001-02-9::10::HTS002",
-"BRD-K13662825-001-07-5::10::HTS002",
-"BRD-K13810148-311-03-2::10::HTS002",
-"BRD-K17203476-001-01-9::10::HTS002",
-"BRD-K17705806-003-04-4::10::HTS002",
-"BRD-K17743125-001-08-4::10::HTS002",
-"BRD-K19034817-001-01-4::10::HTS002",
-"BRD-K20605374-001-05-4::10::HTS002",
-"BRD-K21361524-001-01-1::10::HTS002",
-"BRD-K23190681-001-01-1::10::HTS002",
-"BRD-K31866293-001-01-6::10::HTS002",
-"BRD-K32501161-300-06-2::10::HTS002",
-"BRD-K35329391-334-01-7::10::HTS002",
-"BRD-K36529613-001-02-6::10::HTS002",
-"BRD-K39484304-001-16-5::10::HTS002",
-"BRD-K39484304-001-16-5::2.5::HTS002",
-"BRD-K44227013-001-06-4::10::HTS002",
-"BRD-K51791723-003-01-7::10::HTS002",
-"BRD-K51911221-001-01-2::10::HTS002",
-"BRD-K51911221-001-01-2::2.5::HTS002",
-"BRD-K53417444-003-03-1::10::HTS002",
-"BRD-K53561341-001-07-5::10::HTS002",
-"BRD-K54395039-001-01-7::10::HTS002",
-"BRD-K56957086-001-06-3::10::HTS002",
-"BRD-K56957086-001-06-3::2.5::HTS002",
-"BRD-K57169635-001-04-5::10::HTS002",
-"BRD-K60446698-001-01-2::0.625::HTS002",
-"BRD-K60446698-001-01-2::10::HTS002",
-"BRD-K60446698-001-01-2::2.5::HTS002",
-"BRD-K61397605-001-03-4::10::HTS002",
-"BRD-K61397605-001-03-4::2.5::HTS002",
-"BRD-K64881305-001-03-7::10::HTS002",
-"BRD-K68532323-003-02-8::10::HTS002",
-"BRD-K71467466-001-02-3::10::HTS002",
-"BRD-K72951360-001-01-4::10::HTS002",
-"BRD-K73982490-001-02-9::10::HTS002",
-"BRD-K77841042-001-14-1::10::HTS002",
-"BRD-K77841042-001-14-1::2.5::HTS002",
-"BRD-K78055238-001-01-8::10::HTS002",
-"BRD-K78567475-001-01-4::10::HTS002",
-"BRD-K78659596-001-03-9::10::HTS002",
-"BRD-K78659596-001-03-9::2.5::HTS002",
-"BRD-K83988098-003-03-4::10::HTS002",
-"BRD-K86525559-001-07-8::10.0868::HTS002",
-"BRD-K87124298-001-03-4::10::HTS002",
-"BRD-K90497590-001-04-2::10::HTS002",
-"BRD-K94485812-001-02-9::10.2094::HTS002",
-"BRD-K96104201-001-01-5::10::HTS002",
-"BRD-K99475619-001-01-2::10::HTS002") # replace with your actual treatments
-
-# Find common treatments
-common_treatments <- intersect(names(cell_line_values_filtered), other_treatments)
-
-print(common_treatments)
-
-
-
-```
-
-
-
-
-
-```{r}
-hdac_treatments<- c("BRD-K12867552-001-04-7::10::HTS002", "BRD-K13167095-001-02-9::10::HTS002", "BRD-K13810148-311-03-2::10::HTS002", "BRD-K17743125-001-08-4::10::HTS002", "BRD-K56957086-001-06-3::2.5::HTS002", "BRD-K56957086-001-06-3::10::HTS002", "BRD-K61397605-001-03-4::2.5::HTS002", "BRD-K61397605-001-03-4::10::HTS002")
-
-# Find common treatments
-common_treatments_hdac <- intersect(names(cell_line_values_filtered), hdac_treatments)
-
-print(common_treatments_hdac)
-
-
-
-```
-
-
-
-
-```{r}
-# Convert the named vector to a data frame
-cell_line_df <- data.frame(treatment = names(cell_line_values_filtered),
-                           response = as.numeric(cell_line_values_filtered))
-
-# Define the treatments of interest
-treatments_of_interest <- c("BRD-K12867552-001-04-7::10::HTS002",  
-                            "BRD-K13167095-001-02-9::10::HTS002", 
-                            "BRD-K13810148-311-03-2::10::HTS002",  
-                            "BRD-K56957086-001-06-3::10::HTS002",
-                            "BRD-K56957086-001-06-3::2.5::HTS002",
-                            "BRD-K61397605-001-03-4::10::HTS002")
-
-# Add a new column to distinguish between the treatments of interest and the rest
-cell_line_df$group <- ifelse(cell_line_df$treatment %in% treatments_of_interest, 
-                             "Treatments of Interest", "Rest of Treatments")
-
-# Now, create a boxplot to compare the distribution of responses
-library(ggplot2)
-ggplot(cell_line_df, aes(x = group, y = response)) +
-  geom_boxplot(fill = "turquoise" ) +
-  labs(x = "Group", y = "Response", 
-       title = "Comparison of Responses: Treatments of Interest vs. Rest") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-
-```
-
-
-
-
-```{r}
-cell_line_919 <- "ACH-000919"
-
-# Assuming the cell line names are in the row names of your data frame
-cell_line_row_919 <- prism_gastric_cleaned_treatments[cell_line_919, ]
-
-# Now, 'cell_line_row_919' is a named vector where the names are the treatments
-# and the values are the responses
-
-# Convert the data frame row to a numeric vector
-cell_line_values_919 <- as.numeric(cell_line_row_919)
-
-# Assign treatment names to the numeric vector
-names(cell_line_values_919) <- colnames(cell_line_row_919)
-
-# Filter the treatments based on the response
-cell_line_values_filtered_919 <- cell_line_values_919[cell_line_values_919 <= -7]
-
-# Create a bar plot with the filtered data
-barplot(cell_line_values_filtered_919, 
-        main = paste("Treatment responses for", cell_line_919 ), 
-        xlab = "Treatment", 
-        ylab = "Response", 
-        las = 2,   # makes the x-axis labels vertical
-        cex.names = 0.5, # reduces the size of the x-axis labels
-        col = "magenta") # changes the color of the bars to turquoise
-
-
-# Find common treatments
-common_treatments_919 <- intersect(names(cell_line_values_filtered_919), other_treatments)
-
-print(common_treatments_919)
-
-
-
-# Find common treatments
-common_treatments_hdac_919 <- intersect(names(cell_line_values_filtered_919), hdac_treatments)
-
-print(common_treatments_hdac_919)
-
-
-# Convert the named vector to a data frame
-cell_line_df_919 <- data.frame(treatment = names(cell_line_values_filtered_919),
-                           response = as.numeric(cell_line_values_filtered_919))
-
-# Define the treatments of interest
-treatments_of_interest <- c("BRD-K12867552-001-04-7::10::HTS002",  
-                            "BRD-K13167095-001-02-9::10::HTS002", 
-                            "BRD-K13810148-311-03-2::10::HTS002",  
-                            "BRD-K56957086-001-06-3::10::HTS002",
-                            "BRD-K56957086-001-06-3::2.5::HTS002",
-                            "BRD-K61397605-001-03-4::10::HTS002")
-
-# Add a new column to distinguish between the treatments of interest and the rest
-cell_line_df_919$group <- ifelse(cell_line_df_919$treatment %in% treatments_of_interest, 
-                             "Treatments of Interest", "Rest of Treatments")
-
-# Now, create a boxplot to compare the distribution of responses
-library(ggplot2)
-ggplot(cell_line_df_919, aes(x = group, y = response)) +
-  geom_boxplot(fill = "magenta") +
-  labs(x = "Group", y = "Response", 
-       title = "Comparison of Responses: Treatments of Interest vs. Rest") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-```
-
-
-
-
-
-
-Check normality 
 
 
 
@@ -572,9 +257,6 @@ print(shapiro_test_non_oncology_gastric)
 #For avg_response_oncology_gastric, the p-value is 0.9127, which is greater than 0.05. This indicates that the data does not significantly deviate from a normal distribution.
 
 # For avg_response_non_oncology_gastric, the p-value is 0.06901, which is greater than 0.05. -> normally distributed
-
-
-
 
 
 ```{r}
@@ -619,39 +301,6 @@ print(t_test_result)
 # This result suggests that there is a statistically significant difference in the responses of cell lines to non-oncology gastric treatments compared to oncology gastric treatments, as measured by the fold changes. P value < 0,05
 
 
-```{r}
-t.test(avg_response_oncology_gastric, avg_response_non_oncology_gastric, alternative = "less")
-
-```
-# The result of your one-sided t-test indicates that there's a significant difference in the means of your two groups (oncology and non-oncology gastric treatments). The t-value is -2.9536 and the p-value is 0.00337, which is less than 0.05, the common threshold for statistical significance. This means that you can reject the null hypothesis that the mean response of oncology treatments is equal to or greater than the mean response of non-oncology treatments.
-
-# The negative t-value suggests that the mean response of oncology treatments is less than the mean response of non-oncology treatments. Furthermore, the 95% confidence interval for the difference in means does not contain zero and is negative, providing additional evidence for this conclusion.
-
-
-
-
-
-```{r}
-# Convert average responses to data frames
-avg_response_oncology_gastric_df <- data.frame(response = avg_response_oncology_gastric, group = "Oncology")
-avg_response_non_oncology_gastric_df <- data.frame(response = avg_response_non_oncology_gastric, group = "Non-Oncology")
-
-# Combine the two data frames
-all_avg_responses <- rbind(avg_response_oncology_gastric_df, avg_response_non_oncology_gastric_df)
-
-# Create boxplot
-ggplot(all_avg_responses, aes(x = group, y = response, fill = group)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Comparison of Average Oncology and Non-Oncology Gastric Treatment Responses",
-       x = "Group",
-       y = "Average Response",
-       fill = "Group") +
-  guides(fill=FALSE)  # This removes the legend
-
-```
-
-
 
 
 ```{r}
@@ -683,7 +332,6 @@ gastric_oncology_responses_imputed <- as.data.frame(lapply(gastric_oncology_resp
 avg_response_oncology_gastric <- rowMeans(gastric_oncology_responses_imputed, na.rm = TRUE)
 
 #Repeat steps 2 and 3 for non-oncology treatments
-
 non_oncology_treatments <- prism.treat[!contains_oncology, ]
 non_oncology_treatment_ids <- rownames(non_oncology_treatments)
 non_oncology_responses <- prism_gastric[, colnames(prism_gastric) %in% non_oncology_treatment_ids]
@@ -716,79 +364,17 @@ ggplot(fold_changes_df, aes(x = cell_line, y = fold_change, fill = cell_line)) +
 
 
 ```{r}
-cell_line_674 <- "ACH-000674"
+# Add a new column to indicate if the treatment is oncology or non-oncology
+fold_changes_df$type <- ifelse(fold_changes_df$cell_line %in% gastric_oncology_treatment_ids, "Oncology", "Non-Oncology")
 
-# Assuming the cell line names are in the row names of your data frame
-cell_line_row_674 <- prism_gastric_cleaned_treatments[cell_line_674, ]
-
-# Now, 'cell_line_row_674' is a named vector where the names are the treatments
-# and the values are the responses
-
-# Convert the data frame row to a numeric vector
-cell_line_values_674 <- as.numeric(cell_line_row_674)
-
-# Assign treatment names to the numeric vector
-names(cell_line_values_674) <- colnames(cell_line_row_674)
-
-
-
-# Filter the treatments based on the response
-cell_line_values_filtered_674 <- cell_line_values_674[cell_line_values_674 <= -7]
-
-# Create a bar plot with the filtered data
-barplot(cell_line_values_filtered_674, 
-        main = paste("Treatment responses for", cell_line_674 ), 
-        xlab = "Treatment", 
-        ylab = "Response", 
-        las = 2,   # makes the x-axis labels vertical
-        cex.names = 0.5, # reduces the size of the x-axis labels
-        col = "lightpink") # changes the color of the bars to turquoise
-
-
-# Find common treatments
-common_treatments_674 <- intersect(names(cell_line_values_filtered_674), other_treatments)
-
-print(common_treatments_674)
-
-
-
-# Find common treatments
-common_treatments_hdac_674 <- intersect(names(cell_line_values_filtered_674), hdac_treatments)
-
-print(common_treatments_hdac_674)
-
-
-# Convert the named vector to a data frame
-cell_line_df_674 <- data.frame(treatment = names(cell_line_values_filtered_674),
-                           response = as.numeric(cell_line_values_filtered_674))
-
-# Define the treatments of interest
-treatments_of_interest_674 <- c("BRD-K61397605-001-03-4::10::HTS002",  
-                            "BRD-K61397605-001-03-4::2.5::HTS002")
-
-# Add a new column to distinguish between the treatments of interest and the rest
-cell_line_df_674$group <- ifelse(cell_line_df_674$treatment %in% treatments_of_interest_674, 
-                             "Treatments of Interest", "Rest of Treatments")
-
-# Now, create a boxplot to compare the distribution of responses
-library(ggplot2)
-ggplot(cell_line_df_674, aes(x = group, y = response)) +
-  geom_boxplot(fill = "lightpink") +
-  labs(x = "Group", y = "Response", 
-       title = "Comparison of Responses: Treatments of Interest vs. Rest") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
+# Create the violin plot
+ggplot(fold_changes_df, aes(x = type, y = fold_change, fill = type)) +
+  geom_violin(scale = "width", trim = FALSE) +
+  geom_boxplot(width = 0.1, fill = "white") +
+  labs(x = "cell line", y = "Fold Change", title = "Distribution of Fold Changes by Treatment Type") +
+  theme_minimal()
 
 ```
-
-
-
-
-
-
-
-
-
 
 
 ```{r}
@@ -870,34 +456,6 @@ print(t_test_result_2)
 
 # P value is shorter than 0,05 -> diference is significant 
 
-```{r}
-# Perform a one-sided t-test
-t_test_result_2_onesided <- t.test(avg_response_oncology_gastric, avg_response_non_oncology, alternative = "less")
-
-# Print the result
-print(t_test_result_2_onesided)
-
-```
-```{r}
-# Combine the oncology and non-oncology responses into one data frame
-combined_responses <- data.frame(
-  Treatment = c(rep("Oncology", length(avg_response_oncology_gastric)), 
-                rep("Non-Oncology", length(avg_response_non_oncology))),
-  Response = c(avg_response_oncology_gastric, avg_response_non_oncology)
-)
-
-# Load the necessary library
-library(ggplot2)
-
-# Create the boxplot
-ggplot(combined_responses, aes(x = Treatment, y = Response)) +
-  geom_boxplot() +
-  labs(x = "Treatment Type", y = "Response", title = "Response by Treatment Type")
-
-```
-
-
-
 
 ```{r}
 # Perform the Mann-Whitney U Test
@@ -908,7 +466,6 @@ print(mann_whitney_test_result_2)
 
 ```
 # P value is shorter than 0,05 -> diference is significant 
-
 
 
 
@@ -946,7 +503,7 @@ library(ggplot2)
 
 # Using ggplot2
 ggplot(fold_changes_df_general, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
-  geom_bar(stat = "identity", fill = "purple") +
+  geom_bar(stat = "identity", fill = "yellow") +
   theme_minimal() +
   theme(axis.text.x = element_blank()) + # This hides the x-axis labels
   labs(title = "Fold Changes Non-Oncology Treatments Relative to Oncology Treatments",
@@ -994,37 +551,6 @@ print(t_test_result_3 )
 
 # P value is shorter than 0,05 -> diference is significant 
 
-```{r}
-# Perform a one-sided t-test
-t_test_result_general_onesided <- t.test(avg_response_oncology, avg_response_non_oncology, alternative = "less")
-
-# Print the result
-print(t_test_result_general_onesided)
-
-```
-
-```{r}
-# Combine the data into a single dataframe
-combined_data <- data.frame(
-  group = c(rep("Oncology", length(avg_response_oncology)), rep("Non-Oncology", length(avg_response_non_oncology))),
-  response = c(avg_response_oncology, avg_response_non_oncology)
-)
-
-# Load the necessary library
-library(ggplot2)
-
-# Create the boxplot
-ggplot(combined_data, aes(x = group, y = response, fill = group)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Boxplot of Average Responses: Oncology vs Non-Oncology",
-       x = "Group",
-       y = "Average Response") 
-
-```
-
-
-
 
 ```{r}
 # Perform the Mann-Whitney U Test
@@ -1034,40 +560,6 @@ mann_whitney_test_result_3 <- wilcox.test(avg_response_oncology, avg_response_no
 print(mann_whitney_test_result_3)
 
 ```
-
-
-```{r}
-# Load the necessary library
-library(ggplot2)
-
-# Histograms
-# For avg_response_oncology
-ggplot(data=NULL, aes(x=avg_response_oncology)) +
-  geom_histogram(bins = 30, color="black", fill="lightpink") +
-  labs(title="Histogram for avg_response_oncology", x="Values", y="Frequency")
-
-# For avg_response_non_oncology
-ggplot(data=NULL, aes(x=avg_response_non_oncology)) +
-  geom_histogram(bins = 30, color="black", fill="lightyellow") +
-  labs(title="Histogram for avg_response_non_oncology", x="Values", y="Frequency")
-
-# Q-Q plots
-# For avg_response_oncology_gastric
-qqnorm(avg_response_oncology, main = "Q-Q Plot for avg_response_oncology")
-qqline(avg_response_oncology, col = "red", lwd = 2)
-
-# For avg_response_non_oncology
-qqnorm(avg_response_non_oncology, main = "Q-Q Plot for avg_response_non_oncology")
-qqline(avg_response_non_oncology, col = "red", lwd = 2)
-
-```
-
-
-
-
-
-
-
 
 
 
@@ -1149,262 +641,6 @@ print(paste("Lowest value in prism.exp:", min_value))
 
 
 
-```{r}
-# Calculate the 95th percentile of the expression data
-high_expression_threshold <- quantile(prism.exp_gastric, 0.9997, na.rm = TRUE)
-
-# Filter the data to include only genes with at least one expression level above this threshold
-highly_expressed_genes <- prism.exp_gastric[, apply(prism.exp_gastric, 2, function(col) any(col > high_expression_threshold, na.rm = TRUE))]
-
-# Generate the heatmap
-pheatmap(highly_expressed_genes)
-
-```
-
-
-
-
-
-
-```{r}
-# Assuming you have a dataframe 'prism.treat' with a column 'genes'
-# And your overexpressed genes are in a list 'overe.genes'
-
-# Filter the treatments dataset for those that target the overexpressed genes
-targeted_treatments <- prism.treat[prism.treat$genes %in% highly_expressed_genes,]
-
-# Get the treatment IDs
-targeted_treatment_ids <- rownames(targeted_treatments)
-
-# Get the responses for these treatments
-targeted_treatment_responses <- prism[, colnames(prism) %in% targeted_treatment_ids]
-
-# Compute the average response for each cell line
-avg_targeted_treatment_responses <- rowMeans(targeted_treatment_responses, na.rm = TRUE)
-
-# Print the result
-print(avg_targeted_treatment_responses)
-
-```
-
-
-
-
-
-
-```{r}
-tthreshold <- 10
-overe.genes_exp <- prism.exp_gastric[, apply(prism.exp_gastric, 2, function(col) any(col > tthreshold))]
-pheatmap(overe.genes_exp)
-
-```
-
-
-```{r}
-#genes.snv_v is a vector holding all the Hugo_symbols of the damaging gene mutations found in gastric cancer celllines
-## now this vector is going to be used to select these genes from all the genes in the dataframe prism.exp, prism.cnv and prism.achilles because these are probably correlated to the drug response 
-
-genes.snv_v <- prism.snv_gastric$Hugo_Symbol
-
-
-r.prism.exp_g <- prism.exp_gastric[ ,colnames(prism.exp_gastric) %in% genes.snv_v]
-r.prism.cnv_g <- prism.cnv_gastric[ ,colnames(prism.cnv_gastric) %in% genes.snv_v]
-r.prism.achilles_g <- prism.achilles_gastric[ ,colnames(prism.achilles_gastric) %in% genes.snv_v]
-View (r.prism.achilles_g)
-
-```
-
-
-```{r} Plotting a drug response against a gene that is overexpressed in prism.exp_gastric:
-
-
-```{r}
-pheatmap(r.prism.exp_g)
-#heatmap shows that there are not many values bigger than ten-> very overexpressed genes in certain cellines -> these genes i wanna extract from the dataframe into a new one
-# Specify the threshold
-tthreshold <- 10
-
-# Extract columns that include values lower than the threshold
-overe.genes <- r.prism.exp_g[, apply(r.prism.exp_g, 2, function(col) any(col > tthreshold))]
-
-# Print the selected columns
-print(overe.genes)
-
-
-```
-
-Reduced dataframe:
-
-```{r}
-pheatmap(overe.genes)
-```
-
-
-
-```{r}
-pheatmap(r.prism.cnv_g)
-```
-
-
-```{r}
-pheatmap(r.prism.achilles_g)
-```
-
-
-
-```{r}
-selected_genes <- c("FN1", "TIMP1", "SPP1", "APOE", "VCAN")
-
-# Check if each selected gene is in the dataframe's column names
-genes_in_df <- selected_genes %in% colnames(prism.exp)
-
-# Print out the result
-print(genes_in_df)
-
-```
-
-
-
-```{r}
-# Create a vector of gene names
-selected_genes <- c("FN1", "TIMP1", "SPP1", "APOE", "VCAN")
-
-# Subset your dataframe to include only the selected genes
-selected_genes_df <- prism.exp[, selected_genes]
-
-# Create a heatmap
-pheatmap(selected_genes_df)
-
-```
-
-
-
-
-```{r}
-# Subset your data for selected genes and cell lines
-selected_data <- prism.exp[gastric.cancer.celllines.v, selected_genes]
-
-# Remove the first row from the selected_data data frame
-selected_data <- selected_data[-1, ]
-
-
-# Create the heatmap
-heatmap(as.matrix(selected_data), Rowv = NA, scale = "none", Colv = NA, col = heat.colors(256), margins = c(5,10), xlab = "Cell Lines", ylab = "Genes", main = "Heatmap of selected gene expression")
-
-
-```
-
-
-
-
-```{r}
-library(pheatmap)
-
-# Normalize the data by scaling the values between 0 and 1
-selected_data_normalized <- t(apply(selected_data, 1, function(x) (x - min(x)) / (max(x) - min(x))))
-selected_data_normalized[is.na(selected_data_normalized)] <- 0
-
-# Create the heatmap with pheatmap
-pheatmap(selected_data_normalized, scale = "none", clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", color = colorRampPalette(c("white", "blue", "yellow"))(50))
-
-```
-
-
-
-
-```{r}
-# Filter for treatments that target HIF1A
-hif1a_treatments <- prism.treat[grep("HIF1A", prism.treat$target, ignore.case = TRUE), ]
-
-# Print out the indications for these treatments
-print(hif1a_treatments$indication)
-
-# Assuming 'gastric.cancer.celllines.v' is a vector of your gastric cancer cell lines
-
-# Get the treatment IDs for the HIF1A treatments
-hif1a_treatment_ids <- rownames(hif1a_treatments)
-
-# Filter the prism data for these treatment IDs
-hif1a_responses_gastric <- prism_gastric[, colnames(prism) %in% hif1a_treatment_ids]
-
-# Print out the average response for each treatment
-print(colMeans(hif1a_responses_gastric, na.rm = TRUE))
-
-
-```
-
-
-```{r}
-# Calculate the average response for each treatment
-hif1a_responses_avg <- colMeans(hif1a_responses_gastric, na.rm = TRUE)
-
-# Convert to a data frame for plotting
-hif1a_responses_avg_df <- data.frame(Treatment = names(hif1a_responses_avg), AverageResponse = hif1a_responses_avg)
-
-# Order the data frame by average response
-hif1a_responses_avg_df <- hif1a_responses_avg_df[order(hif1a_responses_avg_df$AverageResponse, decreasing = TRUE), ]
-
-# Plot using ggplot2
-library(ggplot2)
-ggplot(hif1a_responses_avg_df, aes(x = reorder(Treatment, -AverageResponse), y = AverageResponse)) +
-  geom_bar(stat = "identity", fill = "pink") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-  labs(title = "Average Response of HIF1A Targeting Treatments in Gastric Cancer Cell Lines",
-       x = "Treatment",
-       y = "Average Response")
-
-```
-
-
-
-```{r}
-# Find treatments that target HIF1A
-HIF1A_treatments_df <- prism.treat[grep("HIF1A", prism.treat$target, ignore.case = TRUE), ]
-
-# Filter the response data to include only the gastric cell lines and HIF1A-targeting treatments
-HIF1A_responses <- prism_gastric[gastric.cancer.celllines.v, rownames(HIF1A_treatments_df)]
-
-
-# Generate the heatmap
-library(pheatmap)
-pheatmap(HIF1A_responses, color = colorRampPalette(c("blue", "white", "red"))(50), scale = "row", 
-         width = 20,  # Adjust as needed
-         height = 20,  # Adjust as needed
-         fontsize = 10,  # Adjust as needed
-         fontsize_row = 6,  # Adjust as needed
-         fontsize_col = 8  # Adjust as needed
-
-)
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-print(selected_genes %in% colnames(gastric_df))
-
-```
-
-
-
-```{r}
-print(gastric.cancer.celllines %in% rownames(prism.exp))
-
-```
-
-
-
 
 
 ```{r}
@@ -1418,17 +654,6 @@ Filtered_data.snv <- prism.snv[prism.snv$Hugo_Symbol %in% target_molecules, ]
 
 ```
 
-
-
 ```{r}
 str(prism.snv)
 ```
-
-
-
-
-
-
-
-
-

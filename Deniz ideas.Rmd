@@ -71,14 +71,11 @@ dim(prism_cleaned)
 View(prism_cleaned)
 ```
 
-```{r}
-data_matrix <- as.matrix(prism_cleaned)
-
-# Plot the heatmap
-heatmap(data_matrix, col = heat.colors(256))
-```
-
 Data visualization of prism_cleaned data frame, which include only the columns(drugs) that influence the cell growth of the cancer cell lines negatively
+
+```{r}
+heatmap(prism_cleaned)
+```
 
 # General data visualization of selected 5 cancer cell lines
 
@@ -207,10 +204,7 @@ sum(is.na(prism_celllines_matrix_filtered1))
 ```
 
 ```{r}
-data_matrix2 <- as.matrix(prism_celllines_matrix_filtered1)
-
-# Plot the heatmap
-heatmap(data_matrix, col = heat.colors(256))
+heatmap(prism_celllines_matrix_filtered1)
 ```
 
 # Data reduction: PCA
@@ -264,11 +258,6 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
-```{r}
-# Save the plot as an image
-ggsave("plot_image.png", width = 8, height = 6, dpi = 300)
-```
-
 # Get the dataframe ready for future anaysis
 
 ```{r}
@@ -302,10 +291,6 @@ pca_loadings_t <- pca_result_matrix_transposed$rotation  # Loadings (coefficient
 plot(1:length(pca_variances_t), pca_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
 plot(pca_values_t[, 1], pca_values_t[, 2], xlab = "PC1", ylab = "PC2")
 
-
-```
-
-```{r}
 
 ```
 
@@ -379,6 +364,8 @@ barplot(correlation_values,
 text(x = 1:7, y = correlation_values, 
      labels = round(correlation_values, 2), pos = 3)
 ```
+
+
 
 ```{r}
 # cell line 2
@@ -485,48 +472,15 @@ correlation_data_long <- tidyr::gather(correlation_data, PC, Correlation, -CellL
 # Create the bar plot using ggplot
 ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Pearson Correlation of Principal Components
-       with Gastric Cancer Cell Lines",
+  labs(title = "Pearson Correlation of Principal Components with Gastric Cancer Cell Lines",
        x = "Principal Components",
        y = "Pearson Correlation") +
   scale_fill_discrete(name = "Cell Line") +
   ylim(-1, 1) +
   theme_minimal()
-
-## make the square smaller and the title smaller to fit it
-```
-```{r}
-# Convert the data from wide to long format
-correlation_data_long <- tidyr::gather(correlation_data, PC, Correlation, -CellLine)
-
-# Create the bar plot using ggplot
-ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Pearson Correlation of Principal Components 
-       of Gastric Cancer Cell Lines",
-       x = "Principal Components",
-       y = "Pearson Correlation") +
-  scale_fill_discrete(name = "Gastric Cancer Cell Lines") +
-  ylim(-1, 1) +
-  theme_minimal() +
-  theme(legend.text = element_text(size = 6),  # Adjust the size of legend text
-        legend.key.size = unit(0.4, "cm"))
-
 ```
 
-```{r}
 
-library(ggplot2)
-ggsave("correlation_data_long.png", plot = ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
-         geom_bar(stat = "identity", position = "dodge") +
-         labs(title = "Pearson Correlation of Principal Components with Gastric Cancer Cell Lines",
-              x = "Principal Components",
-              y = "Pearson Correlation") +
-         scale_fill_discrete(name = "Cell Line") +
-         ylim(-1, 1) +
-         theme_minimal(),
-       width = 8, height = 6, dpi = 300)
-```
 
 # Selection of the drugs which contribute positive to PC1
 
@@ -558,10 +512,6 @@ pc1_selected_drugs
 ## Create a vector of these drugs
 prism_treat_new <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs, ]
 prism_treat_new
-
-prism_treat_new2 <- subset(prism_treat_new, dose == "10")
-prism_treat_new2
-View(prism_treat_new2)
 ```
 
 ```{r}
@@ -577,7 +527,7 @@ library(ggplot2)
 ```{r}
 #visualize the mechanism of action (moa) of different drugs to specify which target is playing a major role by inhibiting the cell growth of gastric cancer cell lines
 
-mechanism_counts <- table(prism_treat_new2$moa)
+mechanism_counts <- table(prism_treat_new$moa)
 
 # Step 2: Create a pie chart
 pie_chart <- ggplot(data = data.frame(mechanism = names(mechanism_counts), count = as.numeric(mechanism_counts)),
@@ -589,39 +539,7 @@ pie_chart <- ggplot(data = data.frame(mechanism = names(mechanism_counts), count
 
 # Display the pie chart
 print(pie_chart)
-# Step 2: Create a pie chart without legend
-pie_chart <- ggplot(data = data.frame(mechanism = names(mechanism_counts), count = as.numeric(mechanism_counts)),
-                    aes(x = "", y = count, fill = mechanism)) +
-  geom_col(width = 1) +
-  coord_polar("y", start = 0) +
-  theme_void() +
-  labs(title = "Mechanism of Action Distribution") +
-  guides(fill = FALSE)
 
-# Display the pie chart without legend
-print(pie_chart)
-
-```
-
-```{r}
-library(ggplot2)
-
-# Step 1: Calculate the counts of each mechanism of action
-mechanism_counts <- table(prism_treat_new2$moa)
-
-# Step 2: Create a pie chart with a smaller legend and multiple columns
-pie_chart <- ggplot(data = data.frame(mechanism = names(mechanism_counts), count = as.numeric(mechanism_counts)),
-                    aes(x = "", y = count, fill = mechanism)) +
-  geom_col(width = 1) +
-  coord_polar("y", start = 0) +
-  theme_void() +
-  labs(title = "Mechanism of Action Distribution") +
-  theme(legend.text = element_text(size = 4),   # Set legend text size
-        legend.key.size = unit(0.1, "cm")) +    # Set legend key size
-  guides(fill = guide_legend(nrow = 15, ncol = 1))  # Set number of rows and columns in the legend
-
-# Display the pie chart
-print(pie_chart)
 ```
 
 ```{r}
@@ -671,7 +589,7 @@ ggsave("bar_chart.png", bar_chart, width = 20, height = 20, units = "cm")
 
 ```{r}
 # Seperate the strings of the column target
-big_string <- paste(prism_treat_new2$target, collapse = ",")
+big_string <- paste(prism_treat_new$target, collapse = ",")
 ```
 
 ```{r}
@@ -777,29 +695,24 @@ print(target_freq_dataframe_selected)
 
 ```{r}
 # Create a bar plot using ggplot2
-bar_plot_target <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+bar_plot <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
   geom_bar(stat = "identity") +
-  labs(title= " Target Molecules of Selected Drugs ", x = "Target", y = "Frequency") +
+  labs(x = "Target", y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 45, hjust = 1))+
   ylim(0, 15)  # Adjust the range as needed
 
 # Adjust the x-axis labels
-bar_plot_target <- bar_plot_target + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+bar_plot <- bar_plot + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
 
 
-print(bar_plot_target)
-```
-
-```{r}
-# Save the plot as an image
-ggsave("bar_plot_target.png", plot = bar_plot_target, width = 8, height = 6, dpi = 300)
+print(bar_plot)
 ```
 
 ```{r}
 #The same with moa
 # Seperate the strings of the column target
-big_string <- paste(prism_treat_new2$moa, collapse = ",")
+big_string <- paste(prism_treat_new$moa, collapse = ",")
 
 ```
 
@@ -827,8 +740,7 @@ print(moa_freq_dataframe_selected)
 # Create a bar plot of moa
 bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
   geom_bar(stat = "identity") +
-  labs(title= "Mechanism of Actions 
-       of Selected Drugs", x = "moa", y = "Frequency") +
+  labs(x = "moa", y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 45, hjust = 1))+
   ylim(0, 15)  # Adjust the range as needed
@@ -840,28 +752,25 @@ bar_plot_moa <- bar_plot_moa + scale_x_discrete(labels = function(x) stringr::st
 print(bar_plot_moa)
 ```
 
-```{r}
-# Save the plot as an image
-ggsave("bar_plot_moa.png", plot = bar_plot_moa, width = 8, height = 6, dpi = 300)
-```
 
-#Further anaysis \## Find the mutation characteristics of most of the targets
 
+#Further anaysis
+## Find the mutation characteristics of most of the targets
 ```{r}
 selected_genes <- c("HDAC1", "HDAC2", "HDAC3", "HDAC4", "HDAC5", "HDAC6", "HDAC7", "HDAC8", "HDAC9")
 
 selected_prism_snv <- prism.snv[prism.snv$Hugo_Symbol %in% selected_genes, ]
 ```
 
+
 ```{r}
 selected_prism_snv
 ```
-
 ```{r}
 library(ggplot2)
 
 # Count the frequency of each mutation type
-mutation_counts <- table(selected_prism_snv$Variant_Classification)
+mutation_counts <- table(prism.snv$Variant_Classification)
 
 # Create a data frame with mutation types and their counts
 mutation_data <- data.frame(Mutation_Type = names(mutation_counts),
@@ -873,7 +782,7 @@ mutation_data <- mutation_data[order(mutation_data$Count, decreasing = TRUE), ]
 # Plot the distribution of mutation types
 ggplot(mutation_data, aes(x = reorder(Mutation_Type, Count), y = Count)) +
   geom_bar(stat = "identity", fill = "lightblue", color = "black") +
-  labs(title = "Distribution of Mutation Types of Selected Genes",
+  labs(title = "Distribution of Mutation Types",
        x = "Mutation Type",
        y = "Count") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -881,19 +790,6 @@ ggplot(mutation_data, aes(x = reorder(Mutation_Type, Count), y = Count)) +
 
 ```
 
-```{r}
-ggsave("mutation_data.png", plot = mutation_data , width = 8, height = 6, dpi = 300)
-```
-```{r}
-column_name <- "HDAC1"
-has_column <- column_name %in% colnames(prism.exp)
-
-if (has_column) {
-  print("The dataframe contains a column with the name 'HDAC1'.")
-} else {
-  print("The dataframe does not contain a column with the name 'HDAC1'.")
-}
-```
 ```{r}
 
 ```

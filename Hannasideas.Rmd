@@ -32,12 +32,11 @@ pheatmap(overe.genes)
 col_Means <- colMeans(selected_drugs)
 
 # Set a threshold for column mean
-mean_threshold <- 1
-
+mean_threshold <- -6.5
 
 # Select columns with mean greater than the threshold
 selected_columns <- selected_drugs[, col_means < mean_threshold]
-pheatmap(selected_columns,  cellwidth = 4, cellheight = 4,show_colnames = FALSE)
+pheatmap(selected_columns,  cellwidth = 10, cellheight = 5)
 ```
 
 ```{r}
@@ -56,7 +55,7 @@ View (selected_columns)
 ```
 
 ```{r}
-p<-pheatmap(r.prism.cnv_g)
+pheatmap(r.prism.cnv_g)
 ```
 
 ```{r}
@@ -132,7 +131,7 @@ new_dataframe2 <- data.frame(clustered_columns)
 ```
 
 ```{r}
-heatmap <- pheatmap(clustered_columns, cellwidth = 2, cellheight = 2,show_colnames=FALSE)
+heatmap <- pheatmap(clustered_columns, cellwidth = 2, cellheight = 2)
 ```
 
 ```{r}
@@ -149,7 +148,7 @@ hist(col_means)
 col_Means <- colMeans(selected_drugs)
 
 # Set a threshold for column mean
-mean_threshold <- -7
+mean_threshold <- -6.5
 
 # Select columns with mean greater than the threshold
 selected_columns <- selected_drugs[, col_means < mean_threshold]
@@ -407,20 +406,16 @@ transposed_prism.exp_celllines <- t(prism.exp_celllines)
 # Calculate the variance of each row
 
 gene.exp_variances <- apply(transposed_prism.exp_celllines, MARGIN = 1, var)
-gene.exp_variances2 <- apply(prism.exp_celllines, MARGIN = 1, var)
 ```
 
 ```{r}
 #plotting the variances to define a logical treshold for selecting drugs
 hist(gene.exp_variances)
-hist(gene.exp_variances2)
 ```
 
 ```{r}
 threshold <- 3
 selected_genes_var <- transposed_prism.exp_celllines[gene.exp_variances > threshold, ]
-threshold2 <- 6.5
-selected_genes_var2 <- prism.exp_celllines[gene.exp_variances2 > threshold2, ]
 ```
 
 ```{r}
@@ -501,39 +496,6 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 ```
 
-```{r}
-pca_result_genes_var2 <- prcomp(selected_genes_var2)
-pca_values <- pca_result_genes_var2$x # Principal component scores (transformed data)
-pca_variances <- pca_result_genes_var2$sdev^2  # Variance explained by each principal component
-pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
-pca_loadings <- pca_result_genes_var2$rotation  # Loadings (coefficients) of each variable on each principal component
- plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
-     main = "Scree Plot")
-plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
-
-
-###
-pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
-
-bone.cancer.celllines.group<- "red"
-kidney.cancer.celllines.group <- "blue"
-liver.cancer.celllines.group <- "green"
-gastric.cancer.celllines.group<- "purple"
-breast.cancer.celllines.group <- "orange"
-
-pca_data$Group <- NA
-pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
-pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
-pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
-pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
-pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
-
-ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
-  geom_point() +
-  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
-  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
-```
-
 **Create new dataframes of prism based of the treatments original indication:**
 
 Creating dataframe of prism with treatment of oncology and with treat not of oncology
@@ -560,11 +522,11 @@ prism_nonc <- prism_celllines[, selected_treat_nonc,drop = FALSE]
 prism_onc[is.na(prism_onc)] <- 0
 # Replace NA values with zero in the entire dataframe
 prism_nonc[is.na(prism_nonc)] <- 0
-pheatmap(prism_onc,show_colnames = FALSE)
+pheatmap(prism_onc)
 ```
 
 ```{r}
-pheatmap(prism_nonc,ColCol = NA,show_colnames = FALSE)
+pheatmap(prism_nonc,ColCol = NA)
 ```
 
 **Trying to extract treatments froms prism.treat that have already an indication related to gastric affected diseases:**
@@ -581,7 +543,7 @@ prism_gastrictreat <- prism_celllines[, selected_gastric_treat,drop = FALSE]
 # Replace NA values with zero in the entire dataframe
 prism_gastrictreat[is.na(prism_gastrictreat)] <- 0
 
-pheatmap(prism_gastrictreat, show_colnames = FALSE)
+pheatmap(prism_gastrictreat)
 ```
 
 **Reducing the dataframe prism.exp to just the genes that show high variance within a cancertype to see if the clustering based on PCA differs :**
@@ -601,23 +563,6 @@ B.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% bone.cancer.
 Br.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% breast.cancer.celllines.v, ]
 #Liver cancer Dataframe of Prism.exp
 L.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% liver.cancer.celllines.v, ]
-```
-
-```{r}
-# Name der gewünschten Spalte
-spaltenname <- "CDH1"
-
-# Durchschnitt (Mittelwert) der Spalte berechnen
-durchschnitt <- mean(Br.prism.exp[[spaltenname]])
-
-# Ausgabe des Durchschnitts
-print(durchschnitt)
-
-# Durchschnitt (Mittelwert) der Spalte berechnen
-durchschnitt1 <- mean(G.prism.exp[[spaltenname]])
-
-# Ausgabe des Durchschnitts
-print(durchschnitt1)
 ```
 
 Second step:
@@ -800,69 +745,6 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
 **Applying PCA on the oncological and non-oncological dataframes:**
 
 ```{r}
-transposed_prism_onc<- t(prism_onc)
-transposed_prism_nonc<- t(prism_nonc)
-transposed_prism_gastrictreat<- t(prism_gastrictreat)
-
-#Variance in treatment response
-prism.onc_var<-apply(transposed_prism_onc, MARGIN = 1, var)
-prism.nonc_var<-apply(transposed_prism_nonc, MARGIN = 1, var)
-prism.gastrictreat_var<-apply(transposed_prism_gastrictreat, MARGIN = 1, var)
-
-hist(prism.onc_var)
-hist(prism.nonc_var)
-hist(prism.gastrictreat_var)
-```
-
-```{r}
-treshold.onc<- 3
-treshhold.nonc<-3
-treshhold.gc<-2.5
-
-selected_treatonc_var<- transposed_prism_onc[prism.onc_var>treshold.onc,]
-selected_treatnonc_var<- transposed_prism_nonc[prism.nonc_var>treshhold.nonc,]
-selected_treatgc_var<- transposed_prism_gastrictreat[prism.gastrictreat_var>treshhold.gc,]
-
-prism.onc.var<- t(selected_treatonc_var)
-prism.nonc.var<- t(selected_treatnonc_var)
-prism.gc.var<- t(selected_treatgc_var)
-```
-
-```{r}
-pca_result_prism_onc <- prcomp(prism.onc.var)
-pca_values <- pca_result_prism_onc$x # Principal component scores (transformed data)
-pca_variances <- pca_result_prism_onc$sdev^2  # Variance explained by each principal component
-pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
-pca_loadings <-  pca_result_prism_onc$rotation  # Loadings (coefficients) of each variable on each principal component
- plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
-     main = "Scree Plot")
-plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
-
-
-###
-pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
-
-bone.cancer.celllines.group<- "red"
-kidney.cancer.celllines.group <- "blue"
-liver.cancer.celllines.group <- "green"
-gastric.cancer.celllines.group<- "purple"
-breast.cancer.celllines.group <- "orange"
-
-pca_data$Group <- NA
-pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
-pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
-pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
-pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
-pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
-
-ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
-  geom_point() +
-  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
-  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
-
-```
-
-```{r}
 pca_result_prism_onc <- prcomp(prism_onc)
 pca_values <- pca_result_prism_onc$x # Principal component scores (transformed data)
 pca_variances <- pca_result_prism_onc$sdev^2  # Variance explained by each principal component
@@ -929,78 +811,12 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
 ```
 
 ```{r}
-pca_result_prism_nonc <- prcomp(prism.nonc.var)
-pca_values <- pca_result_prism_nonc$x # Principal component scores (transformed data)
-pca_variances <- pca_result_prism_nonc$sdev^2  # Variance explained by each principal component
-pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
-pca_loadings <-  pca_result_prism_nonc$rotation  # Loadings (coefficients) of each variable on each principal component
- plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
-     main = "Scree Plot")
-plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
-
-
-###
-pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
-
-bone.cancer.celllines.group<- "red"
-kidney.cancer.celllines.group <- "blue"
-liver.cancer.celllines.group <- "green"
-gastric.cancer.celllines.group<- "purple"
-breast.cancer.celllines.group <- "orange"
-
-pca_data$Group <- NA
-pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
-pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
-pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
-pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
-pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
-
-ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
-  geom_point() +
-  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
-  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
-```
-
-```{r}
 prism_gastrictreat
 pca_result_prism_gastrictreat <- prcomp(prism_gastrictreat)
 pca_values <- pca_result_prism_gastrictreat$x # Principal component scores (transformed data)
 pca_variances <- pca_result_prism_gastrictreat$sdev^2  # Variance explained by each principal component
 pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
 pca_loadings <-  pca_result_prism_gastrictreat$rotation  # Loadings (coefficients) of each variable on each principal component
- plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
-     main = "Scree Plot")
-plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
-
-
-###
-pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
-
-bone.cancer.celllines.group<- "red"
-kidney.cancer.celllines.group <- "blue"
-liver.cancer.celllines.group <- "green"
-gastric.cancer.celllines.group<- "purple"
-breast.cancer.celllines.group <- "orange"
-
-pca_data$Group <- NA
-pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
-pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
-pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
-pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
-pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
-
-ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
-  geom_point() +
-  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
-  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
-```
-
-```{r}
-pca_result_prism_nonc <- prcomp(prism.gc.var)
-pca_values <- pca_result_prism_nonc$x # Principal component scores (transformed data)
-pca_variances <- pca_result_prism_nonc$sdev^2  # Variance explained by each principal component
-pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
-pca_loadings <-  pca_result_prism_nonc$rotation  # Loadings (coefficients) of each variable on each principal component
  plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
      main = "Scree Plot")
 plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
@@ -1172,16 +988,16 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
   scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
   labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 # Extract the PC scores
-pc_scores.exp <- as.data.frame(pca_result_prism.exp_geneshv$x[, 1:2])
+pc_scores <- as.data.frame(pca_result_prism.exp_geneshv$x[, 1:2])
 
 # Perform k-means clustering on the PC scores
 kmeans_result <- kmeans(pc_scores, centers = 3)
 
 # Add cluster labels to the PC scores
-pc_scores.exp$cluster <- as.factor(kmeans_result$cluster)
+pc_scores$cluster <- as.factor(kmeans_result$cluster)
 
 # Plot the clustered data
-ggplot(pc_scores.exp, aes(PC1, PC2, color = cluster)) +
+ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
   geom_point() +
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
 ```
@@ -1218,93 +1034,66 @@ ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 ```
 
- Testing the right amount of clusters:
-
 ```{r}
+library(ggplot2)
+library(ggforce)
 library(cluster)
-library(factoextra)
-install.packages ("factoextra")
 
+# Scatter plot without clustering
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group, "Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" = gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
 
-fviz_nbclust(pc_scores.exp, kmeans, method = "wss") + geom_vline(xintercept = 3, linetype=2)
+# Perform PCA
+pca_result <- prcomp(pca_data[, c("PC1", "PC2")])
 
+# Extract the PC scores
+pc_scores <- as.data.frame(pca_result$x[, 1:2])
+
+# Determine the range of k values for elbow method and silhouette coefficient
+k_values <- 2:10
+# Create empty vectors for silhouette and WCSS values
+silhouette_values <- numeric(length(k_values))
+wcss_values <- numeric(length(k_values))
+
+# Loop over k values
+for (i in seq_along(k_values)) {
+  k <- k_values[i]
+  
+  # Perform k-means clustering
+  kmeans_result <- kmeans(pc_scores[, c(1, 2)], centers = k)
+  
+  # Calculate silhouette coefficient
+  silhouette_obj <- silhouette(kmeans_result$cluster, dist(pc_scores[, c(1, 2)]))
+  silhouette_values[i] <- mean(silhouette_obj)
+  
+  # Calculate within-cluster sum of squares (WCSS)
+  wcss_values[i] <- kmeans_result$tot.withinss
+}
+# Plot the elbow method graph
+elbow_plot <- ggplot(data.frame(k = k_values, WCSS = wcss_values), aes(x = k, y = WCSS)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Number of clusters (k)", y = "Within-cluster sum of squares (WCSS)", title = "Elbow Method")
+
+# Plot the silhouette coefficients
+silhouette_plot <- ggplot(data.frame(k = k_values, Silhouette = silhouette_values), aes(x = k, y = Silhouette)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Number of clusters (k)", y = "Silhouette coefficient", title = "Silhouette Coefficient")
+
+# Print both plots
+print(elbow_plot)
+print(silhouette_plot)
+
+# Plot the clustered data with circles around each cluster
+ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 ```
 
-```{r}
-
-library(purrr)
-library(factoextra)
-library(cluster)
-#higher values indicates a better clustering
-avg_sil <- function(k) {
-  km.res <- kmeans(pc_scores.exp, centers = 5, nstart = 25)
-  ss <- silhouette(km.res$cluster, dist(pc_scores.exp))
-  mean(ss[, 3])
-  }
-#compute and plot wss for k=2 to k=15
-k.values <- 2:15
-
-# extract avg silhouette for 2-15 clusters
-avg_sil_values <- map_dbl(k.values, avg_sil)
-
-plot(k.values, avg_sil_values,
-       type = "b", pch = 19, frame = FALSE, 
-       xlab = "Number of clusters K",
-       ylab = "Average Silhouettes")
-
-#computing with silhouette method
-fviz_nbclust(pc_scores.exp, kmeans, method = "silhouette")
-
-
-
-```
-
-```{r}
-pam.res4 <- pam(pc_scores.exp, 3,  metric = "euclidean", stand = FALSE)
-fviz_cluster(pam.res4, data = pc_scores.exp, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33","green"), ellipse.type = "euclid", 
-star.plot = TRUE, 
-repel = TRUE, 
-ggtheme = theme_minimal(), geom = "point" )
-fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
-
-```
-
-```{r}
-pam.res4 <- pam(pc_scores.exp, 5,  metric = "euclidean", stand = FALSE)
-fviz_cluster(pam.res4, data = pc_scores.exp, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33","pink"), ellipse.type = "euclid", 
-star.plot = TRUE, 
-repel = TRUE, 
-ggtheme = theme_minimal(), geom = "point" )
-fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
-```
-
-```{r}
-fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
-#In our case, an average silhouette width of 0.41 indicates a moderate to good separation of data points within their respective clusters. This suggests that the clustering result has some level of distinction and coherence, with a reasonably clear separation between the clusters
- #trying with other numbers:
-pam.res2 <- pam(pc_scores.exp, 2,  metric = "euclidean", stand = FALSE)
-fviz_cluster(pam.res2, data = pc_scores.exp, palette = c("#FC4E07", "#00AFBB"), ellipse.type = "euclid", 
-star.plot = TRUE, 
-repel = TRUE, 
-ggtheme = theme_minimal(), geom = "point" )
-
-fviz_silhouette(pam.res2, palette = "jco", ggtheme = theme_classic())
-
-```
-
-```{r}
-#here we have 0.49, which is even better
-#PCA of this reduced data frame: 
-
-standardized_data.p <- scale(prism_cleaned)
-pca_result.p <- prcomp(standardized_data.p, scale. = FALSE)
-View(pca_result.p)
-pcs <- pca_result.p$x
-variance_explained <- pca_result.p$sdev^2 / sum(pca_result.p$sdev^2)
-
-loadings <- pca_result.p$rotation
-scree_plot <- plot(1:length(variance_explained), variance_explained, type = "b",  xlab = "Principal Component", ylab = "Variance Explained")
-```
+ 
 
 ## **Finding correlation between Target of a treatment and the respectiv gene for that target in cancer cellline:**
 
@@ -2012,6 +1801,7 @@ print(description)
 ```
 
 ```{r}
+
 # Flatten the list to a numeric vector
 flat_list <- unlist(correlation_results)
 
@@ -2610,6 +2400,7 @@ plot(vector60, vector61, type = "p", pch = 16, col = "blue",
 ```
 
 ```{r}
+
 #Dataframe used: Prism with just gastric celllines and all drugs ; Prism.cnv just gastric cellines
 # Find the index of the maximum value in the list
 max_index <- which.max(sapply(correlation_results1, function(x) x[1]))
@@ -2650,210 +2441,6 @@ print(highest_values)
 ```
 
 ```{r}
-# Select a column by its name and store it in a vector
-column_name <- "KDR"
-vector90 <- prism.cnv[[column_name]]
-# Select a column by its name and store it in a vector
-column_name <- "BRD-K84564571-001-02-4::0.0024414::HTS002"
-vector91 <- new_df[[column_name]]
-plot(vector90, vector91, type = "p", pch = 16, col = "blue",
-     xlab = "KDR", ylab = "BRD-K84564571-001-02-4::0.00976562::HTS002", main = "Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002")
-cor(vector90,vector91)
-
-```
-
-```{r}
-# Calculate the correlation between the limited vectors
-limited_correlation <- cor(vector80, vector81)
-
-# Specify the threshold for correlation change
-threshold <- 0.005  # Adjust the threshold as needed
-
-# Initialize an empty vector to store selected elements
-selected_elements <- numeric(0)
-
-# Iterate over the elements of the larger vector
-for (i in 1:length(vector90)) {
-  modified_vector80 <- c(vector80, vector90[i])
-  modified_vector81 <- c(vector81, vector91[i])
-  modified_correlation <- cor(modified_vector80, modified_vector81)
-  correlation_change <- abs(modified_correlation - limited_correlation)
-  
-  # Check if the correlation change is below the threshold
-  if (correlation_change <= threshold) {
-    selected_elements <- c(selected_elements, vector80[i])
-  } else {
-    break  # Exit the loop if correlation change exceeds the threshold
-  }
-}
-
-# Add the selected elements to the limited vectors
-updated_vector80 <- c(vector80, selected_elements)
-updated_vector81 <- c(vector81, selected_elements)
-```
-
-```{r}
-# Calculate the correlation between the limited vectors
-limited_correlation <- cor(vector80, vector2)
-
-# Specify the threshold for correlation change
-threshold <- 0.25 # Adjust the threshold as needed
-
-# Initialize an empty vector to store selected elements
-selected_elements <- numeric(0)
-
-# Iterate over the elements of the larger vector90
-for (i in 1:length(vector90)) {
-  modified_vector80 <- c(vector80, vector90[i])
-  modified_vector81 <- c(vector2, vector91[i])
-  modified_correlation <- cor(modified_vector80, modified_vector81)
-  correlation_change <- abs(modified_correlation - limited_correlation)
-  
-  # Check if the correlation change is below the threshold
-  if (correlation_change <= threshold) {
-    selected_elements <- c(selected_elements, i)
-  } else {
-    break  # Exit the loop if correlation change exceeds the threshold
-  }
-}
-
-# Add the selected elements to the limited vectors
-updated_vector80 <- c(vector80, vector90[selected_elements])
-updated_vector81 <- c(vector2, vector91[selected_elements])
-```
-
-```{r}
-
-plot(updated_vector80,updated_vector81, type = "p", pch = 16, col = "blue",
-     xlab = "KDR", ylab = "BRD-K84564571-001-02-4::0.00976562::HTS002", main = "Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002")
-cor(updated_vector80,updated_vector81)
-```
-
-```{r}
-# Perform linear regression
-regression_model <- lm(vector81 ~ vector2)
-
-# Plot the scatter plot
-plot(vector80, vector2, type = "p", pch = 16, col = "blue",
-     xlab = "KDR", ylab = "BRD-K84564571-001-02-4::0.00976562::HTS002", 
-     main = "Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002")
-
-# Add the linear regression line
-abline(regression_model, col = "red")
-```
-
-```{r}
-# Set up a color palette
-library(RColorBrewer)
-colors <- brewer.pal(8, "Set1")
-
-# Plot the scatter plot with enhanced features
-plot(vector80, vector2, type = "p", pch = 16, col = colors[1], 
-     xlab = "Kinase Domain Receptor (KDR) Expression Level", 
-     ylab = "BRD-K84564571-001-02-4::0.00976562::HTS002", 
-     main = "Scatter Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002",
-     xlim = c(min(vector80), max(vector80)), 
-     ylim = c(min(vector2), max(vector2)),
-     xaxt = "n", yaxt = "n", bty = "n", frame.plot = FALSE)
-
-# Add grid lines
-grid(lty = 2, col = "gray")
-
-# Add the linear regression line
-abline(regression_model, col = "red")
-
-# Customize point colors and sizes
-points(vector80, vector2, pch = 16, col = colors[1], cex = 1.5)
-
-# Add a legend
-legend("bottomright", legend = "Group A", pch = 16, col = colors[1], bty = "n")
-
-# Adjust margins and plot dimensions
-par(mar = c(5, 5, 4, 4) + 0.1)
-
-library(ggplot2)
-
-# Create a data frame with the variables
-data <- data.frame(KDR = vector80, 
-                   HTS002 = vector2)
-
-# Create the scatter plot using ggplot2
-ggplot(data, aes(x = KDR, y = HTS002)) +
-  geom_point(size = 3, color = "blue") +
-  geom_smooth(method = "lm", color = "red", se = FALSE) +
-  labs(x = "Kinase Domain Receptor (KDR) Expression Level", 
-       y = "BRD-K84564571-001-02-4::0.00976562::HTS002",
-       title = "Scatter Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002") +
-  theme_minimal()
-```
-
-```{r}
-# Set up a color palette
-library(RColorBrewer)
-colors <- brewer.pal(8, "Set1")
-
-# Plot the scatter plot with enhanced features
-plot(updated_vector80, updated_vector81, type = "p", pch = 16, col = colors[1], 
-     xlab = "Kinase Domain Receptor (KDR) Expression Level", 
-     ylab = "BRD-K84564571-001-02-4::0.00976562::HTS002", 
-     main = "Scatter Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002",
-     xlim = c(min(updated_vector80), max(updated_vector80)), 
-     ylim = c(min(updated_vector81), max(updated_vector81)),
-     xaxt = "n", yaxt = "n", bty = "n", frame.plot = FALSE)
-
-# Add grid lines
-grid(lty = 2, col = "gray")
-
-# Add the linear regression line
-abline(regression_model, col = "red")
-
-# Customize point colors and sizes
-points(updated_vector80, updated_vector81, pch = 16, col = colors[1], cex = 1.5)
-
-# Add a legend
-legend("bottomright", legend = "Group A", pch = 16, col = colors[1], bty = "n")
-
-# Adjust margins and plot dimensions
-par(mar = c(5, 5, 4, 4) + 0.1)
-
-library(ggplot2)
-
-# Create a data frame with the variables
-data <- data.frame(KDR = updated_vector80, 
-                   HTS002 = updated_vector81)
-
-# Create the scatter plot using ggplot2
-ggplot(data, aes(x = KDR, y = HTS002)) +
-  geom_point(size = 3, color = "blue") +
-  geom_smooth(method = "lm", color = "red", se = FALSE) +
-  labs(x = "Kinase Domain Receptor (KDR) Expression Level", 
-       y = "BRD-K84564571-001-02-4::0.00976562::HTS002",
-       title = "Scatter Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002") +
-  theme_minimal()
-```
-
-```{r}
-# Perform linear regression
-regression_model <- lm(vector81 ~ vector80)
-
-# Make predictions using new data
-predicted_values <- predict(regression_model, newdata = data.frame(vector80))
-# Obtain the residuals
-residuals <- residuals(regression_model)
-
-# Create a residual plot
-plot(predicted_values, residuals, pch = 16, col = "blue",
-     xlab = "Predicted Values", ylab = "Residuals",
-     main = "Residual Plot")
-```
-
-```{r}
-plot(vector80, vector2, type = "p", pch = 16, col = "blue",
-     xlab = "KDR", ylab = "BRD-K84564571-001-02-4::0.00976562::HTS002", main = "Plot of KDR vs BRD-K84564571-001-02-4::0.00976562::HTS002")
-cor(vector80, vector2)
-```
-
-```{r}
 #Scatter plot of all the concentrations of drug prism_gastric BRD-K84564571-001-02-4 and prism.cnv_gastric gene expression of KDR
 # Select a column by its name and store it in a vector
 column_name <- "KDR"
@@ -2876,18 +2463,15 @@ vector7 <- prism_gastric[[column_name6]]
 column_name7 <- "BRD-K84564571-001-02-4::10::HTS002"
 vector8<- prism_gastric[[column_name7]]
 # Create a matrix of vectors
-vectors <- cbind(vector1, vector2, vector3, vector4, vector5,vector6, vector7, vector8)
-par(mar = c(5, 5, 4, 7))
+vectors <- cbind(vector1, vector2, vector3, vector4, vector5, vector6, vector7, vector8)
+
 # Plot the vectors
 matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
-        xlab = "KDR", ylab = "BRD-K84564571-001-02-4")
-# Get the coordinates for the legend
-legend_x <- 1.11  # Adjust the value as needed
-legend_y <- 0.5
-# Add a legend
-legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
-       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+        xlab = "Vector", ylab = "Value")
 
+# Add a legend
+legend("topright", legend = c("Vector1", "Vector2", "Vector3", "Vector4", "Vector5", "Vector6", "Vector7", "Vector8"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16)
 ```
 
 ```{r}
@@ -3019,37 +2603,4 @@ description <- names(correlation_results7)[matching_indices]
 # Print the extracted value and description
 print(extracted_value)
 print(description)
-```
-
-**Linear Regression**
-
-```{r}
-install.packages("dplyr")   # Install the dplyr package
-install.packages("ggplot2") # Install the ggplot2 package
-
-library(dplyr)   # Load the dplyr package
-library(ggplot2) # Load the ggplot2 package
-
-lm_model <- lm(vector80~ vector2)
-```
-
-```{r}
-data_df <- data.frame(vector80, vector2) 
-lm_model <- lm(vector80~ vector2,data = data_df)
-summary(lm_model)
-new_data_df <- data.frame(x = vector12) 
-predictions <- predict(lm_model, newdata = new_data_df)
-ggplot(data = data_df, aes(x = vector80, y = vector2)) +
-  geom_point() +
-  geom_line(data = new_data_df, aes(y = predictions), color = "red")
-```
-
-```{r}
-range(vector80)
-start <- 0.68      # Start value of the range
-end <- 1.09     # End value of the range
-distance <- 0.025  # Distance between values
-
-vector12 <- seq(start, end, by = distance)  # Create the vector
-
 ```
