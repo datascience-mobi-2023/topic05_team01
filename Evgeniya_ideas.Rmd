@@ -225,32 +225,11 @@ prism_celllines_numeric[is.na(prism_celllines_numeric)] <-median(prism_celllines
 sum(is.na(prism_celllines_numeric))
 View(prism_celllines_numeric)
 ```
-PCA of drug response with Seurat
-1.Install "Seurat"
-```{r}
-#install three more thing in terminal on MacOS
-#install igraph: answer to the question is no
-#install deldir: answer is no
-install.packages('Seurat') #the answer is yes
-install.packages("igraph")
-library(Seurat)
 
 ```
-2.Creat a Seurat Object (transposed)each drug is a variable for the PCA
+
+
 ```{r}
-seurat_object_prism_celllines<- CreateSeuratObject(counts = prism_celllines_matrix_filtered1)
-seurat_object_prism_celllines <- NormalizeData(seurat_object_prism_celllines)
-sum(is.na(seurat_object_prism_celllines_t))
-seurat_object_prism_celllines <- FindVariableFeatures(seurat_object_prism_celllines)
-seurat_object_prism_celllines <- ScaleData(seurat_object_prism_celllines)
-seurat_object_prism_celllines <- RunPCA(seurat_object_prism_celllines, svd.method = "standard")
-seurat_object_prism_celllines <- FindNeighbors(seurat_object_prism_celllines, dims = 1:30)
-seurat_object_prism_celllines <- FindClusters(seurat_object_prism_celllines, resolution = 0.8, verbose = FALSE)
-seurat_object_prism_celllines <- RunUMAP(seurat_object_prism_celllines, dims = 1:30)
-DimPlot(seurat_object_prism_celllines, label = TRUE)
-```
-
-
 ```{r}
 ##lets create a transposed matrix:
 prism_celllines_matrix_transposed<- t(prism_celllines_matrix_filtered1)
@@ -279,12 +258,56 @@ pca_proportions_t <- pca_variances_t / sum(pca_variances_t)  # Proportion of var
 pca_loadings_t <- pca_result_matrix_transposed$rotation  # Loadings (coefficients) of each variable on each principal component
 plot(1:length(pca_variances_t), pca_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
 plot(pca_values_t[, 1], pca_values_t[, 2], xlab = "PC1", ylab = "PC2")
+```
 
-###lets create a seurat object:
-seurat_object_prism_celllines_t <- CreateSeuratObject(counts = prism_celllines_matrix_transposed)
+##lets create a transposed matrix:
+prism_celllines_matrix_transposed<- t(prism_celllines_matrix_filtered1)
+sum(is.na(prism_celllines_matrix_filtered1))##there are no missing values, I am so proud
+class(prism_celllines_matrix_transposed)
+###do not do the following code:
+prism_celllines_matrix_transposed <- as.matrix(prism_celllines_matrix_transposed)
+prism_celllines_matrix_transposed_copy <- prism_celllines_matrix_transposed
+medians <- apply(prism_celllines_matrix_transposed, 1, median, na.rm = TRUE)
+prism_celllines_matrix_transposed_copy[is.na(prism_celllines_matrix_transposed)] <- medians[is.na(prism_celllines_matrix_transposed)]
+prism_celllines_matrix_transposed[is.na(prism_celllines_matrix_transposed)] <- medians[is.na(prism_celllines_matrix_transposed)]
+for (i in 1:nrow(prism_celllines_matrix_transposed)) {
+  row_values <- prism_celllines_matrix_transposed[i, ]
+row_median <- median(row_values, na.rm = TRUE)
+prism_celllines_matrix_transposed_copy[i, is.na(prism_celllines_matrix_transposed[i, ])] <- row_median
+}
+sum(is.na(prism_celllines_matrix_transposed_copy))
+sum(is.na(prism_celllines_matrix_transposed))
+is.numeric(prism_celllines_matrix_transposed)
+
+#PCA of transposed matrix:
+pca_result_matrix_transposed <- prcomp(prism_celllines_matrix_transposed)
+pca_values_t <- pca_result_matrix_transposed$x # Principal component scores (transformed data)
+pca_variances_t <- pca_result_matrix_transposed$sdev^2  # Variance explained by each principal component
+pca_proportions_t <- pca_variances_t / sum(pca_variances_t)  # Proportion of variance explained by each principal component
+pca_loadings_t <- pca_result_matrix_transposed$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_t), pca_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_t[, 1], pca_values_t[, 2], xlab = "PC1", ylab = "PC2")
+
 ```
 PCA for drugs for our gastric cancer cellline:
 ```{r}
+```{r}
+prism_gastric_cleaned_treatments_t<- t(prism_gastric_cleaned_treatments)
+sum(is.na(prism_gastric_cleaned_treatments_t))
+is.numeric(prism_gastric_cleaned_treatments_t)
+pca_result_gastric_cleaned_treatments_t<- prcomp(prism_gastric_cleaned_treatments_t)
+pca_values_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$x # Principal component scores (transformed data)
+pca_variances_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$sdev^2  # Variance explained by each principal component
+pca_proportions_gastric_cleaned_treatment_t <- pca_variances_gastric_cleaned_treatments_t / sum(pca_variances_gastric_cleaned_treatments_t)  # Proportion of variance explained by each principal component
+pca_loadings_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_gastric_cleaned_treatments_t), pca_variances_gastric_cleaned_treatments_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2", main = "PCA scatter plot for drug response of gastric cancer cell lines")
+
+```
+```{r}
+
+```
+
 prism_gastric_cleaned_treatments_t<- t(prism_gastric_cleaned_treatments)
 sum(is.na(prism_gastric_cleaned_treatments_t))
 is.numeric(prism_gastric_cleaned_treatments_t)
@@ -342,8 +365,34 @@ cbmc <- FindClusters(cbmc, resolution = 0.8, verbose = FALSE)
 cbmc <- RunUMAP(cbmc, dims = 1:30)
 DimPlot(cbmc, label = TRUE)
 ```
-```{r}
 
+```{r}
+treatment_names <- colnames(prism_gastric_cleaned_treatments)
+concentration <- sub(".*::(.*?)::.*", "\\1", treatment_names)
+concentration <- as.numeric(concentration)
+drug_response_1 <- as.numeric(prism_gastric_cleaned_treatments[1, ])
+correlation1_gastric_cleaned_treatments <- cor(concentration, drug_response_1)
+print(correlation1_gastric_cleaned_treatments)
+plot(concentration, drug_response_1, pch = 16, col = "blue", xlab = "Concentration", ylab = "Drug Response", main = "Correlation Plot")
+#Just testing:
+ 
+  #This works:   
+correlation_results <- apply(prism_gastric_cleaned_treatments, 1, function(row) {
+  drug_response <- as.numeric(row)
+  correlation <- cor(concentration, drug_response)
+  print(correlation)
+  })      
+   #conclusion: strong negative correlation: by increasing the concentration, we have stronger drug response   
+ 
+    for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
+  drug_response_i <- as.numeric(prism_gastric_cleaned_treatments[i, ])
+  correlation <- cor(concentration, drug_response_i)
+  plot(concentration, drug_response_i, pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation))
+}
+ 
+hist(correlation_results, main = "Correlation Histogram", xlab = "Correlation")
 ```
 Important! Calculating the drug concentration and the drug response for each drug: 
 
@@ -362,17 +411,124 @@ name <- ""
 drug_names_prism <- sub("::.*", "", treatment_names)
 
 drug_matrices <- vector("list", length(treatment_names))
-
+#The goal of the code is to find a way to calculate the correlation between each cell line and each drug. I decided to separate each cell lines and to calculate the correlation for each of them with a code separately, but my question is, how to make the "loop" to stop after the end of each drug and to calculate the correlation for each drug
 # Loop over each drug
 for (j in 1:length(treatment_names)) {
-  drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))))
+  drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grep(treatment_names[j], colnames(prism_gastric_cleaned_treatments))))
   for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
-    drug_response_try <- prism_gastric_cleaned_treatments[i, grepl(treatment_names[j], colnames(prism_gastric_cleaned_treatments))]
+    drug_response_try <- prism_gastric_cleaned_treatments[i, grep(treatment_names[j], colnames(prism_gastric_cleaned_treatments))]
     drug_matrix[i, ] <- drug_response_try
   }
   drug_matrices[[j]] <- drug_matrix
 }
 
+drug_vectors <- list()  # Create an empty list to store the vectors
+
+for (j in 1:length(treatment_names)) {
+  drug_vector <- numeric(length = nrow(prism_gastric_cleaned_treatments))  
+  for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
+    drug_response_try <- prism_gastric_cleaned_treatments[i, grep(treatment_names[j], colnames(prism_gastric_cleaned_treatments))]
+    drug_vector[i] <- drug_response_try
+  }
+  drug_vectors[[j]] <- drug_vector 
+}
+
+drug_matrices <- vector("list", length(treatment_names))
+
+# Loop over each drug
+for (j in 1:length(treatment_names)) {
+  drug_name <- treatment_names[j]
+  drug_matrix <- matrix(NA, nrow = nrow(prism_gastric_cleaned_treatments), ncol = sum(grep(drug_name, colnames(prism_gastric_cleaned_treatments))))
+  
+  # Loop over each row in prism_gastric_cleaned_treatments
+  for (i in 1:nrow(prism_gastric_cleaned_treatments)) {
+    drug_response_try <- prism_gastric_cleaned_treatments[i, grep(drug_name, colnames(prism_gastric_cleaned_treatments))]
+    drug_matrix[i, ] <- drug_response_try
+  }
+  
+  drug_matrices[[j]] <- drug_matrix
+}
+```
+
+#drug correlation only of the most importnat drugs
+```{r}
+treatment_names_new <- rownames(prism_treat_new)
+
+drug_names_prism_new <- sub("::.*", "", treatment_names_new)
+
+selected_columns_new <- prism_gastric_cleaned_treatments[, grepl(paste(drug_names_prism_new, collapse = "|"), colnames(prism_gastric_cleaned_treatments))]
+
+treatment_names_new_selected <- colnames(selected_columns_new)
+
+concentration_new <- sub(".*::(.*?)::.*", "\\1", treatment_names_new_selected)
+concentration_new <- as.numeric(concentration_new)
+drug_response_1_new <- as.numeric(selected_columns_new[1, ]) #this is only of the first row.
+
+correlations_new1 <- apply(selected_columns_new[, 1:8], 1, function(x) cor(x[1:8], concentration_new[1:8]))
+print(correlations_new1)
+
+correlations_new1 <- apply(selected_columns_new[, 1:8], 1, function(x) cor(x, concentration_new[1:8]))
+print(correlations_new1)
+correlation1_new <- cor(concentration_new, drug_response_1_new)
+print(correlation1_new)
+plot(concentration_new[1:8], drug_response_1_new[1:8], pch = 16, col = "blue", xlab = "Concentration", ylab = "Drug Response", main = "Correlation Plot")
+
+
+#for the first drug
+correlation_results_new1 <- vector()
+for (i in 1:nrow(selected_columns_new)) {
+  drug_response_i_new <- as.numeric(selected_columns_new[i, ])
+  correlation_new_1_gastric <- cor(concentration_new[1:8], drug_response_i_new[1:8])
+  plot(concentration_new[1:8], drug_response_i_new[1:8], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation))
+  
+  correlation_results_new1 <- c(correlation_results_new1, correlation_new_1_gastric)
+}
+
+hist(correlation_results_new1, main = "Correlation Histogram", xlab = "Correlation")
+
+#for the second drug
+correlation_results_new2 <- vector()
+for (i in 1:nrow(selected_columns_new)) {
+  drug_response_i_new <- as.numeric(selected_columns_new[i, ])
+  correlation_new_2_gastric <- cor(concentration_new[9:15], drug_response_i_new[9:15])
+  plot(concentration_new[9:15], drug_response_i_new[9:15], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_2_gastric))
+  
+  correlation_results_new2 <- c(correlation_results_new2, correlation_new_2_gastric)
+}
+
+hist(correlation_results_new2, main = "Correlation Histogram", xlab = "Correlation")
+
+#for the third drug:
+correlation_results_new3 <- vector()
+for (i in 1:nrow(selected_columns_new)) {
+  drug_response_i_new <- as.numeric(selected_columns_new[i, ])
+  correlation_new_3_gastric <- cor(concentration_new[16:23], drug_response_i_new[16:23])
+  plot(concentration_new[16:23], drug_response_i_new[16:23], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_3_gastric))
+  
+  correlation_results_new3 <- c(correlation_results, correlation_new_3_gastric)
+}
+
+hist(correlation_results_new3, main = "Correlation Histogram", xlab = "Correlation")
+
+#for the 4th drug:
+correlation_results_new4 <- vector()
+for (i in 1:nrow(selected_columns_new)) {
+  drug_response_i_new <- as.numeric(selected_columns_new[i, ])
+  correlation_new_4_gastric <- cor(concentration_new[24:28], drug_response_i_new[24:28])
+  plot(concentration_new[24:28], drug_response_i_new[24:28], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_4_gastric))
+  
+  correlation_results_new4 <- c(correlation_results_new4, correlation_new_4_gastric)
+}
+
+hist(correlation_results_new4, main = "Correlation Histogram", xlab = "Correlation")
 
 
 ```
@@ -405,7 +561,197 @@ correlation_results_seld <- apply(selected_drugs, 1, function(row) {
  
 hist(correlation_results_seld, main = "Correlation Histogram", xlab = "Correlation")
 ```
+Calculating the correlation of only the HDAC inhibitors
+```{r}
+HDAC_inhibitor_v <- subset(prism_treat_new, moa == "HDAC inhibitor")
 
+HDAC_names_new <- rownames(HDAC_inhibitor_v)
+
+HDAC_names_prism_new <- sub("::.*", "", HDAC_names_new)
+
+HDAC_inhibitor_df <- prism_gastric_cleaned_treatments[, grepl(paste(HDAC_names_prism_new, collapse = "|"), colnames(prism_gastric_cleaned_treatments))]
+
+
+HDAC_names_new_selected <- colnames(HDAC_inhibitor_df)
+
+HDAC_concentration <- sub(".*::(.*?)::.*", "\\1", HDAC_names_new_selected)
+HDAC_concentration <- as.numeric(HDAC_concentration)
+
+
+#for the first drug
+correlation_results_HDAC1 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_1_HDAC <- cor(HDAC_concentration[1:7], drug_response_i_new_HDAC[1:7])
+  plot(HDAC_concentration[1:7], drug_response_i_new_HDAC[1:7], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_1_HDAC))
+  
+  correlation_results_HDAC1 <- c(correlation_results_HDAC1, correlation_new_1_HDAC)
+}
+
+
+hist(correlation_results_HDAC1, main = "Correlation Histogram of BRD-K12867552-001-04-7", xlab = "Correlation")
+
+
+#for the second drug
+correlation_results_HDAC2 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_2_HDAC <- cor(HDAC_concentration[8:15], drug_response_i_new_HDAC[8:15])
+  plot(HDAC_concentration[8:15], drug_response_i_new_HDAC[8:15], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_2_HDAC))
+  
+  correlation_results_HDAC2<- c(correlation_results_HDAC2, correlation_new_2_HDAC)
+}
+correlation_results_HDAC2 <- unique(correlation_results_HDAC2)
+correlation_results_HDAC2 <- correlation_results_HDAC2[1:17]
+
+#for drug 3
+
+correlation_results_HDAC3 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_3_HDAC <- cor(HDAC_concentration[16:23], drug_response_i_new_HDAC[16:23])
+  plot(HDAC_concentration[16:23], drug_response_i_new_HDAC[16:23], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_3_HDAC))
+  
+  correlation_results_HDAC3 <- c(correlation_results_HDAC3, correlation_new_3_HDAC)
+}
+
+hist(correlation_results_HDAC3, main = "Correlation Histogram of BRD-K13810148-311-03-2", xlab = "Correlation")
+
+#drug 4
+
+correlation_results_HDAC4 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_4_HDAC <- cor(HDAC_concentration[24:31], drug_response_i_new_HDAC[24:31])
+  plot(HDAC_concentration[24:31], drug_response_i_new_HDAC[24:31], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_4_HDAC))
+  
+  correlation_results_HDAC4 <- c(correlation_results_HDAC4, correlation_new_4_HDAC)
+}
+
+hist(correlation_results_HDAC4, main = "Correlation Histogram of RD-K17743125-001-08-4", xlab = "Correlation")
+
+
+#for drug 5
+correlation_results_HDAC5 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_5_HDAC <- cor(HDAC_concentration[32:39], drug_response_i_new_HDAC[32:39])
+  plot(HDAC_concentration[32:39], drug_response_i_new_HDAC[32:39], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_5_HDAC))
+  
+  correlation_results_HDAC5 <- c(correlation_results_HDAC5, correlation_new_5_HDAC)
+}
+
+hist(correlation_results_HDAC5, main = "Correlation Histogram of BRD-K56957086-001-06-3", xlab = "Correlation")
+
+#for drug 6
+correlation_results_HDAC6 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_6_HDAC <- cor(HDAC_concentration[39:44], drug_response_i_new_HDAC[39:44])
+  plot(HDAC_concentration[39:44], drug_response_i_new_HDAC[39:44], pch = 16, col = "blue", 
+       xlab = "Concentration", ylab = "Drug Response",
+       main = paste("Correlation Plot - Row", i, ", Correlation:", correlation_new_6_HDAC))
+  
+  correlation_results_HDAC6 <- c(correlation_results_HDAC6, correlation_new_6_HDAC)
+}
+
+hist(correlation_results_HDAC6, main = "Correlation Histogram of BRD-K61397605-001-03-4", xlab = "Correlation")
+
+
+correlation_matrix <- matrix(c(correlation_results_HDAC1, correlation_results_HDAC2, correlation_results_HDAC3, correlation_results_HDAC4, correlation_results_HDAC5, correlation_results_HDAC6),nrow = nrow(HDAC_inhibitor_df), ncol = 6, byrow = FALSE)
+
+rownames(correlation_matrix) <- rownames(HDAC_inhibitor_df)
+colnames(correlation_matrix) <- c("BRD-K12867552-001-04-7", "BRD-K13167095-001-02-9",
+                                  "BRD-K13810148-311-03-2", "RD-K17743125-001-08-4",
+                                  "BRD-K56957086-001-06-3", "BRD-K61397605-001-03-4")
+correlation_matrix_t <- t(correlation_matrix)
+View(correlation_matrix_t)
+plot.new()
+install.packages("RColorBrewer")
+install.packages("gplots")
+library(RColorBrewer)
+library(gplots)
+colors <- rev(colorRampPalette(brewer.pal(9, "Blues"))(100))
+
+par(mar = c(5, 5, 2, 2))
+
+legend_breaks <- seq(-1, 0, length.out = length(colors) + 1)
+
+heatmap.2(correlation_matrix,
+          col = colors,
+          main = "Correlation Heatmap",
+          xlab = "Drug",
+          ylab = "Cell",
+          key = TRUE,
+          keysize = 1.5,
+          symkey = FALSE,  # Display only negative values on the legend
+          breaks = legend_breaks,  # Specify the color legend breaks
+          cex.main = 1.5,  # Adjust main title size
+          cex.axis = 0.8,  # Adjust axis label size
+          cex.lab = 0.8)
+help("heatmap.2")
+heatmap.2(correlation_matrix,
+          col = colors,
+          main = "Correlation heatmap of drug concentration and response",
+          xlab = "Drug",
+          ylab = "Cell",
+          trace = "none",
+          cexRow = 0.7,
+          cexCol = 0.4,
+          key = TRUE,
+          keysize = 1.5,
+          symkey = FALSE,  # Display only negative values on the legend
+          breaks = legend_breaks,  # Specify the color legend breaks
+          cex.main = 0.4,  # Adjust main title size
+          cex.axis = 0.8,  # Adjust axis label size
+          cex.lab = 0.8) 
+
+legend("right",
+       legend = c("High", "Low"),
+       fill = colors[1:2],
+       bty = "n",
+       title = "Correlation",
+       cex = 0.8,
+       y.intersp = 1.5)
+
+heatmap(correlation_matrix,
+        col = colors,
+        main = "Correlation Heatmap",
+        xlab = "Drug",
+        ylab = "Row")
+
+
+
+color.legend(legend = c("High", "Low"),
+             gradient = c("blue", "white"),
+             bty = "n",
+             main = "Correlation",
+             side = 4,
+             cex.main = 1.2,
+             cex.axis = 1,
+             cex.lab = 1)
+
+
+legend("right", legend = c("High", "Low"),
+       fill = colors[c(1, num_colors)],
+       title = "Correlation",
+       bty = "n")
+
+legend("right", legend = c("Low", "Medium", "High"),
+       fill = c("blue", "white", "red"),
+       title = "Correlation",
+       bty = "n")
+```
 
 
 
@@ -801,6 +1147,7 @@ genes_variance.V <- c(G.column_names,K.column_names,L.column_names,B.column_name
 ```
 
 ```{r}
+
 prism.filtered1_drugs_variances <- prism_celllines_matrix_filtered1[,colnames( prism_celllines_matrix_filtered1) %in% genes_variance.V ]
 
 
@@ -817,6 +1164,8 @@ plot(pca_values_prism.filtered1_drugs_variances[, 1], pca_values_prism.filtered1
 ###
 pca_data_prism.filtered1_drugs_variances <- data.frame(PC1 = pca_values_prism.filtered1_drugs_variances[, 1], PC2 = pca_values_prism.filtered1_drugs_variances[, 2],CellLine = rownames(pca_values_prism.filtered1_drugs_variances) )
 
+pca_data_prism.filtered1_drugs_variances_PC <- data.frame(PC1 = pca_values_prism.filtered1_drugs_variances[, 1], PC2 = pca_values_prism.filtered1_drugs_variances[, 2])
+
 bone.cancer.celllines.group<- "red"
 kidney.cancer.celllines.group <- "blue"
 liver.cancer.celllines.group <- "green"
@@ -830,10 +1179,11 @@ pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_va
 pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
 pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
 
+library(ggplot2)
 ggplot(pca_data_prism.filtered1_drugs_variances, aes(x = PC1, y = PC2, color = Group)) +
   geom_point() +
   scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group,"Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" =  gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
-  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot for drug response of five different cancer subtypes")
 
 pc_scores_prism <- as.data.frame(pca_result_prism.filtered1_drugs_variances$x[, 1:2])
 kmeans_result_prism <- kmeans(pc_scores_prism, centers = 4)
@@ -852,17 +1202,17 @@ ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
   geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
   labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
 
-#testing the right number og clusters:
+#testing the right number of clusters:
 library(cluster)
 library(factoextra)
 install.packages ("factoextra")
 
 
-fviz_nbclust(pc_scores_prism, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype=2)
-
+fviz_nbclust(pca_data_prism.filtered1_drugs_variances_PC, kmeans, method = "wss") + geom_vline(xintercept = 4, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
   
 
- 
+View(prism.filtered1_drugs_variances)
 #trying things
 install.packages("NbClust")
 library(NbClust)
@@ -905,7 +1255,7 @@ pam.res4 <- pam(pc_scores_prism, 4,  metric = "euclidean", stand = FALSE)
 fviz_cluster(pam.res4, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
 star.plot = TRUE, 
 repel = TRUE, 
-ggtheme = theme_minimal(), geom = "point" )
+ggtheme = theme_minimal(),geom = "point" )
 
 fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
 #In our case, an average silhouette width of 0.41 indicates a moderate to good separation of data points within their respective clusters. This suggests that the clustering result has some level of distinction and coherence, with a reasonably clear separation between the clusters
@@ -914,11 +1264,508 @@ pam.res2 <- pam(pc_scores_prism, 2,  metric = "euclidean", stand = FALSE)
 fviz_cluster(pam.res2, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB"), ellipse.type = "euclid", 
 star.plot = TRUE, 
 repel = TRUE, 
+ggtheme = theme_minimal())
+
+fviz_silhouette(pam.res5, palette = "jco", ggtheme = theme_classic())
+
+#here we have 0.49, which is even better
+
+pam.res6 <- pam(pc_scores_prism, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+ #it does not work with 6 because too few points to calculate an ellipse
+```
+
+```{r, set.seed(333)}
+knitr::opts_chunk$set(cache = T)
+
+#testing the right number of clusters:
+library(cluster)
+library(factoextra)
+install.packages ("factoextra")
+
+
+fviz_nbclust(pca_data_prism.filtered1_drugs_variances_PC, kmeans, method = "wss") + geom_vline(xintercept = 2, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
+  
+
+View(prism.filtered1_drugs_variances)
+#trying things
+install.packages("NbClust")
+library(NbClust)
+clusternum <- NbClust ((pc_scores_prism), distance="euclidean", method="kmeans")
+
+pam.res5 <- pam(pc_scores_prism, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
 ggtheme = theme_minimal(), geom = "point" )
+
+install.packages("tidyverse")
+library(purrr)
+
+fviz_silhouette(pam.res5, palette = "jco", ggtheme = theme_classic())
+#higher values indicates a better clustering
+avg_sil <- function(k) {
+  km.res <- kmeans(pc_scores_prism, centers = 5, nstart = 25)
+  ss <- silhouette(km.res$cluster, dist(pc_scores_prism))
+  mean(ss[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values <- map_dbl(k.values, avg_sil)
+
+plot(k.values, avg_sil_values,
+       type = "b", pch = 19, frame = FALSE, 
+       xlab = "Number of clusters K",
+       ylab = "Average Silhouettes")
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism, kmeans, method = "silhouette")
+
+
+
+
+pam.res4 <- pam(pc_scores_prism, 4,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(),geom = "point" )
+
+fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic())
+#In our case, an average silhouette width of 0.41 indicates a moderate to good separation of data points within their respective clusters. This suggests that the clustering result has some level of distinction and coherence, with a reasonably clear separation between the clusters
+ #trying with other numbers:
+pam.res2 <- pam(pc_scores_prism, 2,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res2, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
 
 fviz_silhouette(pam.res2, palette = "jco", ggtheme = theme_classic())
 
 #here we have 0.49, which is even better
+
+pam.res6 <- pam(pc_scores_prism, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+ #it does not work with 6 because too few points to calculate an ellipse
+
+```
+
+```{r,set.seed(333)}
+knitr::opts_chunk$set(cache = T)
+#the same for the transposed matrix:
+prism.filtered1_drugs_variances_t <- t(prism.filtered1_drugs_variances)
+pca_result_prism.filtered1_drugs_variances_t <- prcomp(prism.filtered1_drugs_variances_t)
+pca_values_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $x # Principal component scores (transformed data)
+pca_variances_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $sdev^2  # Variance explained by each principal component
+pca_proportions_prism.filtered1_drugs_variance_t <- pca_variances_prism.filtered1_drugs_variances_t / sum(pca_variances_prism.filtered1_drugs_variances_t)  # Proportion of variance explained by each principal component
+pca_loadings_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances_prism.filtered1_drugs_variances_t), pca_variances_prism.filtered1_drugs_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values_prism.filtered1_drugs_variances_t[, 1], pca_values_prism.filtered1_drugs_variances_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+
+pc_scores_prism_t <- as.data.frame(pca_result_prism.filtered1_drugs_variances_t$x[, 1:2])
+kmeans_result_prism_t <- kmeans(pc_scores_prism_t, centers = 4)
+
+# Add cluster labels to the PC scores
+pc_scores_prism_t$cluster <- as.factor(kmeans_result_prism_t$cluster)
+
+# Plot the clustered data
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
+
+cluster_centers_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), mean)
+cluster_radii_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
+
+
+library(cluster)
+library(factoextra)
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "wss") + geom_vline(xintercept = 3, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
+  
+
+View(prism.filtered1_drugs_variances)
+#trying things
+install.packages("NbClust")
+library(NbClust)
+clusternum <- NbClust ((pc_scores_prism), distance="euclidean", method="kmeans")
+
+pam.res5_t <- pam(pc_scores_prism_t, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+install.packages("tidyverse")
+library(purrr)
+
+fviz_silhouette(pam.res5_t, palette = "jco", ggtheme = theme_classic())
+#higher values indicates a better clustering
+avg_sil_t <- function(k) {
+  km.res_t <- kmeans(pc_scores_prism_t, centers = 5, nstart = 25)
+  ss_t <- silhouette(km.res_t$cluster, dist(pc_scores_prism_t))
+  mean(ss_t[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values_t <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values_t <- map_dbl(k.values_t, avg_sil_t)
+
+plot(k.values_t, avg_sil_values_t,
+       type = "b", pch = 19, frame = FALSE, 
+       xlab = "Number of clusters K",
+       ylab = "Average Silhouettes")
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "silhouette")
+
+
+
+
+pam.res4_t <- pam(pc_scores_prism_t, 4,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(),geom = "point" )
+
+fviz_silhouette(pam.res4_t, palette = "jco", ggtheme = theme_classic())
+pam.res6_t <- pam(pc_scores_prism_t, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res6_t, palette = "jco", ggtheme = theme_classic())
+
+
+pam.res3_t <- pam(pc_scores_prism_t, 3,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res3_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res3_t, palette = "jco", ggtheme = theme_classic())
+
+```
+
+
+
+```
+
+
+
+```{r, set.seed(333)}
+knitr::opts_chunk$set(cache = T) 
+#the same for the transposed matrix:
+prism.filtered1_drugs_variances_t <- t(prism.filtered1_drugs_variances)
+pca_result_prism.filtered1_drugs_variances_t <- prcomp(prism.filtered1_drugs_variances_t)
+pca_values_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $x # Principal component scores (transformed data)
+pca_variances_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $sdev^2  # Variance explained by each principal component
+pca_proportions_prism.filtered1_drugs_variance_t <- pca_variances_prism.filtered1_drugs_variances_t / sum(pca_variances_prism.filtered1_drugs_variances_t)  # Proportion of variance explained by each principal component
+pca_loadings_prism.filtered1_drugs_variances_t <- pca_result_prism.filtered1_drugs_variances_t $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances_prism.filtered1_drugs_variances_t), pca_variances_prism.filtered1_drugs_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values_prism.filtered1_drugs_variances_t[, 1], pca_values_prism.filtered1_drugs_variances_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+
+pc_scores_prism_t <- as.data.frame(pca_result_prism.filtered1_drugs_variances_t$x[, 1:2])
+kmeans_result_prism_t <- kmeans(pc_scores_prism_t, centers = 4)
+
+# Add cluster labels to the PC scores
+pc_scores_prism_t$cluster <- as.factor(kmeans_result_prism_t$cluster)
+
+# Plot the clustered data
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
+
+cluster_centers_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), mean)
+cluster_radii_prism_t <- aggregate(pc_scores_prism_t[, c("PC1", "PC2")], list(cluster = pc_scores_prism_t$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+ggplot(pc_scores_prism_t, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
+
+
+library(cluster)
+library(factoextra)
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
+  
+
+View(prism.filtered1_drugs_variances)
+#trying things
+install.packages("NbClust")
+library(NbClust)
+clusternum <- NbClust ((pc_scores_prism), distance="euclidean", method="kmeans")
+
+pam.res5_t <- pam(pc_scores_prism_t, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+
+install.packages("tidyverse")
+library(purrr)
+
+fviz_silhouette(pam.res5_t, palette = "jco", ggtheme = theme_classic())
+#higher values indicates a better clustering
+avg_sil_t <- function(k) {
+  km.res_t <- kmeans(pc_scores_prism_t, centers = 5, nstart = 25)
+  ss_t <- silhouette(km.res_t$cluster, dist(pc_scores_prism_t))
+  mean(ss_t[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values_t <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values_t <- map_dbl(k.values_t, avg_sil_t)
+
+plot(k.values_t, avg_sil_values_t,
+       type = "b", pch = 19, frame = FALSE, 
+       xlab = "Number of clusters K",
+       ylab = "Average Silhouettes")
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism_t, kmeans, method = "silhouette")
+
+
+
+
+pam.res4_t <- pam(pc_scores_prism_t, 4,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(),geom = "point" )
+
+fviz_silhouette(pam.res4_t, palette = "jco", ggtheme = theme_classic())
+pam.res6_t <- pam(pc_scores_prism_t, 6,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res6_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33", "#8C4599", "#4DB3E6"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res6_t, palette = "jco", ggtheme = theme_classic())
+
+
+pam.res3_t <- pam(pc_scores_prism_t, 3,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res3_t, data = pc_scores_prism_t, palette = c("#FC4E07", "#00AFBB", "#E7B800"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res3_t, palette = "jco", ggtheme = theme_classic())
+
+
+```{r}
+
+```
+
+```{r}
+#trying something
+rows_with_CDH1 <- subset(prism.snv, Hugo_Symbol == "CDH1")
+print(rows_with_CDH1)
+CDH1_DepMap_ID <- rows_with_CDH1$DepMap_ID
+
+
+HDAC_inhibitor_df_all <- prism_celllines[, grepl(paste(HDAC_names_prism_new, collapse = "|"), colnames(prism_celllines))]
+
+
+HDAC_names_new_selected_all <- colnames(HDAC_inhibitor_df_all)
+
+HDAC_concentration <- sub(".*::(.*?)::.*", "\\1", HDAC_names_new_selected)
+HDAC_concentration <- as.numeric(HDAC_concentration)
+
+
+```
+
+```{r}
+prism_breast <- prism[rownames(prism) %in% breast.cancer.celllines.v, ]
+View (prism_breast)
+```
+```{r}
+typeof(prism_breast)
+prism_breast_numeric_2 <- (
+  sapply(prism_breast, as.numeric)
+)
+is.numeric(prism_breast_numeric_2)
+###removing all columns that have only missing values
+prism_breast_matrix_filtered <- prism_breast_numeric_2[, colSums(is.na(prism_breast_numeric_2)) < nrow(prism_breast_numeric_2)]
+###save the names of the rows so we can restore them after that
+original_row_names_breast <- rownames(prism_breast)
+###replacing the NAs by median of the columns
+prism_breast_numeric_2[is.na(prism_breast_numeric_2)] <-median(prism_breast_numeric_2,na.rm =TRUE)
+
+sum(is.na(prism_breast_numeric_2))
+original_row_names_breast <- rownames(prism_breast)
+###restoring the row names
+prism_breast_matrix_filtered1 <- matrix(prism_breast_numeric_2, nrow = nrow(prism_breast), dimnames = list(rownames(prism_breast), colnames(prism_breast)))
+original_row_names_breast <- rownames(prism_breast)
+prism_breast_matrix_filtered1 <- matrix(prism_breast_numeric_2, nrow = nrow(prism_breast), dimnames = list(rownames(prism_breast), colnames(prism_breast)))
+typeof(prism_breast_matrix_filtered1)
+class(prism_breast_matrix_filtered1)
+sum(is.na(prism_breast_matrix_filtered1))###no missing values
+####till here is important####
+
+
+prism_breast_cleaned_treatments <- prism_breast[, colSums(is.na(prism_breast)) == 0]
+
+```
+```{r}
+prism_breast_cleaned_treatments_t<- t(prism_breast_cleaned_treatments)
+sum(is.na(prism_breast_cleaned_treatments_t))
+is.numeric(prism_breast_cleaned_treatments_t)
+pca_result_breast_cleaned_treatments_t<- prcomp(prism_breast_cleaned_treatments_t)
+pca_values_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$x # Principal component scores (transformed data)
+pca_variances_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$sdev^2  # Variance explained by each principal component
+pca_proportions_breast_cleaned_treatment_t <- pca_variances_breast_cleaned_treatments_t / sum(pca_variances_breast_cleaned_treatments_t)  # Proportion of variance explained by each principal component
+pca_loadings_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_breast_cleaned_treatments_t), pca_variances_breast_cleaned_treatments_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_breast_cleaned_treatments_t[, 1], pca_values_breast_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2")
+```
+```{r}
+pc1_positive_drugs_breast <- rownames(pca_values_breast_cleaned_treatments_t)[pca_values_breast_cleaned_treatments_t[, "PC1"] > 0]
+mean(pca_loadings_breast_cleaned_treatments_t[,1]) #very similar to gastric here
+#### There are 678 drugs which contribute positive to the PC1. So lets select a threshold and find selected drugs.
+pc1_selected_drugs_breast <- rownames(pca_values_breast_cleaned_treatments_t)[pca_values_breast_cleaned_treatments_t[, "PC1"] > 20]
+View(pc1_selected_drugs_breast)
+prism_treat_new_breast <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs_breast, ]
+prism_treat_new_breast <- subset(prism_treat_new_breast, dose > 3 )
+View(prism_treat_new_breast)
+```
+```{r}
+bar_chart_breast <- ggplot(data = prism_treat_new_breast, aes(x = target)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Target Distribution", x = "Target", y = "Count") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 10)  # Adjust the range as needed
+
+# Display the bar chart
+bar_chart_breast
+
+
+```
+```{r}
+big_string_breast <- paste(prism_treat_new_breast$target, collapse = ",")
+target_vector_breast <- unlist(strsplit(big_string_breast, ","))
+target_vector_breast <- gsub(" ", "", target_vector_breast)
+target_frequency_breast <- as.data.frame(table(target_vector_breast))
+target_frequency_breast
+View(target_frequency_breast)
+target_freq_dataframe_selected_breast <- subset(target_frequency_breast, Freq > 2)
+
+target_freq_dataframe_selected_breast <- target_freq_dataframe_selected_breast[target_freq_dataframe_selected_breast$target_vector_breast != "NA", ]
+
+bar_plot_breast <- ggplot(target_freq_dataframe_selected_breast, aes(x = reorder(target_vector_breast, -Freq), y = Freq, fill = target_vector_breast)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot_breast <- bar_plot_breast + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot_breast)
+
+
+```
+```{r}
+#The same with moa
+# Seperate the strings of the column target
+big_string_breast <- paste(prism_treat_new_breast$moa, collapse = ",")
+
+```
+
+```{r}
+moa_vector_breast <- unlist(strsplit(big_string_breast, ","))
+moa_vector_breast <- gsub(" ", "", moa_vector_breast)
+moa_frequency_breast <- as.data.frame(table(moa_vector_breast))
+moa_frequency_breast
+View(moa_frequency_breast)
+```
+
+```{r}
+# create a new dataframe of target frequency and select those which have more than 1 freq:
+
+moa_freq_dataframe_selected_breast <- subset(moa_frequency_breast, Freq > 1)
+
+
+# Print the new dataframe
+print(moa_freq_dataframe_selected)
+```
+
+#Bar plot of moa
+
+```{r}
+# Create a bar plot of moa
+bar_plot_moa_breast <- ggplot(moa_freq_dataframe_selected_breast, aes(x = reorder(moa_vector_breast, -Freq), y = Freq, fill = moa_vector_breast)) +
+  geom_bar(stat = "identity") +
+  labs(x = "moa", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+##Adjust the x-axis labels
+bar_plot_moa_breast <- bar_plot_moa_breast + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot_moa_breast)
+```
+```{r}
+
+pca_result_gastric_cleaned_treatments<- prcomp(prism_gastric_cleaned_treatments)
+pca_values_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$x # Principal component scores (transformed data)
+pca_variances_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$sdev^2  # Variance explained by each principal component
+pca_proportions_gastric_cleaned_treatment <- pca_variances_gastric_cleaned_treatments / sum(pca_variances_gastric_cleaned_treatments)  # Proportion of variance explained by each principal component
+pca_loadings_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$rotation  # Loadings (coefficients) of each variable on each principal component
+ggplot(1:length(pca_variances_gastric_cleaned_treatments), pca_variances_gastric_cleaned_treatments, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_gastric_cleaned_treatments[, 1], pca_values_gastric_cleaned_treatments[, 2], xlab = "PC1", ylab = "PC2")
+
+
+scree_plot_g <- ggplot(data = data.frame(Principal_Component = 1:length(pca_variances_gastric_cleaned_treatments),
+                                       Variance_Explained = pca_variances_gastric_cleaned_treatments),
+                     aes(x = Principal_Component, y = Variance_Explained)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 3) +
+  labs(x = "Principal Component", y = "Variance Explained", title = "Scree Plot") +
+  theme_minimal()
+
+
+
+pca_df_g <- data.frame(PC1 = pca_values_gastric_cleaned_treatments[, 1],
+                     PC2 = pca_values_gastric_cleaned_treatments[, 2])
+
+# Scatter plot using ggplot2
+scatter_plot_gg <- ggplot(data = pca_df_g, aes(x = PC1, y = PC2)) +
+  geom_point(color = "blue", size = 3) +
+  labs(x = "PC1", y = "PC2") +
+  ggtitle("Scatter Plot") +
+  theme_minimal()
+print(scatter_plot_gg)
+# Combine the plots
+combined_plot_g <- cowplot::plot_grid(scree_plot_g, scatter_plot_gg, nrow = 1)
+
+# Display the combined plot
+print(combined_plot_g)
+print(scree_plot_g)
+print(scatter_plot_gg)
+```
+
+
 PCA of this reduced data frame: 
 ```{r}
 standardized_data.p <- scale(prism_cleaned)
