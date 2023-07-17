@@ -20,11 +20,27 @@ knitr::opts_chunk$set(echo = TRUE)
 
 \large
 
-Deniz Korkmazel, Hanna Friess, Evgeniya Abadhieva, Maria Paula Fuentes
+**Data Analysis Report - Topic 5, Group 1**
 
 \vspace{1cm}
 
-July 16, 2023
+**Examining HDAC inhibitors in context of gastric cancer**
+
+\vspace{1cm}
+
+Authors: Deniz Korkmazel, Hanna Friess, Evgeniya Abadhieva, Maria Paula Fuentes
+
+\vspace{1cm}
+
+Data Science Project SoSe 2023
+
+Supervisor : Carl Herrmann
+
+Tutor: Ana Luisa Costa
+
+\vspace{1cm}
+
+Deadline: 17.07.2023
 
 \newpage
 
@@ -67,7 +83,7 @@ kable(abbreviations_table, "pipe")
 
 # Abstract
 
-The development of effective treatments for diseases is a time-consuming and expensive process, leading to the growing application of drug repurposing as a method to discover new drugs for treating various diseases. In this report, we analyzed data on multiple drugs and their impact on cell growth in cell lines across different cancer types with a special focus on gastric cancer.In order to provide context for the analysis of drug responses across cancer cell lines, various genetic aspects were taken into account. Specifically, gene expression, CNVs, and gene knock-out scores in the cancer cell lines were observed. Fold change analysis showed that oncological drugs show a higher potential in decreasing cell growth across all cell lines. HDAC inhibitors as a subgroup of the oncological drugs turned out to be a promising group to be repurposed in gastric cancer as well as breast cancer. Searching for further similarities in gastric and breast cancer, clustering the PCA scores of gene expression across cell lines of five cancer types, led to distinct clusters of breast and gastric cancer. Finally prediction models for two promising drugs to be repurposed for gastric cancer were created based on the CNVs of their target genes. 
+The development of effective treatments for diseases is a time-consuming and expensive process, leading to the growing application of drug repurposing as a method to discover new drugs for treating various diseases. In this report, we analyzed data on multiple drugs and their impact on cell growth in cell lines across different cancer types with a special focus on gastric cancer.In order to provide context for the analysis of drug responses across cancer cell lines, various genetic aspects were taken into account. Specifically, gene expression, CNVs, and gene knock-out scores in the cancer cell lines were observed. Fold change analysis showed that oncology drugs show a higher potential in decreasing cell growth across all cell lines. HDAC inhibitors as a subgroup of the oncological drugs turned out to be a promising group to be repurposed in gastric cancer as well as breast cancer. Searching for further similarities in gastric and breast cancer, clustering the PCA scores of gene expression across cell lines of five cancer types, led to distinct clusters of breast and gastric cancer. Finally prediction models for two promising drugs to be repurposed for gastric cancer were created based on the CNVs of their target genes. 
 
 \newpage
 
@@ -82,13 +98,13 @@ load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/prism_dataset
 
 # Introduction
 
-The advancement in the creation of new drugs to combat chronic diseases and pathologies that today represent a global priority in health research, is one of the great challenges of medicine and biotechnology nowadays. This is especially evident in diseases such as cancer, due to its high incidence and mortality rate (Carcas, 2014).A large number of potential anti-tumoral drugs tend to fail in clinical trial stages, as they are not sufficiently effective or safe for human use, and simply do not reach the stage of being approved for distribution on the market. Moreover, the approval processes are remarkably long, lasting between 10 and 17 years (Loakeim-Skoufa et al., 2023).Likewise, the most effective and novel treatments tend to be expensive, making them inaccessible for oncological patients from middle and low-income countries. This situation has generated a growing interest in the search for more affordable, less toxic, and faster-to-obtain alternatives.
+The advancement in the creation of new drugs to combat chronic diseases and pathologies that today represent a global priority in health research, is one of the great challenges of medicine and biotechnology nowadays. This is especially evident in diseases such as cancer, due to its high incidence and mortality rate (@carcas2014gastric).A large number of potential anti-tumoral drugs tend to fail in clinical trial stages, as they are not sufficiently effective or safe for human use, and simply do not reach the stage of being approved for distribution on the market. Moreover, the approval processes are remarkably long, lasting between 10 and 17 years (@ioakeim2023drug).Likewise, the most effective and novel treatments tend to be expensive, making them inaccessible for oncological patients from middle and low-income countries. This situation has generated a growing interest in the search for more affordable, less toxic, and faster-to-obtain alternatives.
 
-An innovative strategy is "drug repurposing", which consists on re-evaluating existing and approved drugs to treat diseases different from the original application, which in the case of cancer could have an anti-tumoral effect. Once their potential against cancer is discovered, clinical trials can be initiated in patients, reducing both the time and final cost to the public, as these drugs are already available in the market (Loakeim-Skoufa et al., 2023)
+An innovative strategy is "drug repurposing", which consists on re-evaluating existing and approved drugs to treat diseases different from the original application, which in the case of cancer could have an anti-tumoral effect. Once their potential against cancer is discovered, clinical trials can be initiated in patients, reducing both the time and final cost to the public, as these drugs are already available in the market (@ioakeim2023drug)
 
-Cancer is among the deadliest illnesses, characterized by a remarkably high death rate. Currently, one of the types of cancer that persists as a serious health problem is gastric cancer, despite a downward trajectory in global incidence. It is recognized as the second leading etiology of cancer-related mortality globally and registers as the fifth most prevalent cancer diagnosis (Carcas, 2014).Among the different types of gastric cancer, adenocarcinoma is the most common (Cebrián, Concha, & Fernández-Urién, 2016).In the context of early-stage tumors, the first therapeutic options are endoscopic resection, surgery, and or an integrated regimen of chemotherapy or chemoradiation. However, the treatment of advanced or metastatic gastric cancer is not very far reaching, and normally in this stage the overall survival time rate in this group is less than one year (Carcas, 2014).This landscape highlights the urgency to develop and explore new therapeutic alternatives, such as drug repurposing, to improve the survival and quality of life of patients with gastric cancer.
+Cancer is among the deadliest illnesses, characterized by a remarkably high death rate. Currently, one of the types of cancer that persists as a serious health problem is gastric cancer, despite a downward trajectory in global incidence. It is recognized as the second leading etiology of cancer-related mortality globally and registers as the fifth most prevalent cancer diagnosis (@carcas2014gastric).Among the different types of gastric cancer, adenocarcinoma is the most common (@cebrian2016cancer).In the context of early-stage tumors, the first therapeutic options are endoscopic resection, surgery, and or an integrated regimen of chemotherapy or chemoradiation. However, the treatment of advanced or metastatic gastric cancer is not very far reaching, and normally in this stage the overall survival time rate in this group is less than one year (@carcas2014gastric).This landscape highlights the urgency to develop and explore new therapeutic alternatives, such as drug repurposing, to improve the survival and quality of life of patients with gastric cancer.
 
-In this study, our main objective is to systematically explore the responses of a broad spectrum of drugs in a diverse range of cancer cell lines, with special emphasis on gastric cancer. With the help of additional information on factors such as gene expression, genetic alterations and description of target molecules, we aim to identify potential therapeutic agents for the treatment of cancer through the analysis of intermolecular relationships. Ultimately, this research aims to contribute to the evolving field of drug repositioning as a viable strategy to advance gastric cancer therapeutics.
+In this study, our main objective is to systematically explore the responses of a broad spectrum of drugs in a diverse range of cancer cell lines, with special emphasis on gastric cancer. With the help of additional information on factors such as gene expression, genetic alterations and description of target molecules, we aim to identify potential therapeutic agents for the treatment of cancer through the analysis of intermolecular relationships. Ultimately, this research aims to contribute to the evolving field of drug repurposing as a viable strategy to advance gastric cancer therapeutics.
 
 # Material and Methods
 
@@ -102,11 +118,11 @@ To reduce the dimensionality of the "prism", which originally had dimensions of 
 
 ## 2.3 Exploring the effect of treatments on cell growth and identifying potential targets and mechanisms of action
 
-We conducted a comprehensive analysis of drug responses in gastric cancer cell lines and also in breast cancer cell lines as comparison for a further analysis, with a focus on reducing high-dimensional prism dataframe. Therefore, we applied Principle Component Analysis (PCA) on "prism". Furthermore, we performed Pearson correlation on each individual principal component to assess statistically the strength and the direction of the linear(@Goncalves2020).
+We conducted a comprehensive analysis of drug responses in gastric cancer cell lines and also in breast cancer cell lines as comparison for a further analysis, with a focus on reducing high-dimensional prism dataframe. Therefore, we applied Principle Component Analysis (PCA) on "prism". Furthermore, we performed Pearson correlation on each individual principal component to assess statistically the strength and the direction of the linear(@https://doi.org/10.15252/msb.20199405).
 
 ## 2.4 Finding clusters of the cell lines based on gene expression and drug response
 
-Principal component analysis (PCA) was performed on the "prism" (drug responses) and "prism.exp" (gene expression) data. By calculating the variance of each row in the transposed data frames and then plotting them for visualization in histograms, it provided a better understanding of the variability in the data and therefore it helped us establish a minimum variance threshold for gene expression and drug response in cell lines. Only drugs and genes with high variance were selected for PCA. To visualize the PCA results, we created a scree plot and scatter plot for both "prism" and "prism.exp"(Supplementary). We applied K-means clustering to group the cell lines based on PCA results. To determine the optimal number of clusters, we used the elbow and silhouette methods. The elbow plot shows the sum of squared distances between data points and cluster centers for different numbers of clusters, with the "elbow" indicating the optimal number of clusters. The silhouette method, considering distances within and between clusters, suggests the optimal number of clusters when analyzing data. (Supplementary).
+Principal component analysis (PCA) was performed on the "prism" (drug responses) and "prism.exp" (gene expression) data. By calculating the variance of each row in the transposed data frames and then plotting them for visualization in histograms, it provided a better understanding of the variability in the data and therefore it helped us establish a minimum variance threshold for gene expression and drug response in cell lines. Only drugs and genes with high variance were selected for PCA. To visualize the PCA results, we created scatter plots for both "prism" and "prism.exp". We applied K-means clustering to group the cell lines based on PCA results. To determine the optimal number of clusters, we used the elbow and silhouette methods. The elbow plot shows the sum of squared distances between data points and cluster centers for different numbers of clusters, with the "elbow" indicating the optimal number of clusters. The silhouette method, considering distances within and between clusters, suggests the optimal number of clusters when analyzing data.
 
 ## 2.5 Fold Change Analysis: Evaluating Non-Oncology Versus Oncology Treatment Responses
 
@@ -120,9 +136,7 @@ Obtaining the target of each drug of which the drug response is shown in the "pr
 
 ## 3.1 Differential Treatment Efficacy in Oncology and Non-Oncology Drugs: A Fold Change Analysis
 
-Our study involved two-fold change analyses, both general and gastric cancer cell line -specific, to assess the efficacy of oncology and non-oncology treatments on various cell lines. A preliminary general analysis, visualized through a box plot (SM: Fig. X), suggested that oncology treatments were more effective at inhibiting cell growth for most cell lines. This was further evidenced by a fold change bar plot (SM: Fig. X) where the majority of cell lines exhibited a fold change value below 1, but above 0. However, a subset of cell lines presented with larger positive fold changes, suggesting a heightened effectiveness of non-oncology treatments.This hole preliminary general analysis was statistically proofed through normality testing (p=0.3101 (oncology) and p= 0.06227 (non- oncology)) and plotting (SM: Fig. X). And through one side testing it was proofed that oncology treatments were generally more effective at inhibiting cell growth (p-value=2.2e-16).
-
-The focus of our study was the more detailed fold change analysis, which compared non-oncology treatments relative to oncology treatments in gastric cancer cell lines, specifically excluding gastric oncology treatments. The reason behind this particular focus was based on the previous finding that oncology treatments generally outperformed non-oncology treatments in terms of efficacy.  The results revealed that most gastric cell lines also exhibited a fold change value below 1 (Fig. ), implying superior efficacy of oncology treatments. However, three cell lines (ACH-000919, ACH-000344, and ACH-000898) showed a fold change value exceeding 1, suggesting these specific cell lines responded better to non-oncology treatments.Statistical validation of these fold change analysis was performed using Welch's Two Sample t-test, after data normality checks via the Shapiro-Wilk test. The test and additionally visualizations (SM: Fig. X) affirmed a reasonably normal data distribution (p=0.364 (oncology) and p= 0.0798 (non- oncology)). So, with this information it was performed a two-sided t-test and it revealed no significant difference between the mean responses of the two treatment groups (p-value=0.2803). Additionally, a boxplot (SM: Fig. X) visually supported this finding, showing comparable medians for the two treatment types in the specialized gastric cancer cell line analysis. This suggests similar impacts on cell growth from both treatment types, providing us with the freedom to focus our research on cancer drugs outside of gastric cancer-specific drugs or completely non-oncologic drugs.
+Our study involved two-fold change analyses, both general and gastric cancer cell line -specific, to assess the efficacy of oncology and non-oncology treatments on various cell lines. A preliminary general analysis, visualized through a box plot (SM: Fig. 18), suggested that oncology treatments were more effective at inhibiting cell growth for most cell lines. This was further evidenced by a fold change bar plot (SM: Fig. 15) where the majority of cell lines exhibited a fold change value below 1, but above 0. However, a subset of cell lines presented with larger positive fold changes, suggesting a heightened effectiveness of non-oncology treatments.This hole preliminary general analysis was statistically proofed through normality testing (p=0.3101 (oncology) and p= 0.06227(non- oncology)) and plotting (SM: Fig. 16). And through one side testing it was proofed that oncology treatments were generally more effective at inhibiting cell growth (p-value=2.2e-16). The focus of our study was the more detailed fold change analysis, which compared non-oncology treatments relative to oncology treatments in gastric cancer cell lines, specifically excluding gastric oncology treatments.The reason behind this particular focus was based on the previous finding that oncology treatments generally outperformed non-oncology treatments in terms of efficacy. The results revealed that most gastric cell lines also exhibited a fold change value below 1 (Fig. 1), implying superior efficacy of oncology treatments. However, three cell lines (ACH-000919, ACH-000344, and ACH-000898) showed a fold change value exceeding 1, suggesting these specific cell lines responded better to non-oncology treatments.Statistical validation of these fold change analysis was performed using Welch's Two Sample t-test, after data normality checks via the Shapiro-Wilk test. The test and additionally visualizations (SM: Fig. 17) affirmed a reasonably normal data distribution (p=0.364 (oncology) and p= 0.0798 (non- oncology)). So, with this information it was performed a two-sided t-test and it revealed no significant difference between the mean responses of the two treatment groups (p-value=0.2803). Additionally, a boxplot (SM: Fig. 18) visually supported this finding, showing comparable medians for the two treatment types in the specialized gastric cancer cell line analysis. This suggests similar impacts on cell growth from both treatment types, providing us with the freedom to focus our research on cancer drugs outside of gastric cancer-specific drugs or completely non-oncologic drugs.
 
 ```{r include=FALSE}
 library(ggplot2)
@@ -227,7 +241,7 @@ ggplot(fold_changes_df_0, aes(x = reorder(cell_line, -fold_change), y = fold_cha
        y = "Fold Change")
 ```
 
-```{r echo=FALSE, out.height= "40%", out.width= "40%", fig.cap= "Figure 1(Left): Bar Plot Representation of Fold Change Analysis: Comparing Efficiency of Oncology and Non-Oncology Treatments Across Various Cell Lines.(Right):Representation of Fold Change Analysis: Comparing Oncology and Non-Oncology Treatment Efficiency Across the 17 gastric  cancer cell lines",fig.show='hold', fig.align='center'}
+```{r echo=FALSE, out.height= "40%", out.width= "40%", fig.cap= "Representation of Fold Change Analysis: Comparing Oncology and Non-Oncology Treatment Efficiency Across the 17 gastric  cancer cell lines",fig.show='hold', fig.align='center'}
 
 
 library(ggplot2)
@@ -284,7 +298,7 @@ print(t_test_result_2_twosided)
 
 ## 3.2 Data reduction based on drug response of gastric cancer cell lines
 
-First of all, our primary objective was to reduce the dimensionality of the "prism" dataframe, focusing specifically on gastric cancer cell lines by applying PCA. The aim was to gain valuable insights into the relationship between gastric cancer cell lines and drugs. We performed 2 different PCA analysis and generated scatter plots to visualize the outcomes(SM: Fig.11). Subsequently, we selected six from seventeen principle components, based on their contribution to the overall variance being more than 10 percent. Then, we computed the Pearson correlation of six principal components to the gastric cancer cell lines. This Pearson correlation analysis visualizes the contribution of each principal component to the cell growth of gastric cancer cell lines(Fig. 2).
+Our primary objective was to reduce the dimensionality of the "prism" dataframe, focusing specifically on gastric cancer cell lines by applying PCA. The aim was to gain valuable insights into the relationship between gastric cancer cell lines and drugs. We performed 2 different PCA analysis and generated scatter plots to visualize the outcomes(SM: Fig.10). Subsequently, we selected six from seventeen principle components, based on their contribution to the overall variance being more than 10 percent. Then, we computed the Pearson correlation of six principal components to the gastric cancer cell lines. This Pearson correlation analysis visualizes the contribution of each principal component to the cell growth of gastric cancer cell lines(SM: Fig. 11). PC1 accounted for a significant portion (86.34%) of the overall variance. We identified 678 drugs as positively contributing to the PC1 and demonstrated a consistent negative effect on cell growth of all gastric cancer cell lines. Therefore, we selected a threshold as 20 for PC values of these drugs and we continued the further analysis with 52 selected drugs.
 
 ```{r include=FALSE}
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
@@ -341,7 +355,7 @@ ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLin
 
 ```
 
-```{r echo=FALSE, fig.width = 6, fig.height = 3, fig.cap = "Pearson correlation of Principle components for gastric cancer cell lines. Each color represents different gastric cancer cell line.",fig.show='hold'}
+```{r include=FALSE}
 # Create the bar plot using ggplot
 ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -357,11 +371,9 @@ ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLin
 
 ```
 
-PC1 accounted for a significant portion (86.34%) of the overall variance. We identified 678 drugs as positively contributing to the PC1 and demonstrated a consistent negative effect on cell growth of all gastric cancer cell lines. Therefore, we selected a threshold as 20 for PC values of these drugs and we continued the further analysis with 52 selected drugs.
-
 ## 3.3 Identifying top targets and mechanism of action for drugs inducing strong negative cell growth in gastric cancer cell lines
 
-With the aim of identifying the target molecules and the mechanism of actions we reduced the "prism.treat" extracting these 52 selected drugs. We created 2 barpots to better visualize the most frequent targets and mechanism of action among these drugs(Fig. 3). The first bar plot revealed that HDAC emerged as the most commonly targeted molecule among the 52 selected drugs. To be more concrete: HDAC1, HDAC2, HDAC3, HDAC4, HDAC5, HDAC6, HDAC7, HDAC8 and  HDAC9. Consequently, HDAC inhibition was identified as the dominant mechanism of action among the selected drugs.
+With the aim of identifying the target molecules and the mechanism of actions we reduced the "prism.treat" extracting these 52 selected drugs. We created 2 barpots to better visualize the most frequent targets and mechanism of action among these drugs(Fig. 2). The first bar plot revealed that HDAC emerged as the most commonly targeted molecule among the 52 selected drugs. To be more concrete: *HDAC1-HDAC9.* Consequently, HDAC inhibition was identified as the dominant mechanism of action among the selected drugs.
 
 ```{r include=FALSE}
 pc1_selected_drugs <- rownames(pca_values_gastric_cleaned_treatments_t)[pca_values_gastric_cleaned_treatments_t[, "PC1"] > 20]
@@ -437,7 +449,7 @@ print(bar_plot_moa)
 
 ## 3.4 Exploring the Correlation Between HDAC Inhibitor Concentration and Gastric Cancer Cell Growth
 
-Through our investigation, we identified six HDAC inhibitors that exhibited strong inhibitory effects on cell growth. To gain deeper insights into the relationship between drug concentration and drug response, we calculated the correlation between these two factors. To facilitate this analysis, we extracted the relevant information for these six treatments, including their respective concentrations and their effects on cell growth in gastric cancer cell lines. We were able to perform correlation calculations for each cell line separately. To visualize the results, we created a heatmap(Fig. 4). The heatmap highlighted a robust negative correlation between the concentration of the HDAC inhibitors and cell growth. In other words, as the dosage of the inhibitors increased, the drug influence on the cell growth became stronger, leading to a more pronounced negative impact.
+Through our investigation, we identified six HDAC inhibitors that exhibited strong inhibitory effects on cell growth. To gain deeper insights into the relationship between drug concentration and drug response, we calculated the correlation between these two factors. To facilitate this analysis, we extracted the relevant information for these six treatments, including their respective concentrations and their effects on cell growth in gastric cancer cell lines. We were able to perform correlation calculations for each cell line separately. To visualize the results, we created a heatmap(Fig. 3). The heatmap highlighted a robust negative correlation between the concentration of the HDAC inhibitors and cell growth. In other words, as the dosage of the inhibitors increased, the drug influence on the cell growth became stronger, leading to a more pronounced negative impact.
 
 ```{r include=FALSE}
 HDAC_inhibitor_v <- subset(prism_treat_new, moa == "HDAC inhibitor")
@@ -568,11 +580,154 @@ heatmap.2(correlation_matrix,
           key.title = "Color key") 
 ```
 
-## 3.5 Cell lines of different cancer types form different clusters based on their drug response and gene expression
+## 3.5 Drug responses in ACH-000948: Focus on HDAC inhibitors
+
+In our previous result in the section fold change analysis (see. 3.1), we identified that the majority of gastric cancer cell lines had a fold change below 1, indicating a greater effect with oncological treatments. Our aim was to build upon these earlier findings by conducting a more detailed investigation into these cell lines, with a particular emphasis on the potential effects of HDAC-inhibitor treatments. Given that HDAC-inhibitors are currently used as drugs for hematologic malignancies, they present potential oncology candidates for repurposing as treatments for gastric cancer.So, we selected randomly the cell line ACH-000948 for detailed analysis due to its average performance in terms of fold change (bellow 1). We identified the most efficient treatments for this cell line by setting a response threshold. Our analysis revealed that out of all treatments, only 51 demonstrated this level of efficiency on the cell line. Of these, 35 treatments aligned with the treatments identified in the first Principal Component (PC1) from the PCA conducted earlier (see. 3.2). This suggests a significant overlap between highly efficient treatments and the PC1 treatments. Furthermore, as mention before we sought to determine if any of the selected treatments coincided with the six HDAC- inhibitors treatments, previously identified as potential target drugs. Remarkably, four out of the six HDAC treatments were among the most efficient treatments for the selected cell line, reinforcing the notion of HDAC as a potential target for drug repurposing in gastric cancer. The subsequent boxplot comparison (Fig. 4) of the response to these four HDAC-inhibitors versus the other effective treatments revealed that the median line for the HDAC-inhibitors was lower (indicating a more negative response) compared to the rest of the treatments. This observation suggests a superior efficacy of the HDAC-inhibitor treatments compared to the other treatments, thereby reinforcing the hypothesis mentioned in section 3.2 above.
+
+```{r include=FALSE, message=FALSE}
+# PCA1 Treatments 
+treatments_1pca <- c(
+"BRD-A28467416-002-01-0::10::HTS002",
+"BRD-A28970875-300-04-9::10::HTS002",
+"BRD-A66419424-001-02-4::10::HTS002",
+"BRD-A68969091-001-12-7::10.2913::HTS002",
+"BRD-K00535541-001-06-3::10::HTS002",
+"BRD-K01683783-001-02-6::10::HTS002",
+"BRD-K06426971-001-02-7::10::HTS002",
+"BRD-K07955840-001-02-3::10::HTS002",
+"BRD-K08109215-001-06-4::10::HTS002",
+"BRD-K08799216-001-05-3::10::HTS002",
+"BRD-K09443272-001-03-3::10::HTS002",
+"BRD-K12502280-001-08-0::10::HTS002",
+"BRD-K12787259-001-04-3::10::HTS002",
+"BRD-K12867552-001-04-7::10::HTS002",
+"BRD-K13167095-001-02-9::10::HTS002",
+"BRD-K13662825-001-07-5::10::HTS002",
+"BRD-K13810148-311-03-2::10::HTS002",
+"BRD-K17203476-001-01-9::10::HTS002",
+"BRD-K17705806-003-04-4::10::HTS002",
+"BRD-K17743125-001-08-4::10::HTS002",
+"BRD-K19034817-001-01-4::10::HTS002",
+"BRD-K20605374-001-05-4::10::HTS002",
+"BRD-K21361524-001-01-1::10::HTS002",
+"BRD-K23190681-001-01-1::10::HTS002",
+"BRD-K31866293-001-01-6::10::HTS002",
+"BRD-K32501161-300-06-2::10::HTS002",
+"BRD-K35329391-334-01-7::10::HTS002",
+"BRD-K36529613-001-02-6::10::HTS002",
+"BRD-K39484304-001-16-5::10::HTS002",
+"BRD-K44227013-001-06-4::10::HTS002",
+"BRD-K51791723-003-01-7::10::HTS002",
+"BRD-K51911221-001-01-2::10::HTS002",
+"BRD-K53417444-003-03-1::10::HTS002",
+"BRD-K53561341-001-07-5::10::HTS002",
+"BRD-K54395039-001-01-7::10::HTS002",
+"BRD-K56957086-001-06-3::10::HTS002",
+"BRD-K57169635-001-04-5::10::HTS002",
+"BRD-K60446698-001-01-2::10::HTS002",
+"BRD-K61397605-001-03-4::10::HTS002",
+"BRD-K64881305-001-03-7::10::HTS002",
+"BRD-K68532323-003-02-8::10::HTS002",
+"BRD-K71467466-001-02-3::10::HTS002",
+"BRD-K72951360-001-01-4::10::HTS002",
+"BRD-K73982490-001-02-9::10::HTS002",
+"BRD-K77841042-001-14-1::10::HTS002",
+"BRD-K78055238-001-01-8::10::HTS002",
+"BRD-K78567475-001-01-4::10::HTS002",
+"BRD-K78659596-001-03-9::10::HTS002",
+"BRD-K83988098-003-03-4::10::HTS002",
+"BRD-K86525559-001-07-8::10.0868::HTS002",
+"BRD-K87124298-001-03-4::10::HTS002",
+"BRD-K90497590-001-04-2::10::HTS002",
+"BRD-K94485812-001-02-9::10.2094::HTS002",
+"BRD-K96104201-001-01-5::10::HTS002",
+"BRD-K99475619-001-01-2::10::HTS002") 
+
+
+
+
+
+hdac_treatments<- c(
+"BRD-K12867552-001-04-7::10::HTS002", 
+"BRD-K13167095-001-02-9::10::HTS002", 
+"BRD-K13810148-311-03-2::10::HTS002", 
+"BRD-K17743125-001-08-4::10::HTS002", 
+"BRD-K56957086-001-06-3::10::HTS002", 
+"BRD-K61397605-001-03-4::10::HTS002")
+
+cell_line_948 <- "ACH-000948"
+
+# Assuming the cell line names are in the row names of your data frame
+cell_line_row_948 <- prism_gastric_cleaned_treatments[cell_line_948, ]
+
+# Now, 'cell_line_row_948' is a named vector where the names are the treatments
+# and the values are the responses
+
+# Convert the data frame row to a numeric vector
+cell_line_values_948 <- as.numeric(cell_line_row_948)
+
+# Assign treatment names to the numeric vector
+names(cell_line_values_948) <- colnames(cell_line_row_948)
+
+# Filter the treatments based on the response
+cell_line_values_filtered_948 <- cell_line_values_948[cell_line_values_948 <= -7]
+
+# Create a bar plot with the filtered data
+plot20 <- barplot(cell_line_values_filtered_948, 
+        main = paste("Treatment responses for", cell_line_948 ), 
+        xlab = "Treatments", 
+        ylab = "Responses", 
+        las = 2,   # makes the x-axis labels vertical
+        names.arg = "", # hides the x-axis labels
+        col = "lightpink") # changes the color of the bars to rosa
+
+
+# Find common treatments
+common_treatments_948 <- intersect(names(cell_line_values_filtered_948), treatments_1pca)
+
+
+# Find common treatments
+common_treatments_hdac_948 <- intersect(names(cell_line_values_filtered_948), hdac_treatments)
+
+
+# Convert the named vector to a data frame
+cell_line_df_948 <- data.frame(treatment = names(cell_line_values_filtered_948),
+                           response = as.numeric(cell_line_values_filtered_948))
+
+# Define the treatments of interest
+treatments_of_interest_948 <- c("BRD-K13167095-001-02-9::10::HTS002", "BRD-K13810148-311-03-2::10::HTS002", "BRD-K56957086-001-06-3::10::HTS002", "BRD-K61397605-001-03-4::10::HTS002")
+
+# Add a new column to distinguish between the treatments of interest and the rest
+cell_line_df_948$group <- ifelse(cell_line_df_948$treatment %in% treatments_of_interest_948, 
+                             "HDAC-Inhibitors", "Rest of Treatments")
+
+# Now, create a boxplot to compare the distribution of responses
+library(ggplot2)
+plot15 <- ggplot(cell_line_df_948, aes(x = group, y = response)) +
+  geom_boxplot(fill = "lightpink") +
+  labs(x = "Group", y = "Response", 
+       title = "Comparison of Responses: HDAC-Inhibitors vs. Rest of Treatments") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+
+```{r echo=FALSE,message=FALSE, out.width = "40%", out.height = "40%", fig.cap="Boxplot Comparison of HDAC Inhibitors and Non-HDAC Inhibitors Treatments: Efficiency Analysis in Gastric Cancer Cell Line ACH-000948", fig.show='hold'}
+library(ggplot2)
+ggplot(cell_line_df_948, aes(x = group, y = response)) +
+  geom_boxplot(fill = "lightpink") +
+  labs(x = "Group", y = "Response", 
+       title = "Comparison of Responses: HDAC-Inhibitors vs. Rest of Treatments") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## 3.6 Cell lines of different cancer types form different clusters based on their drug response and gene expression
 
 To analyze the similarities and differences regarding drug response and gene expression among cell lines, PCA and k-means clustering were performed. To find the optimal amount of clusters, silhouette and elbow method were applied(SM: Fig. 13 and 14).The log fold change values from the "prism" dataset and TPM values from the "prism.exp" dataset were used, which contained data from cell lines representing five different cancer types: gastric, breast, bone, liver, and kidney.
 
-The PCA scatter plot of drug response is showing similar drug response patterns among all of the examined cancer subtypes (Fig. 5). Most of the cell lines formed one cohesive cluster, which can be further divided into smaller clusters by applying k-means clustering. Notably, these similarities in drug response emerge, even when analyzing drugs with high variance. In other words, these cell lines exhibit similar responses to the drugs in terms of cell growth, independently of the particular cancer subtype. On the other side, the PCA scatter plot of gene expression revealed that cell lines of the same cancer type tend to cluster together, indicating similarities in their gene expression profiles (Fig. 6). However, there were noticeable differences observed within certain cancer types, such as liver and bone cancer cell lines, resulting in a broader distribution in the scatter plot. Furthermore gastric and breast cancer cluster extremely together, forming their own clusters independently of the applied method to find the optimal amount of clusters (SM: Fig. 14), which indicates a strong similarity of gene expression. 
+The PCA scatter plot of drug response is showing similar drug response patterns among all of the examined cancer subtypes (SM: Fig. 12). Most of the cell lines formed one cohesive cluster, which can be further divided into smaller clusters by applying k-means clustering. Notably, these similarities in drug response emerge, even when analyzing drugs with high variance. In other words, these cell lines exhibit similar responses to the drugs in terms of cell growth, independently of the particular cancer subtype. On the other side, the PCA scatter plot of gene expression revealed that cell lines of the same cancer type tend to cluster together, indicating similarities in their gene expression profiles (Fig. 5). However, there were noticeable differences observed within certain cancer types, such as liver and bone cancer cell lines, resulting in a broader distribution in the scatter plot. Furthermore gastric and breast cancer cluster extremely together, forming their own clusters independently of the applied method to find the optimal amount of clusters (SM: Fig. 14), which indicates a strong similarity of gene expression. 
 
 ```{r include=FALSE}
 
@@ -761,11 +916,6 @@ combined_plot2 <- plot_grid(plot3, plot4, labels = c("A", "B"), ncol = 2)
 combined_plot2 <- cowplot::plot_grid(plot3, plot4, labels = c("A", "B"), ncol = 2,
                                      rel_widths = c(0.5, 0.5), rel_heights = c(0.5, 0.5))  # Adjust the width and height as needed
 combined_plot2
-```
-
-```{r echo=FALSE, warning=FALSE, out.height="50%", out.width="50%", fig.cap = "(Left): PCA scatter plot for drug response of 5 different cancer subtypes. Each subtype is represented by a different color. Each dot corresponds to a cancer cell line. (Right): K - mean clustering applied for identifying different clusters", fig.show='hold'}
-plot3
-plot4
 ```
 
 ```{r include=FALSE}
@@ -1007,9 +1157,9 @@ plot6
 
 ```
 
-## 3.6 Comparative Analysis: Shared Targets and Mechanisms of Action in Gastric and Breast Cancer
+## 3.7 Comparative Analysis: Shared Targets and Mechanisms of Action in Gastric and Breast Cancer
 
-In order to validate the observed clustering between gene expression patterns of gastric cancer and breast cancer and their similar drug response, we conducted further analysis to substantiate the significance of this finding. To achieve this, we performed PCA exclusively on the "prism" data set, focusing only on breast cancer cell lines, with the objective of identifying key targets and potential mechanisms of action and to compare them with gastric cancer. The methods applied in this analysis were consistent with the approach explained in the initial sections of the report (see 2.3). Subsequently, we generated two bar plots which visualize the most commonly observed targets and mechanism of actions (Fig. 7). It is important to note that this analysis focused exclusively on drugs that made the most substantial contributions to PC1. Remarkably, our analysis revealed the presence of three specific and noteworthy targets that are shared between gastric cancer and breast cancer subtypes: EGFR, HDAC1, and mTOR. Additionally, upon examining the second histogram, we observed a convergence of mechanisms of action. Specifically, HDAC inhibitors and FLT3 inhibitors emerged as the most frequent mechanisms common in both cancer subtypes. These findings demonstrate that breast and gastric cancer exhibit remarkable similarities in terms of shared targets, as well as common mechanisms of action. The importance of this result will be further observed in the discussion part.
+In order to validate the observed clustering between gene expression patterns of gastric cancer and breast cancer and their similar drug response, we conducted further analysis to substantiate the significance of this finding. To achieve this, we performed PCA exclusively on the "prism" data set, focusing only on breast cancer cell lines, with the objective of identifying key targets and potential mechanisms of action and to compare them with gastric cancer. The methods applied in this analysis were consistent with the approach explained in the initial sections of the report (see 2.3). Subsequently, we generated two bar plots which visualize the most commonly observed targets and mechanism of actions (Fig. 6). It is important to note that this analysis focused exclusively on drugs that made the most substantial contributions to PC1. Remarkably, our analysis revealed the presence of three specific and noteworthy targets that are shared between gastric cancer and breast cancer subtypes: EGFR, HDAC1, and mTOR. Additionally, upon examining the second histogram, we observed a convergence of mechanisms of action. Specifically, HDAC inhibitors and FLT3 inhibitors emerged as the most frequent mechanisms common in both cancer subtypes. These findings demonstrate that breast and gastric cancer exhibit remarkable similarities in terms of shared targets, as well as common mechanisms of action. The importance of this result will be further observed in the discussion part.
 
 ```{r include=FALSE}
 prism_breast <- prism[rownames(prism) %in% breast.cancer.celllines.v, ]
@@ -1144,13 +1294,13 @@ bar_plot_breast
 bar_plot_moa_breast
 ```
 
-## 3.7 Analyzing the correlation between drugs and their targets
+## 3.8 Analyzing the correlation between drugs and their targets
 
-Correlations between drug response and gene expression or CNVs of drug targets in gastric cancer cells identified two drug-gene pairs for further analysis: dacinostat(BRD-K56957086-001-06-3)/HDAC1 and GZD824 (BRD-K35329391-334-01-7)/BCR. These pairs demonstrated strong correlations between the drug response and both the gene expression and CNVs of their respective targets (SM: Fig. ).
+Correlations between drug response and gene expression or CNVs of drug targets in gastric cancer cells identified two drug-gene pairs for further analysis: dacinostat(BRD-K56957086-001-06-3)/*HDAC1* and GZD824 (BRD-K35329391-334-01-7)/BCR. These pairs demonstrated strong correlations between the drug response and both the gene expression and CNVs of their respective targets (SM: Fig. 20).
 
-As before mentioned HDAC inhibitors seem to be a promising group of repurposing drugs for gastric cancer as the graphs depicting the drug response of dacinostat against HDAC1 gene expression or CNVs in gastric cancer cell lines confirm (Fig. 8). The reduction of cell growth is dose-dependent of dacinostat since the dots of lower doses are clustered around zero, meaning no effect, while increasing the dose lead to a reduction of cell growth in all gastric cancer cell lines (Fig. 8). Same can be observed when looking at the scatter plots visualizing the relationship between the drug response of GZD824 and the gene expression or the CNVs of its target BCR (Fig. 9). Compared to HDAC inhibitor a much higher concentration is needed so the effect of GZD824  is guaranteed since in some cell lines the second highest dose of 2.5 mM has nearly no effect on cell growth. 
+As before mentioned HDAC inhibitors seem to be a promising group of repurposing drugs for gastric cancer as the graphs depicting the drug response of dacinostat against *HDAC1* gene expression or CNVs in gastric cancer cell lines confirm (Fig. 7). The reduction of cell growth is dose-dependent of dacinostat since the dots of lower doses are clustered around zero, meaning no effect, while increasing the dose lead to a reduction of cell growth in all gastric cancer cell lines (Fig. 7). Same can be observed when looking at the scatter plots visualizing the relationship between the drug response of GZD824 and the gene expression or the CNVs of its target BCR (Fig. 8). Compared to HDAC inhibitor a much higher concentration is needed so the effect of GZD824  is guaranteed since in some cell lines the second highest dose of 2.5 mM has nearly no effect on cell growth. 
 
-The correlations between drug response of dacinostat and HDAC1 gene expression vary when increasing the drug dosage (Fig. 8). In fact, there is no consistent pattern or trend in the correlations as the dose of dacinostat increases. Contrarily, as the drug dose of dacinostat increases, the correlations with HDAC1 CNVs consistently increase. This finding supports the hypothesis that the drug's effect in gastric cancer cells is indeed linked to the CNVs of its target gene, HDAC1. For very low dosages, the overall effect on the cell lines is minimal, likely due to the fact that the effective dose of the drug is not reached, thereby hindering a clear expression of the correlation between drug response and HDAC1 CNVs. Similar observations can be made when examining the change of the correlation between the drug response of GZD824 and the gene expression or the CNVs of its target BCR when increasing the dosage of the drug (Fig. 9). However the drug response of GZD824 and the CNVs of BCR in gastric cancer cells show a negative correlation for all dosages of the drug. Lower CNVs suggest a weaker reduction in cell growth, while higher CNVs indicate an increased effectiveness of the drug in reducing cell growth in gastric cancer cells. 
+The correlations between drug response of dacinostat and *HDAC1* gene expression vary when increasing the drug dosage (Fig. 7). In fact, there is no consistent pattern or trend in the correlations as the dose of dacinostat increases. Contrarily, as the drug dose of dacinostat increases, the correlations with *HDAC1* CNVs consistently increase. This finding supports the hypothesis that the drug's effect in gastric cancer cells is indeed linked to the CNVs of its target gene, *HDAC1*. For very low dosages, the overall effect on the cell lines is minimal, likely due to the fact that the effective dose of the drug is not reached, thereby hindering a clear expression of the correlation between drug response and *HDAC1* CNVs. Similar observations can be made when examining the change of the correlation between the drug response of GZD824 and the gene expression or the CNVs of its target BCR when increasing the dosage of the drug (Fig. 8). However the drug response of GZD824 and the CNVs of BCR in gastric cancer cells show a negative correlation for all dosages of the drug. Lower CNVs suggest a weaker reduction in cell growth, while higher CNVs indicate an increased effectiveness of the drug in reducing cell growth in gastric cancer cells. 
 
 ```{r include=FALSE}
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
@@ -1365,9 +1515,9 @@ legend2 <- legend(legend_x2, legend_y2, legend = c("0.00061034", "0.0024414", "0
 
 \newpage
 
-## 3.8 Creating prediction models for the drug response of two specific drugs based on the CNVs of their target gene
+## 3.9 Creating prediction models for the drug response of two specific drugs based on the CNVs of their target gene
 
-Since the correlations of both drugs with their target CNVs were higher compared to the correlation between drug response and target gene expression and also showed a constant increase when increasing the dosage, linear regression was applied to further analyze the relationship between the drug response of dacinostat and GZD824 and the CNVs of HDAC1 and BCR in gastric cancer cells (SM: Fig.). The objective is to develop a prediction model for estimating the drug response of a specific drug, using the copy number variations (CNVs) of the drug's target gene as the independent variable and perform linear regression. The models were created only for the highest dosage of the drugs namely 10 mM. The model of dacinostat has a multiple R-squared of 0.2766, indicating that approximately 27.66% of the variance of the drug response is explained by the model (Fig. 10 right). The F-statistic (5.736) is significant, indicating that the model as a whole is statistically significant. The residual standard error is 0.8758, which represents the average deviation of the observed values from the predicted values. The model of GZD824 explains approximately 46.77% of the variance of the drug response, as indicated by the multiple R-squared value of 0.4677 (Fig.10 left). The F-statistic is 13.18, with a corresponding p-value of 0.002468, suggesting that the model as a whole is statistically significant. The residual standard error is 0.5696, representing the average deviation of the observed values from the predicted values. The R-squared values of both prediction models are not close to one, indicating that the CNVs do not have a very strong predictive power since the linear regression models explain just a moderate amount of the variance of the drug responses. When involving other cancer types in the linear regression analysis, the result states for both drug-genes pairs that the relationship between the drug response and CNVs of the drugs target is not significant, indicated by high p-values of the F-statistics (SM: Fig.).
+Since the correlations of both drugs with their target CNVs were higher compared to the correlation between drug response and target gene expression and also showed a constant increase when increasing the dosage, linear regression was applied to further analyze the relationship between the drug response of dacinostat and GZD824 and the CNVs of *HDAC1* and BCR in gastric cancer cells (SM: Fig.20). The objective is to develop a prediction model for estimating the drug response of a specific drug, using the copy number variations (CNVs) of the drug's target gene as the independent variable and perform linear regression. The models were created only for the highest dosage of the drugs namely 10 mM. The model of dacinostat has a multiple R-squared of 0.2766, indicating that approximately 27.66% of the variance of the drug response is explained by the model (Fig. 9 (right)). The F-statistic (5.736) is significant, indicating that the model as a whole is statistically significant. The residual standard error is 0.8758, which represents the average deviation of the observed values from the predicted values. The model of GZD824 explains approximately 46.77% of the variance of the drug response, as indicated by the multiple R-squared value of 0.4677 (Fig.9(left)). The F-statistic is 13.18, with a corresponding p-value of 0.002468, suggesting that the model as a whole is statistically significant. The residual standard error is 0.5696, representing the average deviation of the observed values from the predicted values. The R-squared values of both prediction models are not close to one, indicating that the CNVs do not have a very strong predictive power since the linear regression models explain just a moderate amount of the variance of the drug responses. When involving other cancer types in the linear regression analysis, the result states for both drug-genes pairs that the relationship between the drug response and CNVs of the drugs target is not significant, indicated by high p-values of the F-statistics (SM: Fig.21).
 
 ```{r include=FALSE}
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
@@ -1453,163 +1603,9 @@ plot11
 plot12
 ```
 
-## 3.9 Drug responses in ACH-000948: Focus on HDAC inhibitors)
-
-In our previous result in the section fold change analysis (see.), we identified that the majority of gastric cancer cell lines had a fold change below 1, indicating a greater effect with oncological treatments. Our aim was to build upon these earlier findings by conducting a more detailed investigation into these cell lines, with a particular emphasis on the potential effects of HDAC-inhibitor treatments. Given that HDAC-inhibitors are currently used as drugs for hematologic malignancies, they present potential oncology candidates for repurposing as treatments for gastric cancer.So, we selected randomly the cell line ACH-000948 for detailed analysis due to its average performance in terms of fold change (bellow 1). We identified the most efficient treatments for this cell line by setting a response threshold. Our analysis revealed that out of all treatments, only 51 demonstrated this level of efficiency on the cell line. Of these, 35 treatments aligned with the treatments identified in the first Principal Component (PC1) from the PCA conducted earlier (see.). This suggests a significant overlap between highly efficient treatments and the PC1 treatments. Furthermore, as mention before we sought to determine if any of the selected treatments coincided with the six HDAC- inhibitors treatments, previously identified as potential target drugs. Remarkably, four out of the six HDAC treatments were among the most efficient treatments for the selected cell line, reinforcing the notion of HDAC as a potential target for drug repurposing in gastric cancer. The subsequent boxplot comparison (Fig.) of the response to these four HDAC-inhibitors versus the other effective treatments revealed that the median line for the HDAC-inhibitors was lower (indicating a more negative response) compared to the rest of the treatments. This observation suggests a superior efficacy of the HDAC-inhibitor treatments compared to the other treatments, thereby reinforcing the hypothesis mentioned in section xxx above.
-
-```{r include=FALSE, message=FALSE}
-# PCA1 Treatments 
-treatments_1pca <- c(
-"BRD-A28467416-002-01-0::10::HTS002",
-"BRD-A28970875-300-04-9::10::HTS002",
-"BRD-A66419424-001-02-4::10::HTS002",
-"BRD-A68969091-001-12-7::10.2913::HTS002",
-"BRD-K00535541-001-06-3::10::HTS002",
-"BRD-K01683783-001-02-6::10::HTS002",
-"BRD-K06426971-001-02-7::10::HTS002",
-"BRD-K07955840-001-02-3::10::HTS002",
-"BRD-K08109215-001-06-4::10::HTS002",
-"BRD-K08799216-001-05-3::10::HTS002",
-"BRD-K09443272-001-03-3::10::HTS002",
-"BRD-K12502280-001-08-0::10::HTS002",
-"BRD-K12787259-001-04-3::10::HTS002",
-"BRD-K12867552-001-04-7::10::HTS002",
-"BRD-K13167095-001-02-9::10::HTS002",
-"BRD-K13662825-001-07-5::10::HTS002",
-"BRD-K13810148-311-03-2::10::HTS002",
-"BRD-K17203476-001-01-9::10::HTS002",
-"BRD-K17705806-003-04-4::10::HTS002",
-"BRD-K17743125-001-08-4::10::HTS002",
-"BRD-K19034817-001-01-4::10::HTS002",
-"BRD-K20605374-001-05-4::10::HTS002",
-"BRD-K21361524-001-01-1::10::HTS002",
-"BRD-K23190681-001-01-1::10::HTS002",
-"BRD-K31866293-001-01-6::10::HTS002",
-"BRD-K32501161-300-06-2::10::HTS002",
-"BRD-K35329391-334-01-7::10::HTS002",
-"BRD-K36529613-001-02-6::10::HTS002",
-"BRD-K39484304-001-16-5::10::HTS002",
-"BRD-K44227013-001-06-4::10::HTS002",
-"BRD-K51791723-003-01-7::10::HTS002",
-"BRD-K51911221-001-01-2::10::HTS002",
-"BRD-K53417444-003-03-1::10::HTS002",
-"BRD-K53561341-001-07-5::10::HTS002",
-"BRD-K54395039-001-01-7::10::HTS002",
-"BRD-K56957086-001-06-3::10::HTS002",
-"BRD-K57169635-001-04-5::10::HTS002",
-"BRD-K60446698-001-01-2::10::HTS002",
-"BRD-K61397605-001-03-4::10::HTS002",
-"BRD-K64881305-001-03-7::10::HTS002",
-"BRD-K68532323-003-02-8::10::HTS002",
-"BRD-K71467466-001-02-3::10::HTS002",
-"BRD-K72951360-001-01-4::10::HTS002",
-"BRD-K73982490-001-02-9::10::HTS002",
-"BRD-K77841042-001-14-1::10::HTS002",
-"BRD-K78055238-001-01-8::10::HTS002",
-"BRD-K78567475-001-01-4::10::HTS002",
-"BRD-K78659596-001-03-9::10::HTS002",
-"BRD-K83988098-003-03-4::10::HTS002",
-"BRD-K86525559-001-07-8::10.0868::HTS002",
-"BRD-K87124298-001-03-4::10::HTS002",
-"BRD-K90497590-001-04-2::10::HTS002",
-"BRD-K94485812-001-02-9::10.2094::HTS002",
-"BRD-K96104201-001-01-5::10::HTS002",
-"BRD-K99475619-001-01-2::10::HTS002") 
-
-
-
-
-
-hdac_treatments<- c(
-"BRD-K12867552-001-04-7::10::HTS002", 
-"BRD-K13167095-001-02-9::10::HTS002", 
-"BRD-K13810148-311-03-2::10::HTS002", 
-"BRD-K17743125-001-08-4::10::HTS002", 
-"BRD-K56957086-001-06-3::10::HTS002", 
-"BRD-K61397605-001-03-4::10::HTS002")
-
-cell_line_948 <- "ACH-000948"
-
-# Assuming the cell line names are in the row names of your data frame
-cell_line_row_948 <- prism_gastric_cleaned_treatments[cell_line_948, ]
-
-# Now, 'cell_line_row_948' is a named vector where the names are the treatments
-# and the values are the responses
-
-# Convert the data frame row to a numeric vector
-cell_line_values_948 <- as.numeric(cell_line_row_948)
-
-# Assign treatment names to the numeric vector
-names(cell_line_values_948) <- colnames(cell_line_row_948)
-
-# Filter the treatments based on the response
-cell_line_values_filtered_948 <- cell_line_values_948[cell_line_values_948 <= -7]
-
-# Create a bar plot with the filtered data
-plot20 <- barplot(cell_line_values_filtered_948, 
-        main = paste("Treatment responses for", cell_line_948 ), 
-        xlab = "Treatments", 
-        ylab = "Responses", 
-        las = 2,   # makes the x-axis labels vertical
-        names.arg = "", # hides the x-axis labels
-        col = "lightpink") # changes the color of the bars to rosa
-
-
-# Find common treatments
-common_treatments_948 <- intersect(names(cell_line_values_filtered_948), treatments_1pca)
-
-
-# Find common treatments
-common_treatments_hdac_948 <- intersect(names(cell_line_values_filtered_948), hdac_treatments)
-
-
-# Convert the named vector to a data frame
-cell_line_df_948 <- data.frame(treatment = names(cell_line_values_filtered_948),
-                           response = as.numeric(cell_line_values_filtered_948))
-
-# Define the treatments of interest
-treatments_of_interest_948 <- c("BRD-K13167095-001-02-9::10::HTS002", "BRD-K13810148-311-03-2::10::HTS002", "BRD-K56957086-001-06-3::10::HTS002", "BRD-K61397605-001-03-4::10::HTS002")
-
-# Add a new column to distinguish between the treatments of interest and the rest
-cell_line_df_948$group <- ifelse(cell_line_df_948$treatment %in% treatments_of_interest_948, 
-                             "HDAC-Inhibitors", "Rest of Treatments")
-
-# Now, create a boxplot to compare the distribution of responses
-library(ggplot2)
-plot15 <- ggplot(cell_line_df_948, aes(x = group, y = response)) +
-  geom_boxplot(fill = "lightpink") +
-  labs(x = "Group", y = "Response", 
-       title = "Comparison of Responses: HDAC-Inhibitors vs. Rest of Treatments") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-
-```
-
-```{r echo=FALSE,message=FALSE, out.width = "40%", out.height = "40%", fig.cap="(Left):Representation of Highly Efficient Treatments for ACH-000948 (Right):Boxplot Comparison of HDAC Inhibitors and Non-HDAC Inhibitors Treatments: Efficiency Analysis in Gastric Cancer Cell Line ACH-000948", fig.show='hold'}
-barplot(cell_line_values_filtered_948, 
-        main = paste("Treatment responses for cell_line_948"), 
-        xlab = "Treatments", 
-        ylab = "Responses", 
-        las = 2,   # makes the x-axis labels vertical
-        names.arg = "", # hides the x-axis labels
-        col = "lightpink") # changes the color of the bars to rosa
-# Now, create a boxplot to compare the distribution of responses
-library(ggplot2)
-ggplot(cell_line_df_948, aes(x = group, y = response)) +
-  geom_boxplot(fill = "lightpink") +
-  labs(x = "Group", y = "Response", 
-       title = "Comparison of Responses: HDAC-Inhibitors vs. Rest of Treatments") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
-
 # **Discussion**
 
-Understanding and analyzing the drug response of existing drugs in cancer cell lines especially in gastric cancer cell lines to identify possible targets and metabolic pathways is important for drug-repurposing and to identify effective treatments for cancer. In our preliminary analysis using fold changes and t-tests, we found that oncological treatments were generally more effective in inhibiting cell growth in all cancer cell lines. This observation highlighted the potential for reusability of oncological drugs in different cancer types and subtypes and different by which they were created. This conclusion led us to the following fold-change analysis, in which we analyzed non-oncology treatments in relation to oncology-treatments, specifically excluding gastric oncological treatments among only gastric cancer cells.
-
-Most gastric cancer cell lines responded more effectively to oncological treatments, even those not specifically designed for gastric cancer, which confirmed our theory.
-There were also some outlier cases that showed greater efficacy with non-oncology drugs. Although our study focused primarily on drug repurposing within oncology, these results point to promising avenues for future research exploring the use of non-oncology treatments and studying the unique characteristics of these atypical cell lines. Through our focused analysis performing PCA and Pearson correlation, we analyzed the relationships between drugs and cell growth in gastric cancer cell lines. By performing the analysis we selected specific drugs, which inhibit the cell growth and gained insights into their potential targets and molecular pathways. According to our results, the majority of the targets of the selected drugs were subtypes of the HDAC enzyme family, followed by MTOR and EGFR. Moreover, the drugs which inhibit HDAC did have a strong negative effect on cell growth of gastric cancer cell lines. Furthermore, we wanted to investigate the correlation between drug concentration and drug response in the context of gastric cancer, specifically focusing on HDAC inhibitors. Our analysis revealed a notable negative correlation between drug concentration and cell growth, indicating that higher drug concentrations corresponded to a stronger influence on inhibiting cell growth. This analysis provides valuable insights into the potential efficacy of HDAC inhibitors in gastric cancer and underscores the importance of dosage considerations in developing more effective therapeutic approaches for treating gastric cancer. This was also verified in the further analysis using the results of the fold change, where it was corroborated that among a gastric cancer cell line that had a response in average ratio of fold change value (best effect with oncology drugs), 4 of the treatments with the best efficiency corresponded to HDAC inhibitors. Furthermore, our analysis revealed intriguing similarities between gastric cancer and breast cancer, including shared targets (EGFR, HDAC1, and mTOR) and mechanisms of action (HDAC inhibitors). Specifically, we investigated the HDAC inhibitor, which is depicted in the barplots analysis for both cancer subtypes. This observation aligns with existing scientific literature, which highlights the potential of HDAC inhibitors to reduce cell growth through their impact on critical processes such as EMT, ER reactivation, and also their ability to induce programmed cell death in breast cancer cells. This shared mechanism of action highlights the potential for repurposing HDAC inhibitors as targeted therapies that could benefit patients with both gastric and breast cancer.To investigate the relationship between a drug and its target gene in gastric cancer cells, we examined the the drug response in relationship to the gene expression or CNVs. This analysis identified several drug-gene pairs, which were then subjected to further analysis using linear regression. By employing linear regression, prediction models were created to estimate the drug response based on the gene expression or the CNVs of the target gene. Since the whole analysis was based on gastric cancer which represents a small group of cell lines with just approximately 17 cell lines in the data set, the limitations of the achieved results should be kept in mind. For example the correlations between dacinostat and GZD824 and the gene expression of their target genes did show inconsistency when increasing the drug doses, which could indicate that the high correlations for some dosages were more or less coincidence and are not proving a relationship between drug response and gene expression. These findings are based on gene expression and CNVs in the cancer cells but no control group for this data was given, meaning no insight was given on how the gene expression or the CNVs differ generally from cells without cancer. The limited amount of tested gastric cancer cell lines and missing information about the gene expression and the CNVs in cells without cancer make it difficult to conclude concrete facts out of this analysis. Though the idea of analyzing the relationship between the tested drug in drug repurposing and its original target gene could be an approach to identify or exclude certain cancer types based on gene expression or CNV ´s for the application of the drug. The created prediction models for the drug response of dacinostat and GZD824 based on the CNVs of their target gene showed no strong predictive power when looking at the R-squared values. When four additional cancer types were included in the prediction model to increase the sample size for the linear regression analysis, the results yielded even lower explanatory power or R-squared value. Since the amount of data for gastric cancer cells is so little, it was not possible to check if the discrepancy occurred because these genes are only related to the drug response in gastric cancer cells or if this proves that there is no significant correlation. But since all five cancer types have in common that these two drugs reduced their cell growth, it indicates that most probably analyzing the CNVs of their target gene is not a good parameter to predict the drug response. Despite the fact that the created prediction models did not prove to have a strong predictive power, the idea of analyzing the target gene or protein in the cells for which the drug is aimed to be repurposed could be an approach to narrow the cancer types that might benefit from the drug. \newpage
+Understanding and analyzing the drug response of existing drugs in cancer cell lines especially in gastric cancer cell lines to identify possible targets and metabolic pathways is important for drug-repurposing and to identify effective treatments for cancer. In our preliminary analysis using fold changes and t-tests, we found that oncological treatments were generally more effective in inhibiting cell growth in all cancer cell lines. This observation highlighted the potential for reusability of oncological drugs in different cancer types and subtypes and different by which they were created. This conclusion led us to the following fold-change analysis, in which we analyzed non-oncology treatments in relation to oncology-treatments, specifically excluding gastric oncological treatments among only gastric cancer cells. Most gastric cancer cell lines responded more effectively to oncological treatments, fact that confirmed our theory. There were also some outlier cases that showed greater efficacy with non-oncology drugs. These results could be used for future research exploring the use of non-oncology treatments and studying the characteristics of these atypical cells. Through our focused analysis performing PCA and Pearson correlation, we selected specific drugs, which inhibit cell growth and gained insights into their potential targets and molecular pathways. According to our results, the majority of the targets of the selected drugs were subtypes of the HDAC enzyme family, followed by MTOR and EGFR. Moreover, the drugs which inhibit HDAC did have a strong negative effect on cell growth of gastric cancer cell lines. This was also verified in the further analysis using the results of the fold change, where it was corroborated that among a gastric cancer cell line that had a response in average ratio of fold change value (best effect with oncology drugs), 4 of the treatments with the best efficiency corresponded to HDAC inhibitors. Furthermore, we wanted to investigate the correlation between drug concentration and drug response in the context of gastric cancer, specifically focusing on HDAC inhibitors. Our analysis revealed a notable negative correlation between drug concentration and cell growth, indicating that higher drug concentrations corresponded to a stronger influence on inhibiting cell growth. This analysis provides valuable insights into the potential efficacy of HDAC inhibitors in gastric cancer and underscores the importance of dosage considerations in developing more effective therapeutic approaches for treating gastric cancer(@rajaselvi2023antineoplastic). Furthermore, our analysis revealed intriguing similarities between gastric cancer and breast cancer, including shared targets (*HDAC1*) and mechanisms of action (HDAC inhibitors). This observation aligns with existing scientific literature, which highlights the potential of HDAC inhibitors to reduce cell growth through their impact on critical processes such as EMT, ER reactivation, and also their ability to induce programmed cell death in breast cancer cells(@pramanik2022potential). This shared mechanism of action highlights the potential for repurposing HDAC inhibitors as targeted therapies that could benefit patients with both gastric and breast cancer. To investigate the relationship between a drug and its target gene in gastric cancer cells, we examined the the drug response and the gene expression or CNVs of its target. This analysis identified several drug-gene pairs, which were then subjected to further analysis using linear regression. By employing linear regression, prediction models were created to estimate the drug response based on the gene expression or the CNVs of the target gene. Since the whole analysis was based on gastric cancer which represents a small group of cell lines with just approximately 17 cell lines in the data set, the limitations of the achieved results should be kept in mind. For example the correlations between dacinostat and GZD824 and the gene expression of their target genes did show inconsistency when increasing the drug doses, which could indicate that the high correlations for some dosages were more or less coincidence and are not proving a relationship between drug response and gene expression. These findings are based on gene expression and CNVs in cancer cells but no control group for this data was given, meaning no insight was given on how gene expression or CNVs differ generally from cells without cancer. The created prediction models for the drug response of dacinostat and GZD824 based on the CNVs of their target gene showed no strong predictive power when looking at the R-squared values. When four additional cancer types were included in the prediction model to increase the sample size for the linear regression analysis, the results yielded even lower explanatory power or R-squared value. Since the amount of data for gastric cancer cells is so little, it was not possible to check if the discrepancy occurred because these genes are only related to the drug response in gastric cancer cells or if this proves that there is no significant correlation. But since all five cancer types have in common that these two drugs reduced their cell growth, it indicates that most probably analyzing the CNVs of their target gene is not a good parameter to predict the drug response. Despite the fact that the created prediction models did not prove to have a strong predictive power, the idea of analyzing the target gene or protein in the cells for which the drug is aimed to be repurposed, could be a benefitial approach to narrow the cancer types. \newpage
 
 # **Supplementary Materials**
 
@@ -1626,6 +1622,27 @@ plot(pca_values_gastric_cleaned_treatments[, 1], pca_values_gastric_cleaned_trea
 ```{r echo=FALSE, out.width= "50%", out.height= "50%", fig.cap=" PCA scatter plot for drug response of gastric cancer cell lines. (Left): each dot represents a cell line. (Right): Each dot corresponds to a specific drug.", fig.show='hold'}
 plot(pca_values_gastric_cleaned_treatments[, 1], pca_values_gastric_cleaned_treatments[, 2], xlab = "PC1", ylab = "PC2", main = "PCA scatter plot for drug response of gastric cancer cell lines ")
 plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2", main = "PCA scatter plot for drug response of gastric cancer cell lines")
+```
+
+```{r echo=FALSE, fig.width = 6, fig.height = 3, fig.cap = "Pearson correlation of Principle components for gastric cancer cell lines. Each color represents different gastric cancer cell line.",fig.show='hold'}
+# Create the bar plot using ggplot
+ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Pearson Correlation of Principal Components of Gastric Cancer Cell Lines",
+       x = "Principal Components",
+       y = "Pearson Correlation") +
+  scale_fill_discrete(name = "Cell Line") +
+  ylim(-1, 1) +
+  theme_minimal() +
+  theme(legend.text = element_text(size = 5),  # Adjust the size of legend text
+        legend.key.size = unit(0.3, "cm"),
+        plot.title = element_text(size = 10))
+
+```
+
+```{r echo=FALSE, warning=FALSE, out.height="50%", out.width="50%", fig.cap = "(Left): PCA scatter plot for drug response of 5 different cancer subtypes. Each subtype is represented by a different color. Each dot corresponds to a cancer cell line. (Right): K - mean clustering applied for identifying different clusters", fig.show='hold'}
+plot3
+plot4
 ```
 
 ```{r include=FALSE}
@@ -2090,8 +2107,3 @@ ggplot(data, aes(x = KDR, y = HTS002)) +
 \newpage
 
 # References
-```{r}
-
-
-```
-
