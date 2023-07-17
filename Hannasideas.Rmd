@@ -2125,7 +2125,13 @@ legend_y <- 0.5
 # Add a legend
 legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
        col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
-cor(vector, vectors)
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976", "0.03906", "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K56957086-001-06-3 '", ylab = "Correlation of drug response and CNVs of HDAC1", cex.names = 0.4)
+
 ```
 
 ```{r}
@@ -2161,7 +2167,12 @@ legend_y <- 0.5
 # Add a legend
 legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
        col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
-cor(vector, vectors)
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976",  "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K56957086-001-06-3 '", ylab = "Correlation of drug response and expression of HDAC1", cex.names = 0.4)
 ```
 
 ```{r}
@@ -2413,7 +2424,13 @@ legend_y <- 0.5
 # Add a legend
 legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
        col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
-cor(vector, vectors)
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976", "0.03906", "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K35329391-334-01-7 '", ylab = "Correlation of drug response and CNVs of BCR", cex.names = 0.4)
+
 ```
 
 ```{r}
@@ -2489,7 +2506,13 @@ legend_y <- 0.5
 # Add a legend
 legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
        col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
-cor(vector, vectors)
+
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976", "0.03906", "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K35329391-334-01-7 '", ylab = "Correlation of drug response and expression of BCR", cex.names = 0.4)
 
 ```
 

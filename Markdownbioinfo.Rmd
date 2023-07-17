@@ -34,7 +34,7 @@ View(gastric.cancer.celllines.v)
 
 ```{r}
 prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
-View (prism_gastric)
+dim(prism_gastric)
 
 
 
@@ -100,7 +100,7 @@ pheatmap(prism.achilles_gastric)
 ```{r}
 prism.snv_gastric <- prism.snv[prism.snv$DepMap_ID%in%gastric.cancer.celllines.v, ]
 prism.snv_gastric <- prism.snv_gastric[grepl("True", prism.snv_gastric$isDeleterious), ]
-View (prism.snv_gastric)
+
 
 ```
 
@@ -117,4 +117,14 @@ r.prism.cnv_g <- prism.cnv_gastric[ ,colnames(prism.cnv_gastric) %in% genes.snv_
 r.prism.achilles_g <- prism.achilles_gastric[ ,colnames(prism.achilles_gastric) %in% genes.snv_v]
 View (r.prism.achilles_g)
 
+```
+
+```{r}
+dim(prism.exp)
+dim(prism_celllines)
+dim(prism.)
+```
+
+```{r}
+?par
 ```
