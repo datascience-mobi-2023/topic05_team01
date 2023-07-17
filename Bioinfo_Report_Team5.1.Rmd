@@ -1,0 +1,2109 @@
+---
+title: "Bioinfo_Report_Team5.1.Rmd"
+output: pdf_document
+toc: false
+bibliography: topic05_team01_references.bib
+geometry: margin=1.5cm
+header-includes:
+  
+   - \usepackage{caption}
+   - \captionsetup[figure]{font=scriptsize}
+   - \usepackage{etoolbox}
+   - \newenvironment{mysize}{\fontsize{10}{12}\selectfont}{}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\vspace{2cm}
+
+\large
+
+**Data Analysis Report - Topic 5, Group 1**
+
+\vspace{1cm}
+
+**Examining HDAC inhibitors in context of gastric cancer**
+
+\vspace{1cm}
+
+Authors: Deniz Korkmazel, Hanna Friess, Evgeniya Abadhieva, Maria Paula Fuentes
+
+\vspace{1cm}
+
+Data Science Project SoSe 2023
+
+Supervisor : Carl Herrmann
+
+Tutor: Ana Luisa Costa
+
+\vspace{1cm}
+
+Deadline: 17.07.2023
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+# List of abbreviations
+
+```{r echo=FALSE, error=FALSE, message=FALSE}
+library(tibble)
+library(dplyr)
+library(knitr)
+
+abbreviations <- tribble(
+  ~Abbreviation, ~Explanation,
+  "BCR", "B cell receptor",
+  "CNV", "Copy number values",
+  "EMT", "Epithelial–mesenchymal transition",
+  "EGFR", "Epidermal Growth Factor Receptor",
+  "ER", "Estrogen receptor",
+  "FLT3", "Fms Related Receptor Tyrosine Kinase 3",
+  "HDAC", "Histone deacetylase",
+  "MTOR", "Mammalian target of rapamycin",
+  "NA", "Not available",
+  "PCR", "Pearson correlation",
+  "PC", "Principal component",
+  "PCA", "Principal Component Analysis",
+  "TPM", "Rranscripts per million"
+)
+
+abbreviations_table <- abbreviations %>%
+  arrange(Abbreviation)
+
+kable(abbreviations_table, "pipe")
+
+```
+
+\newpage
+
+# Abstract
+
+The development of effective treatments for diseases is a time-consuming and expensive process, leading to the growing application of drug repurposing as a method to discover new drugs for treating various diseases. In this report, we analyzed data on multiple drugs and their impact on cell growth in cell lines across different cancer types with a special focus on gastric cancer.In order to provide context for the analysis of drug responses across cancer cell lines, various genetic aspects were taken into account. Specifically, gene expression, CNVs, and gene knock-out scores in the cancer cell lines were observed. Fold change analysis showed that oncology drugs show a higher potential in decreasing cell growth across all cell lines. HDAC inhibitors as a subgroup of the oncological drugs turned out to be a promising group to be repurposed in gastric cancer as well as breast cancer. Searching for further similarities in gastric and breast cancer, clustering the PCA scores of gene expression across cell lines of five cancer types, led to distinct clusters of breast and gastric cancer. Finally prediction models for two promising drugs to be repurposed for gastric cancer were created based on the CNVs of their target genes. 
+
+\newpage
+
+```{r echo=FALSE}
+load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/cellline_datasets.rda")
+load("~/Uni Heidelberg Molekulare Biotechnologie/4.Semster/Bioinfo/prism_datasets.rda")
+
+```
+
+```         
+```
+
+# Introduction
+
+The advancement in the creation of new drugs to combat chronic diseases and pathologies that today represent a global priority in health research, is one of the great challenges of medicine and biotechnology nowadays. This is especially evident in diseases such as cancer, due to its high incidence and mortality rate (@carcas2014gastric).A large number of potential anti-tumoral drugs tend to fail in clinical trial stages, as they are not sufficiently effective or safe for human use, and simply do not reach the stage of being approved for distribution on the market. Moreover, the approval processes are remarkably long, lasting between 10 and 17 years (@ioakeim2023drug).Likewise, the most effective and novel treatments tend to be expensive, making them inaccessible for oncological patients from middle and low-income countries. This situation has generated a growing interest in the search for more affordable, less toxic, and faster-to-obtain alternatives.
+
+An innovative strategy is "drug repurposing", which consists on re-evaluating existing and approved drugs to treat diseases different from the original application, which in the case of cancer could have an anti-tumoral effect. Once their potential against cancer is discovered, clinical trials can be initiated in patients, reducing both the time and final cost to the public, as these drugs are already available in the market (@ioakeim2023drug)
+
+Cancer is among the deadliest illnesses, characterized by a remarkably high death rate. Currently, one of the types of cancer that persists as a serious health problem is gastric cancer, despite a downward trajectory in global incidence. It is recognized as the second leading etiology of cancer-related mortality globally and registers as the fifth most prevalent cancer diagnosis (@carcas2014gastric).Among the different types of gastric cancer, adenocarcinoma is the most common (@cebrian2016cancer).In the context of early-stage tumors, the first therapeutic options are endoscopic resection, surgery, and or an integrated regimen of chemotherapy or chemoradiation. However, the treatment of advanced or metastatic gastric cancer is not very far reaching, and normally in this stage the overall survival time rate in this group is less than one year (@carcas2014gastric).This landscape highlights the urgency to develop and explore new therapeutic alternatives, such as drug repurposing, to improve the survival and quality of life of patients with gastric cancer.
+
+In this study, our main objective is to systematically explore the responses of a broad spectrum of drugs in a diverse range of cancer cell lines, with special emphasis on gastric cancer. With the help of additional information on factors such as gene expression, genetic alterations and description of target molecules, we aim to identify potential therapeutic agents for the treatment of cancer through the analysis of intermolecular relationships. Ultimately, this research aims to contribute to the evolving field of drug repurposing as a viable strategy to advance gastric cancer therapeutics.
+
+# Material and Methods
+
+## 2.1 Data Sets
+
+For this project, we were provided with two datasets consisting of seven data frames in total. These data frames can be divided into three distinct categories. The first category encompasses the data frame "prism," which provides essential information regarding the effect of various treatments on the cell growth of 481 different cell lines. The second category focuses on gene expression and somatic alteration information. It includes:the data frame "prism.exp", which contains data on the levels of gene expression in cancer cell lines. Additionally, the "prism.cnv" data frame, which provides gene copy values indicating gene amplifications or deletions and the"prism.snv" data frame, which contains information about observed mutation types in the samples. Lastly, the "prism.achilles" data frame shows gene knockdown scores, indicating the impact of gene knock-out on cell growth. The third category is annotation, which captures additional details. The data frame "prism.treat" contains information about the treatments themselves, such as the drugs used, associated pathways, and target molecules. The data frame "prism.cl" provides information about the 481 cell lines.
+
+## 2.2 Data cleanup
+
+To reduce the dimensionality of the "prism", which originally had dimensions of 481x11168, we created two additional dataframes. The first dataframe contained only cell lines related to gastric cancer, and we removed any drugs that had missing values (NA), resulting in a reduced dimension of 17x2767. Or in the case of the fold change analysis they were replaced with the mean value.For the second dataframe, which included cell lines from five different types of cancer, we replaced the NA-values with the median value of the drug response across all examined cell lines. The same approach of replacing NA-values , but this time with mean values, was applied to the original "prism.exp" dataframe as well.Furthermore, we created for each data frame a separate data frame including only data regarding the gastric cancer cell lines.
+
+## 2.3 Exploring the effect of treatments on cell growth and identifying potential targets and mechanisms of action
+
+We conducted a comprehensive analysis of drug responses in gastric cancer cell lines and also in breast cancer cell lines as comparison for a further analysis, with a focus on reducing high-dimensional prism dataframe. Therefore, we applied Principle Component Analysis (PCA) on "prism". Furthermore, we performed Pearson correlation on each individual principal component to assess statistically the strength and the direction of the linear(@https://doi.org/10.15252/msb.20199405).
+
+## 2.4 Finding clusters of the cell lines based on gene expression and drug response
+
+Principal component analysis (PCA) was performed on the "prism" (drug responses) and "prism.exp" (gene expression) data. By calculating the variance of each row in the transposed data frames and then plotting them for visualization in histograms, it provided a better understanding of the variability in the data and therefore it helped us establish a minimum variance threshold for gene expression and drug response in cell lines. Only drugs and genes with high variance were selected for PCA. To visualize the PCA results, we created scatter plots for both "prism" and "prism.exp". We applied K-means clustering to group the cell lines based on PCA results. To determine the optimal number of clusters, we used the elbow and silhouette methods. The elbow plot shows the sum of squared distances between data points and cluster centers for different numbers of clusters, with the "elbow" indicating the optimal number of clusters. The silhouette method, considering distances within and between clusters, suggests the optimal number of clusters when analyzing data.
+
+## 2.5 Fold Change Analysis: Evaluating Non-Oncology Versus Oncology Treatment Responses
+
+Fold change analysis was conducted to compare the responses of non-oncology treatments to oncology treatments in a general way and then only for gastric cancer cell lines (excluding here in the oncology treatment group the gastric oncology treatments) . All treatments matching these criteria were identified from the dataset "prism". The average response for each cell line for the various oncology and non-oncology therapy groups was then determined independently. So consequently, a fold change was then computed for each cell line, defined as the ratio of the average non-oncology treatment response to the average oncology treatment response. This provided a measure of the relative response to non-oncology versus oncology treatments for each cell line. A pseudo count was added to both the numerator and the denominator during the fold change calculation to avoid division by zero and stabilize the ratio, especially for small values.
+
+## 2.6 Creating prediction models based on strong correlations
+
+Obtaining the target of each drug of which the drug response is shown in the "prism" data frame by using the "prism.treat" data frame and calculating the correlation between the drugs and their targets regarding gene expression as well as CNVs. Drug-gene pairs showing the highest correlation were selected and linear regression was applied to create a prediction model for the drug responses of the selected drugs based on the CNVs of their target genes.
+
+# **Results**
+
+## 3.1 Differential Treatment Efficacy in Oncology and Non-Oncology Drugs: A Fold Change Analysis
+
+Our study involved two-fold change analyses, both general and gastric cancer cell line -specific, to assess the efficacy of oncology and non-oncology treatments on various cell lines. A preliminary general analysis, visualized through a box plot (SM: Fig. 18), suggested that oncology treatments were more effective at inhibiting cell growth for most cell lines. This was further evidenced by a fold change bar plot (SM: Fig. 15) where the majority of cell lines exhibited a fold change value below 1, but above 0. However, a subset of cell lines presented with larger positive fold changes, suggesting a heightened effectiveness of non-oncology treatments.This hole preliminary general analysis was statistically proofed through normality testing (p=0.3101 (oncology) and p= 0.06227(non- oncology)) and plotting (SM: Fig. 16). And through one side testing it was proofed that oncology treatments were generally more effective at inhibiting cell growth (p-value=2.2e-16). The focus of our study was the more detailed fold change analysis, which compared non-oncology treatments relative to oncology treatments in gastric cancer cell lines, specifically excluding gastric oncology treatments.The reason behind this particular focus was based on the previous finding that oncology treatments generally outperformed non-oncology treatments in terms of efficacy. The results revealed that most gastric cell lines also exhibited a fold change value below 1 (Fig. 1), implying superior efficacy of oncology treatments. However, three cell lines (ACH-000919, ACH-000344, and ACH-000898) showed a fold change value exceeding 1, suggesting these specific cell lines responded better to non-oncology treatments.Statistical validation of these fold change analysis was performed using Welch's Two Sample t-test, after data normality checks via the Shapiro-Wilk test. The test and additionally visualizations (SM: Fig. 17) affirmed a reasonably normal data distribution (p=0.364 (oncology) and p= 0.0798 (non- oncology)). So, with this information it was performed a two-sided t-test and it revealed no significant difference between the mean responses of the two treatment groups (p-value=0.2803). Additionally, a boxplot (SM: Fig. 18) visually supported this finding, showing comparable medians for the two treatment types in the specialized gastric cancer cell line analysis. This suggests similar impacts on cell growth from both treatment types, providing us with the freedom to focus our research on cancer drugs outside of gastric cancer-specific drugs or completely non-oncologic drugs.
+
+```{r include=FALSE}
+library(ggplot2)
+# Filter for oncology treatments
+contains_oncology_or_malignancy <- grepl("oncology|malignancy", prism.treat$disease.area, ignore.case = TRUE)
+oncology_treatments <- prism.treat[contains_oncology_or_malignancy, ]
+oncology_treatment_ids <- rownames(oncology_treatments)
+oncology_responses <- prism[, colnames(prism) %in% oncology_treatment_ids]
+oncology_responses_imputed <- as.data.frame(lapply(oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_oncology_general <- rowMeans(oncology_responses_imputed, na.rm = TRUE)
+
+cell_lines <- rownames(prism) 
+avg_response_oncology_general_df <- data.frame(cell_line = cell_lines, avg = avg_response_oncology_general)
+
+# Analysis 2 -> avg_response_non_oncology
+
+non_oncology_treatments <- prism.treat[!contains_oncology_or_malignancy, ]
+non_oncology_treatment_ids <- rownames(non_oncology_treatments)
+non_oncology_responses <- prism[, colnames(prism) %in% non_oncology_treatment_ids]
+non_oncology_responses_imputed <- as.data.frame(lapply(non_oncology_responses, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+avg_response_non_oncology_general <- rowMeans(non_oncology_responses_imputed, na.rm = TRUE)
+
+
+avg_response_non_oncology_general_df <- data.frame(cell_line = cell_lines, avg = avg_response_non_oncology_general)
+
+
+# Calculate the fold changes
+pseudo_count <- 1e-9
+fold_changes_0 <- (avg_response_non_oncology_general + pseudo_count) / (avg_response_oncology_general + pseudo_count)
+cell_lines <- rownames(prism)  # Assuming row names represent the cell lines
+
+
+# Plot the fold changes
+fold_changes_df_0 <- data.frame(cell_line = cell_lines, fold_change = fold_changes_0)
+
+
+
+```
+
+```{r include=FALSE}
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+
+
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+
+
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+contains_oncology_2 <- grepl("oncology", prism.treat$disease.area, ignore.case = TRUE)
+not_gastric <- !grepl("gastric adenocarcinoma", prism.treat$indication, ignore.case = TRUE)
+
+oncology_treatments_2 <- prism.treat[contains_oncology_2 & not_gastric, ]
+
+# Extract treatment IDs for these oncology treatments (excluding gastric cancer)
+oncology_treatment_ids_2 <- rownames(oncology_treatments_2)
+
+# Filter gastric prism data for oncology treatment IDs
+gastric_oncology_responses_2 <- prism_gastric[, colnames(prism_gastric) %in% oncology_treatment_ids_2]
+
+# Impute NA values with column means
+gastric_oncology_responses_imputed_2 <- as.data.frame(lapply(gastric_oncology_responses_2, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_oncology_gastric_2 <- rowMeans(gastric_oncology_responses_imputed_2, na.rm = TRUE)
+
+# Filter gastric prism data for non-oncology treatment IDs
+gastric_non_oncology_responses_2 <- prism_gastric[, colnames(prism_gastric) %in% non_oncology_treatment_ids]
+
+# Impute NA values with column means
+gastric_non_oncology_responses_imputed_2 <- as.data.frame(lapply(gastric_non_oncology_responses_2, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x)))
+
+avg_response_non_oncology_gastric_2 <- rowMeans(gastric_non_oncology_responses_imputed_2, na.rm = TRUE)
+
+# Calculate the fold changes
+pseudo_count <- 1e-9
+fold_changes_2 <- (avg_response_non_oncology_gastric_2 + pseudo_count) / (avg_response_oncology_gastric_2 + pseudo_count)
+cell_lines <- rownames(prism_gastric)  # Assuming row names represent the cell lines
+
+# Create dataframe for fold changes
+fold_changes_df_2 <- data.frame(cell_line = cell_lines, fold_change = fold_changes_2)
+
+# Load the necessary library
+library(ggplot2)
+
+
+
+
+
+
+
+```
+
+```{r include=FALSE}
+# Load the necessary library
+# Using ggplot2
+ggplot(fold_changes_df_0, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
+  geom_bar(stat = "identity", fill = "blue", width = 0.6) +  # Adjust the width to be smaller than 1
+  theme_minimal() +
+  theme(axis.text.x = element_blank()) + # This hides the x-axis labels
+  labs(title = "Fold Changes: Non-Oncology Treatments \n Relative to Oncology Treatments",
+       x = "Cell Lines",
+       y = "Fold Change")
+```
+
+```{r echo=FALSE, out.height= "40%", out.width= "40%", fig.cap= "Representation of Fold Change Analysis: Comparing Oncology and Non-Oncology Treatment Efficiency Across the 17 gastric  cancer cell lines",fig.show='hold', fig.align='center'}
+
+
+library(ggplot2)
+
+# Create the plot
+ggplot(fold_changes_df_2, aes(x = reorder(cell_line, -fold_change), y = fold_change, fill = fold_change)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "pink", high = "purple") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Cell Line", y = "Fold Change", title = "Fold changes: Non-Oncology Treatments \n Relative to Oncology Treatments for gastric cancer cell lines")
+
+
+```
+
+```{r include=FALSE}
+# Check if the data is normally distributed
+shapiro_test_oncology_general <- shapiro.test(avg_response_oncology_general)
+shapiro_test_non_oncology_general <- shapiro.test(avg_response_non_oncology_general)
+
+# Print the results
+print(shapiro_test_oncology_general)
+print(shapiro_test_non_oncology_general)
+
+
+
+```
+
+```{r include=FALSE}
+# Perform a one-sided t-test
+t_test_result_0_onesided <- t.test(avg_response_oncology_general, avg_response_non_oncology_general, alternative = "less")
+
+# Print the result
+print(t_test_result_0_onesided)
+```
+
+```{r include=FALSE}
+# Check if the data is normally distributed
+shapiro_test_oncology_gastric_2 <- shapiro.test(avg_response_oncology_gastric_2)
+shapiro_test_non_oncology_gastric_2 <- shapiro.test(avg_response_non_oncology_gastric_2)
+
+# Print the results
+print(shapiro_test_oncology_gastric_2)
+print(shapiro_test_non_oncology_gastric_2)
+```
+
+```{r include=FALSE}
+# Two-sided T-test between avg_response_oncology_gastric_2 and avg_response_non_oncology_gastric_2
+t_test_result_2_twosided <- t.test(avg_response_oncology_gastric_2, avg_response_non_oncology_gastric_2)
+
+# Print the result
+print(t_test_result_2_twosided)
+
+```
+
+## 3.2 Data reduction based on drug response of gastric cancer cell lines
+
+Our primary objective was to reduce the dimensionality of the "prism" dataframe, focusing specifically on gastric cancer cell lines by applying PCA. The aim was to gain valuable insights into the relationship between gastric cancer cell lines and drugs. We performed 2 different PCA analysis and generated scatter plots to visualize the outcomes(SM: Fig.10). Subsequently, we selected six from seventeen principle components, based on their contribution to the overall variance being more than 10 percent. Then, we computed the Pearson correlation of six principal components to the gastric cancer cell lines. This Pearson correlation analysis visualizes the contribution of each principal component to the cell growth of gastric cancer cell lines(SM: Fig. 11). PC1 accounted for a significant portion (86.34%) of the overall variance. We identified 678 drugs as positively contributing to the PC1 and demonstrated a consistent negative effect on cell growth of all gastric cancer cell lines. Therefore, we selected a threshold as 20 for PC values of these drugs and we continued the further analysis with 52 selected drugs.
+
+```{r include=FALSE}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+
+
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+
+
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+
+prism_gastric_cleaned_treatments <- prism_gastric[, colSums(is.na(prism_gastric)) == 0]
+prism_gastric_cleaned_treatments_t<- t(prism_gastric_cleaned_treatments)
+
+pca_result_gastric_cleaned_treatments_t<- prcomp(prism_gastric_cleaned_treatments_t)
+pca_values_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$x # Principal component scores (transformed data)
+pca_variances_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$sdev^2  # Variance explained by each principal component
+pca_proportions_gastric_cleaned_treatment_t <- pca_variances_gastric_cleaned_treatments_t / sum(pca_variances_gastric_cleaned_treatments_t)  # Proportion of variance explained by each principal component
+pca_loadings_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$rotation  # Loadings (coefficients) of each variable on each principal component
+
+```
+
+```{r include=FALSE}
+
+#Create a data frame with the correlation values
+library(ggplot2)
+correlation_data <- data.frame(CellLine = 1:17,
+                               PC1 = c(-0.922615177, -0.950194073,   -0.927977386, -0.94910213, -0.9152670, -0.854801869, -0.95349076, -0.92154645, -0.92013903, -0.77537470,-0.950086951, -0.93543329, -0.93709137, -0.9250477213, -0.950361834,-0.93871668, -0.94822669),  
+                               PC2 = c(0.083180285, -0.095496631,  0.179019069,   0.03838714, -0.1386250, 0.345058466, -0.11534765,  0.20474041, -0.06588813,  0.43218037, -0.088239721, -0.14684554, -0.00350409,  0.1180914557, -0.065329501,-0.02260016, -0.06579373), 
+                               PC3= c(-0.063771576,  0.154186354, -0.007993429,  0.11713865, -0.2703927,-0.152188017, -0.07227995,  0.04222941,  0.04007063,  0.16919529, 0.145417339,  0.09744200, -0.06908235, -0.0006997035, -0.025131615,-0.04229883, -0.04697155),
+                              PC4= c(0.001032055, -0.030713988,  0.157945987,  0.02180625,  0.1161595,-0.319057038, -0.02522252,  0.06795268, -0.12543977,  0.14860319,-0.034134148, -0.03687671,  0.10518056,  0.1658635330,  0.007893927,-0.04026534, -0.04409653),
+                              PC5= c(-0.133581302,  0.001271816,  0.036998181, -0.04956825, -0.1377278, 0.001838434,  0.04777600, -0.05017946, -0.21094701, -0.05346703,0.001838434,  0.04777600, -0.05017946, -0.21094701, -0.05346703,0.20053979,  0.17713578),
+                              PC6= c(0.001307767, -0.030989500, -0.050914709, -0.04882622,  0.0351149,-0.103958062,  0.04898928, -0.04865855,  0.21335588,  0.19243498,0.017044198, -0.13232765, -0.12824958,  0.0502075589, -0.159971620, 0.09320630,  0.11132276))
+                              
+                               
+# Convert the data from wide to long format
+correlation_data_long <- tidyr::gather(correlation_data, PC, Correlation, -CellLine)
+my_theme <- theme_minimal() +
+  theme(plot.title = element_text(size = rel(0.6)),  # Adjust the size of the plot title
+        axis.title = element_text(size = rel(0.4)))  # Adjust the size of the axis labels
+
+# Create the bar plot using ggplot
+ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Pearson Correlation of Principal Components of Gastric Cancer Cell Lines",
+       x = "Principal Components",
+       y = "Pearson Correlation") +
+  scale_fill_discrete(name = "Cell Line") +
+  ylim(-1, 1) +
+  theme_minimal() +
+  theme(legend.text = element_text(size = 5),  # Adjust the size of legend text
+        legend.key.size = unit(0.3, "cm"),
+        plot.title = element_text(size = 10))
+
+```
+
+```{r include=FALSE}
+# Create the bar plot using ggplot
+ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Pearson Correlation of Principal Components of Gastric Cancer Cell Lines",
+       x = "Principal Components",
+       y = "Pearson Correlation") +
+  scale_fill_discrete(name = "Cell Line") +
+  ylim(-1, 1) +
+  theme_minimal() +
+  theme(legend.text = element_text(size = 5),  # Adjust the size of legend text
+        legend.key.size = unit(0.3, "cm"),
+        plot.title = element_text(size = 10))
+
+```
+
+## 3.3 Identifying top targets and mechanism of action for drugs inducing strong negative cell growth in gastric cancer cell lines
+
+With the aim of identifying the target molecules and the mechanism of actions we reduced the "prism.treat" extracting these 52 selected drugs. We created 2 barpots to better visualize the most frequent targets and mechanism of action among these drugs(Fig. 2). The first bar plot revealed that HDAC emerged as the most commonly targeted molecule among the 52 selected drugs. To be more concrete: *HDAC1-HDAC9.* Consequently, HDAC inhibition was identified as the dominant mechanism of action among the selected drugs.
+
+```{r include=FALSE}
+pc1_selected_drugs <- rownames(pca_values_gastric_cleaned_treatments_t)[pca_values_gastric_cleaned_treatments_t[, "PC1"] > 20]
+prism_treat_new <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs, ]
+prism_treat_new2 <- subset(prism_treat_new, dose == "10")
+big_string <- paste(prism_treat_new2$target, collapse = ",")
+target_vector <- unlist(strsplit(big_string, ","))
+target_vector <- gsub(" ", "", target_vector)
+target_frequency <- as.data.frame(table(target_vector))
+target_freq_dataframe_selected <- subset(target_frequency, Freq > 2)
+# Remove the row with "NA" in target_vector column
+target_freq_dataframe_selected <- target_freq_dataframe_selected[target_freq_dataframe_selected$target_vector != "NA", ]
+# Create a bar plot using ggplot2
+bar_plot_target <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+  geom_bar(stat = "identity") +
+  labs(title= " Target Molecules of Selected Drugs ", x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  
+bar_plot_target <- bar_plot_target + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+print(bar_plot_target)
+```
+
+```{r include=FALSE}
+# Seperate the strings of the column target
+big_string <- paste(prism_treat_new2$moa, collapse = ",")
+moa_vector <- unlist(strsplit(big_string, ","))
+moa_vector <- gsub(" ", "", moa_vector)
+moa_frequency <- as.data.frame(table(moa_vector))
+# create a new dataframe of target frequency and select those which have more than 1 freq:
+moa_freq_dataframe_selected <- subset(moa_frequency, Freq > 2)
+
+# Create a bar plot of moa
+bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
+  geom_bar(stat = "identity") +
+  labs(title= "Mechanism of Actions 
+       of Selected Drugs", x = "moa", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+##Adjust the x-axis labels
+bar_plot_moa <- bar_plot_moa + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+```
+
+```{r echo=FALSE, out.width = "40%", out.height = "40%", fig.cap = "Barplot representation of the most frequent targets (left) and mechanism of action (right) in gastric cancer cell lines.", fig.show='hold'}
+library(ggplot2)
+library(cowplot)
+
+# Create the first bar plot
+bar_plot_target <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target_vector, -Freq), y = Freq, fill = target_vector)) +
+  geom_bar(stat = "identity") +
+  labs(title= "Target Molecules of Selected Drugs", x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0, 15) +
+  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+print(bar_plot_target)
+
+# Create the second bar plot
+bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
+  geom_bar(stat = "identity") +
+  labs(title= "Mechanism of Actions of Selected Drugs", x = "moa", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0, 15) +
+  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+print(bar_plot_moa)
+
+```
+
+## 3.4 Exploring the Correlation Between HDAC Inhibitor Concentration and Gastric Cancer Cell Growth
+
+Through our investigation, we identified six HDAC inhibitors that exhibited strong inhibitory effects on cell growth. To gain deeper insights into the relationship between drug concentration and drug response, we calculated the correlation between these two factors. To facilitate this analysis, we extracted the relevant information for these six treatments, including their respective concentrations and their effects on cell growth in gastric cancer cell lines. We were able to perform correlation calculations for each cell line separately. To visualize the results, we created a heatmap(Fig. 3). The heatmap highlighted a robust negative correlation between the concentration of the HDAC inhibitors and cell growth. In other words, as the dosage of the inhibitors increased, the drug influence on the cell growth became stronger, leading to a more pronounced negative impact.
+
+```{r include=FALSE}
+HDAC_inhibitor_v <- subset(prism_treat_new, moa == "HDAC inhibitor")
+
+HDAC_names_new <- rownames(HDAC_inhibitor_v)
+
+HDAC_names_prism_new <- sub("::.*", "", HDAC_names_new)
+
+HDAC_inhibitor_df <- prism_gastric_cleaned_treatments[, grepl(paste(HDAC_names_prism_new, collapse = "|"), colnames(prism_gastric_cleaned_treatments))]
+
+
+HDAC_names_new_selected <- colnames(HDAC_inhibitor_df)
+
+HDAC_concentration <- sub(".*::(.*?)::.*", "\\1", HDAC_names_new_selected)
+HDAC_concentration <- as.numeric(HDAC_concentration)
+
+
+#for the first drug
+correlation_results_HDAC1 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_1_HDAC <- cor(HDAC_concentration[1:7], drug_response_i_new_HDAC[1:7])
+  
+  correlation_results_HDAC1 <- c(correlation_results_HDAC1, correlation_new_1_HDAC)
+}
+
+
+
+
+
+#for the second drug
+correlation_results_HDAC2 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_2_HDAC <- cor(HDAC_concentration[8:15], drug_response_i_new_HDAC[8:15])
+  
+  correlation_results_HDAC2<- c(correlation_results_HDAC2, correlation_new_2_HDAC)
+}
+correlation_results_HDAC2 <- unique(correlation_results_HDAC2)
+correlation_results_HDAC2 <- correlation_results_HDAC2[1:17]
+
+#for drug 3
+
+correlation_results_HDAC3 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_3_HDAC <- cor(HDAC_concentration[16:23], drug_response_i_new_HDAC[16:23])
+  
+  correlation_results_HDAC3 <- c(correlation_results_HDAC3, correlation_new_3_HDAC)
+}
+
+
+
+#drug 4
+
+correlation_results_HDAC4 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_4_HDAC <- cor(HDAC_concentration[24:31], drug_response_i_new_HDAC[24:31])
+  
+  correlation_results_HDAC4 <- c(correlation_results_HDAC4, correlation_new_4_HDAC)
+}
+
+
+
+#for drug 5
+correlation_results_HDAC5 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_5_HDAC <- cor(HDAC_concentration[32:39], drug_response_i_new_HDAC[32:39])
+  
+  correlation_results_HDAC5 <- c(correlation_results_HDAC5, correlation_new_5_HDAC)
+}
+
+
+
+#for drug 6
+correlation_results_HDAC6 <- vector()
+for (i in 1:nrow(HDAC_inhibitor_df)) {
+  drug_response_i_new_HDAC <- as.numeric(HDAC_inhibitor_df[i, ])
+  correlation_new_6_HDAC <- cor(HDAC_concentration[39:44], drug_response_i_new_HDAC[39:44])
+  
+  correlation_results_HDAC6 <- c(correlation_results_HDAC6, correlation_new_6_HDAC)
+}
+
+
+
+
+correlation_matrix <- matrix(c(correlation_results_HDAC1, correlation_results_HDAC2, correlation_results_HDAC3, correlation_results_HDAC4, correlation_results_HDAC5, correlation_results_HDAC6),nrow = nrow(HDAC_inhibitor_df), ncol = 6, byrow = FALSE)
+
+rownames(correlation_matrix) <- rownames(HDAC_inhibitor_df)
+colnames(correlation_matrix) <- c("BRD-K12867552-001-04-7", "BRD-K13167095-001-02-9",
+                                  "BRD-K13810148-311-03-2", "RD-K17743125-001-08-4",
+                                  "BRD-K56957086-001-06-3", "BRD-K61397605-001-03-4")
+correlation_matrix_t <- t(correlation_matrix)
+plot.new()
+
+
+library(RColorBrewer)
+library(gplots)
+colors <- rev(colorRampPalette(brewer.pal(9, "Blues"))(100))
+
+par(mar = c(5, 5, 2, 2))
+
+legend_breaks <- seq(-1, 0, length.out = length(colors) + 1)
+
+
+
+
+```
+
+```{r echo=FALSE, out.width = "50%", out.height = "40%", fig.cap= "Heatmap of correlation values between drug concentration and drug response,regarding HDAC inhibitors and gastric cancer cell lines.", fig.align='center'}
+heatmap.2(correlation_matrix,
+          col = colors,
+          main = "Correlation heatmap",
+          xlab = "Drug",
+          ylab = "Cell",
+          trace = "none",
+          cexRow = 0.7,
+          cexCol = 0.4,
+          key = TRUE,
+          keysize = 1.7,
+          symkey = FALSE,  # Display only negative values on the legend
+          breaks = legend_breaks,  # Specify the color legend breaks
+          cex.main = 0.4,  # Adjust main title size
+          cex.axis = 0.8,  # Adjust axis label size
+          cex.lab = 0.8,
+          key.title = "Color key") 
+```
+
+## 3.5 Drug responses in ACH-000948: Focus on HDAC inhibitors
+
+In our previous result in the section fold change analysis (see. 3.1), we identified that the majority of gastric cancer cell lines had a fold change below 1, indicating a greater effect with oncological treatments. Our aim was to build upon these earlier findings by conducting a more detailed investigation into these cell lines, with a particular emphasis on the potential effects of HDAC-inhibitor treatments. Given that HDAC-inhibitors are currently used as drugs for hematologic malignancies, they present potential oncology candidates for repurposing as treatments for gastric cancer.So, we selected randomly the cell line ACH-000948 for detailed analysis due to its average performance in terms of fold change (bellow 1). We identified the most efficient treatments for this cell line by setting a response threshold. Our analysis revealed that out of all treatments, only 51 demonstrated this level of efficiency on the cell line. Of these, 35 treatments aligned with the treatments identified in the first Principal Component (PC1) from the PCA conducted earlier (see. 3.2). This suggests a significant overlap between highly efficient treatments and the PC1 treatments. Furthermore, as mention before we sought to determine if any of the selected treatments coincided with the six HDAC- inhibitors treatments, previously identified as potential target drugs. Remarkably, four out of the six HDAC treatments were among the most efficient treatments for the selected cell line, reinforcing the notion of HDAC as a potential target for drug repurposing in gastric cancer. The subsequent boxplot comparison (Fig. 4) of the response to these four HDAC-inhibitors versus the other effective treatments revealed that the median line for the HDAC-inhibitors was lower (indicating a more negative response) compared to the rest of the treatments. This observation suggests a superior efficacy of the HDAC-inhibitor treatments compared to the other treatments, thereby reinforcing the hypothesis mentioned in section 3.2 above.
+
+```{r include=FALSE, message=FALSE}
+# PCA1 Treatments 
+treatments_1pca <- c(
+"BRD-A28467416-002-01-0::10::HTS002",
+"BRD-A28970875-300-04-9::10::HTS002",
+"BRD-A66419424-001-02-4::10::HTS002",
+"BRD-A68969091-001-12-7::10.2913::HTS002",
+"BRD-K00535541-001-06-3::10::HTS002",
+"BRD-K01683783-001-02-6::10::HTS002",
+"BRD-K06426971-001-02-7::10::HTS002",
+"BRD-K07955840-001-02-3::10::HTS002",
+"BRD-K08109215-001-06-4::10::HTS002",
+"BRD-K08799216-001-05-3::10::HTS002",
+"BRD-K09443272-001-03-3::10::HTS002",
+"BRD-K12502280-001-08-0::10::HTS002",
+"BRD-K12787259-001-04-3::10::HTS002",
+"BRD-K12867552-001-04-7::10::HTS002",
+"BRD-K13167095-001-02-9::10::HTS002",
+"BRD-K13662825-001-07-5::10::HTS002",
+"BRD-K13810148-311-03-2::10::HTS002",
+"BRD-K17203476-001-01-9::10::HTS002",
+"BRD-K17705806-003-04-4::10::HTS002",
+"BRD-K17743125-001-08-4::10::HTS002",
+"BRD-K19034817-001-01-4::10::HTS002",
+"BRD-K20605374-001-05-4::10::HTS002",
+"BRD-K21361524-001-01-1::10::HTS002",
+"BRD-K23190681-001-01-1::10::HTS002",
+"BRD-K31866293-001-01-6::10::HTS002",
+"BRD-K32501161-300-06-2::10::HTS002",
+"BRD-K35329391-334-01-7::10::HTS002",
+"BRD-K36529613-001-02-6::10::HTS002",
+"BRD-K39484304-001-16-5::10::HTS002",
+"BRD-K44227013-001-06-4::10::HTS002",
+"BRD-K51791723-003-01-7::10::HTS002",
+"BRD-K51911221-001-01-2::10::HTS002",
+"BRD-K53417444-003-03-1::10::HTS002",
+"BRD-K53561341-001-07-5::10::HTS002",
+"BRD-K54395039-001-01-7::10::HTS002",
+"BRD-K56957086-001-06-3::10::HTS002",
+"BRD-K57169635-001-04-5::10::HTS002",
+"BRD-K60446698-001-01-2::10::HTS002",
+"BRD-K61397605-001-03-4::10::HTS002",
+"BRD-K64881305-001-03-7::10::HTS002",
+"BRD-K68532323-003-02-8::10::HTS002",
+"BRD-K71467466-001-02-3::10::HTS002",
+"BRD-K72951360-001-01-4::10::HTS002",
+"BRD-K73982490-001-02-9::10::HTS002",
+"BRD-K77841042-001-14-1::10::HTS002",
+"BRD-K78055238-001-01-8::10::HTS002",
+"BRD-K78567475-001-01-4::10::HTS002",
+"BRD-K78659596-001-03-9::10::HTS002",
+"BRD-K83988098-003-03-4::10::HTS002",
+"BRD-K86525559-001-07-8::10.0868::HTS002",
+"BRD-K87124298-001-03-4::10::HTS002",
+"BRD-K90497590-001-04-2::10::HTS002",
+"BRD-K94485812-001-02-9::10.2094::HTS002",
+"BRD-K96104201-001-01-5::10::HTS002",
+"BRD-K99475619-001-01-2::10::HTS002") 
+
+
+
+
+
+hdac_treatments<- c(
+"BRD-K12867552-001-04-7::10::HTS002", 
+"BRD-K13167095-001-02-9::10::HTS002", 
+"BRD-K13810148-311-03-2::10::HTS002", 
+"BRD-K17743125-001-08-4::10::HTS002", 
+"BRD-K56957086-001-06-3::10::HTS002", 
+"BRD-K61397605-001-03-4::10::HTS002")
+
+cell_line_948 <- "ACH-000948"
+
+# Assuming the cell line names are in the row names of your data frame
+cell_line_row_948 <- prism_gastric_cleaned_treatments[cell_line_948, ]
+
+# Now, 'cell_line_row_948' is a named vector where the names are the treatments
+# and the values are the responses
+
+# Convert the data frame row to a numeric vector
+cell_line_values_948 <- as.numeric(cell_line_row_948)
+
+# Assign treatment names to the numeric vector
+names(cell_line_values_948) <- colnames(cell_line_row_948)
+
+# Filter the treatments based on the response
+cell_line_values_filtered_948 <- cell_line_values_948[cell_line_values_948 <= -7]
+
+# Create a bar plot with the filtered data
+plot20 <- barplot(cell_line_values_filtered_948, 
+        main = paste("Treatment responses for", cell_line_948 ), 
+        xlab = "Treatments", 
+        ylab = "Responses", 
+        las = 2,   # makes the x-axis labels vertical
+        names.arg = "", # hides the x-axis labels
+        col = "lightpink") # changes the color of the bars to rosa
+
+
+# Find common treatments
+common_treatments_948 <- intersect(names(cell_line_values_filtered_948), treatments_1pca)
+
+
+# Find common treatments
+common_treatments_hdac_948 <- intersect(names(cell_line_values_filtered_948), hdac_treatments)
+
+
+# Convert the named vector to a data frame
+cell_line_df_948 <- data.frame(treatment = names(cell_line_values_filtered_948),
+                           response = as.numeric(cell_line_values_filtered_948))
+
+# Define the treatments of interest
+treatments_of_interest_948 <- c("BRD-K13167095-001-02-9::10::HTS002", "BRD-K13810148-311-03-2::10::HTS002", "BRD-K56957086-001-06-3::10::HTS002", "BRD-K61397605-001-03-4::10::HTS002")
+
+# Add a new column to distinguish between the treatments of interest and the rest
+cell_line_df_948$group <- ifelse(cell_line_df_948$treatment %in% treatments_of_interest_948, 
+                             "HDAC-Inhibitors", "Rest of Treatments")
+
+# Now, create a boxplot to compare the distribution of responses
+library(ggplot2)
+plot15 <- ggplot(cell_line_df_948, aes(x = group, y = response)) +
+  geom_boxplot(fill = "lightpink") +
+  labs(x = "Group", y = "Response", 
+       title = "Comparison of Responses: HDAC-Inhibitors vs. Rest of Treatments") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+
+```{r echo=FALSE,message=FALSE, out.width = "40%", out.height = "40%", fig.cap="Boxplot Comparison of HDAC Inhibitors and Non-HDAC Inhibitors Treatments: Efficiency Analysis in Gastric Cancer Cell Line ACH-000948", fig.show='hold'}
+library(ggplot2)
+ggplot(cell_line_df_948, aes(x = group, y = response)) +
+  geom_boxplot(fill = "lightpink") +
+  labs(x = "Group", y = "Response", 
+       title = "Comparison of Responses: HDAC-Inhibitors vs. Rest of Treatments") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## 3.6 Cell lines of different cancer types form different clusters based on their drug response and gene expression
+
+To analyze the similarities and differences regarding drug response and gene expression among cell lines, PCA and k-means clustering were performed. To find the optimal amount of clusters, silhouette and elbow method were applied(SM: Fig. 13 and 14).The log fold change values from the "prism" dataset and TPM values from the "prism.exp" dataset were used, which contained data from cell lines representing five different cancer types: gastric, breast, bone, liver, and kidney.
+
+The PCA scatter plot of drug response is showing similar drug response patterns among all of the examined cancer subtypes (SM: Fig. 12). Most of the cell lines formed one cohesive cluster, which can be further divided into smaller clusters by applying k-means clustering. Notably, these similarities in drug response emerge, even when analyzing drugs with high variance. In other words, these cell lines exhibit similar responses to the drugs in terms of cell growth, independently of the particular cancer subtype. On the other side, the PCA scatter plot of gene expression revealed that cell lines of the same cancer type tend to cluster together, indicating similarities in their gene expression profiles (Fig. 5). However, there were noticeable differences observed within certain cancer types, such as liver and bone cancer cell lines, resulting in a broader distribution in the scatter plot. Furthermore gastric and breast cancer cluster extremely together, forming their own clusters independently of the applied method to find the optimal amount of clusters (SM: Fig. 14), which indicates a strong similarity of gene expression. 
+
+```{r include=FALSE}
+
+
+
+breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
+
+
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
+
+liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
+
+
+bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
+
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+
+kidney.cancer.celllines.v <- kidney.cancer.celllines $DepMap_ID
+
+bone.cancer.celllines.v <- bone.cancer.celllines $DepMap_ID
+
+liver.cancer.celllines.v <- liver.cancer.celllines $DepMap_ID
+
+cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.cancer.celllines.v,  breast.cancer.celllines.v,gastric.cancer.celllines.v)
+
+prism_celllines <- prism[rownames(prism) %in% cancer.celllines.v, ]
+View (prism_celllines)
+
+#First of all, we have to clean the original matrix from the missing values. There are columns that include only missing values, so we cannot replace them with median value, we have to remove them. 
+typeof(prism_celllines)
+prism_celllines_numeric_2 <- (
+  sapply(prism_celllines, as.numeric)
+)
+is.numeric(prism_celllines_numeric_2)
+###removing all columns that have only missing values
+prism_celllines_matrix_filtered <- prism_celllines_numeric_2[, colSums(is.na(prism_celllines_numeric_2)) < nrow(prism_celllines_numeric_2)]
+###save the names of the rows so we can restore them after that
+original_row_names <- rownames(prism_celllines)
+###replacing the NAs by median of the columns
+prism_celllines_numeric_2[is.na(prism_celllines_numeric_2)] <-median(prism_celllines_numeric_2,na.rm =TRUE)
+
+sum(is.na(prism_celllines_numeric_2))
+original_row_names <- rownames(prism_celllines)
+###restoring the row names
+prism_celllines_matrix_filtered1 <- matrix(prism_celllines_numeric_2, nrow = nrow(prism_celllines), dimnames = list(rownames(prism_celllines), colnames(prism_celllines)))
+original_row_names <- rownames(prism_celllines)
+prism_celllines_matrix_filtered1 <- matrix(prism_celllines_numeric_2, nrow = nrow(prism_celllines), dimnames = list(rownames(prism_celllines), colnames(prism_celllines)))
+typeof(prism_celllines_matrix_filtered1)
+class(prism_celllines_matrix_filtered1)
+sum(is.na(prism_celllines_matrix_filtered1))###no missing values
+#Gastric cancer Dataframe of Prism.exp
+G.prism.filtered<-prism_celllines_matrix_filtered1[rownames(prism_celllines_matrix_filtered1) %in% gastric.cancer.celllines.v, ]
+#Kidney cancer Dataframe of Prism.exp
+K.prism.filtered<-prism_celllines_matrix_filtered1[rownames(prism_celllines_matrix_filtered1) %in% kidney.cancer.celllines.v, ]
+#Bone cancer Dataframe of Prism.exp
+B.prism.filtered<-prism_celllines_matrix_filtered1[rownames(prism_celllines_matrix_filtered1) %in% bone.cancer.celllines.v, ]
+#Breast cancer Dataframe of Prism.exp
+Br.prism.filtered<-prism_celllines_matrix_filtered1[rownames(prism_celllines_matrix_filtered1) %in% breast.cancer.celllines.v, ]
+#Liver cancer Dataframe of Prism.exp
+L.prism.filtered<-prism_celllines_matrix_filtered1[rownames(prism_celllines_matrix_filtered1) %in% liver.cancer.celllines.v, ]
+# Transpose the dataframes
+t.G.prism.filtered <- t(G.prism.filtered)
+t.K.prism.filtered<- t(K.prism.filtered)
+t.B.prism.filtered<- t(B.prism.filtered)
+t.Br.prism.filtered<-t(Br.prism.filtered)
+t.L.prism.filtered<-t(L.prism.filtered)
+
+
+G.drug.filtered_variances <- apply(t.G.prism.filtered, MARGIN = 1, var)
+K.drug.filtered_variances <- apply(t.K.prism.filtered, MARGIN = 1, var)
+B.drug.filtered_variances <- apply(t.B.prism.filtered, MARGIN = 1, var)
+Br.drug.filtered_variances <- apply(t.Br.prism.filtered, MARGIN = 1, var)
+L.drug.filtered_variances <- apply(t.L.prism.filtered, MARGIN = 1, var)
+
+
+
+threshold1 <- 4
+G.selected_drugs_var <- t.G.prism.filtered[G.drug.filtered_variances > threshold1, ]
+threshold2 <- 5
+K.selected_drugs_var <- t.K.prism.filtered[K.drug.filtered_variances > threshold2, ]
+threshold3 <- 6
+L.selected_drugs_var <- t.L.prism.filtered[L.drug.filtered_variances > threshold3, ]
+threshold4 <- 6
+B.selected_drugs_var <- t.B.prism.filtered[B.drug.filtered_variances > threshold4, ]
+threshold5 <- 5
+Br.selected_drugs_var <- t.Br.prism.filtered[Br.drug.filtered_variances > threshold5, ]
+
+G.prism.drugs.var<-t(G.selected_drugs_var)
+K.prism.drugs.var<-t(K.selected_drugs_var)
+L.prism.drugs.var<-t(L.selected_drugs_var)
+B.prism.drugs.var<-t(B.selected_drugs_var)
+Br.prism.drugs.var<-t(Br.selected_drugs_var)
+
+G.column_names <- colnames(G.prism.drugs.var)
+K.column_names <- colnames(K.prism.drugs.var)
+L.column_names <- colnames(L.prism.drugs.var)
+B.column_names <- colnames(B.prism.drugs.var)
+Br.column_names <- colnames(Br.prism.drugs.var)
+
+genes_variance.V <- c(G.column_names,K.column_names,L.column_names,B.column_names,Br.column_names)
+
+
+prism.filtered1_drugs_variances <- prism_celllines_matrix_filtered1[,colnames( prism_celllines_matrix_filtered1) %in% genes_variance.V ]
+
+
+pca_result_prism.filtered1_drugs_variances <- prcomp(prism.filtered1_drugs_variances)
+pca_values_prism.filtered1_drugs_variances <- pca_result_prism.filtered1_drugs_variances $x # Principal component scores (transformed data)
+pca_variances_prism.filtered1_drugs_variances <- pca_result_prism.filtered1_drugs_variances $sdev^2  # Variance explained by each principal component
+pca_proportions_prism.filtered1_drugs_variance <- pca_variances_prism.filtered1_drugs_variances / sum(pca_variances_prism.filtered1_drugs_variances)  # Proportion of variance explained by each principal component
+pca_loadings_prism.filtered1_drugs_variances <- pca_result_prism.filtered1_drugs_variances $rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances_prism.filtered1_drugs_variances), pca_variances_prism.filtered1_drugs_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values_prism.filtered1_drugs_variances[, 1], pca_values_prism.filtered1_drugs_variances[, 2], xlab = "PC1", ylab = "PC2")
+
+
+###
+pca_data_prism.filtered1_drugs_variances <- data.frame(PC1 = pca_values_prism.filtered1_drugs_variances[, 1], PC2 = pca_values_prism.filtered1_drugs_variances[, 2],CellLine = rownames(pca_values_prism.filtered1_drugs_variances) )
+
+pca_data_prism.filtered1_drugs_variances_PC <- data.frame(PC1 = pca_values_prism.filtered1_drugs_variances[, 1], PC2 = pca_values_prism.filtered1_drugs_variances[, 2])
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data_prism.filtered1_drugs_variances$Group <- NA
+pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data_prism.filtered1_drugs_variances$Group[pca_data_prism.filtered1_drugs_variances$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+library(ggplot2)
+ggplot(pca_data_prism.filtered1_drugs_variances, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group,"Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" =  gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot for drug response of five different cancer subtypes")
+
+
+```
+
+```{r include=FALSE}
+pc_scores_prism <- as.data.frame(pca_result_prism.filtered1_drugs_variances$x[, 1:2])
+kmeans_result_prism <- kmeans(pc_scores_prism, centers = 4)
+
+# Add cluster labels to the PC scores
+pc_scores_prism$cluster <- as.factor(kmeans_result_prism$cluster)
+
+# Plot the clustered data
+ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering")
+
+cluster_centers_prism <- aggregate(pc_scores_prism[, c("PC1", "PC2")], list(cluster = pc_scores_prism$cluster), mean)
+cluster_radii_prism <- aggregate(pc_scores_prism[, c("PC1", "PC2")], list(cluster = pc_scores_prism$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
+
+```
+
+```{r include=FALSE}
+library(ggplot2)
+library(cowplot)
+
+# Plot 1: PCA Scatter Plot
+plot3 <- ggplot(pca_data_prism.filtered1_drugs_variances, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c("Bone cancer" = bone.cancer.celllines.group,"Kidney cancer" = kidney.cancer.celllines.group, "Liver cancer" = liver.cancer.celllines.group, "Gastric cancer" =  gastric.cancer.celllines.group, "Breast cancer" = breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot for drug response of five different cancer subtypes")
+
+# Plot 2: PCA with K-means Clustering and Circles
+plot4 <- ggplot(pc_scores_prism, aes(PC1, PC2, color = cluster)) +
+  geom_point() +
+  stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2) +
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means Clustering and Circles")
+
+# Arrange the plots side by side using cowplot
+combined_plot2 <- plot_grid(plot3, plot4, labels = c("A", "B"), ncol = 2)
+combined_plot2 <- cowplot::plot_grid(plot3, plot4, labels = c("A", "B"), ncol = 2,
+                                     rel_widths = c(0.5, 0.5), rel_heights = c(0.5, 0.5))  # Adjust the width and height as needed
+combined_plot2
+```
+
+```{r include=FALSE}
+library(ggplot2)
+library(stats)
+breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
+liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
+bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
+
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+kidney.cancer.celllines.v <- kidney.cancer.celllines $DepMap_ID
+bone.cancer.celllines.v <- bone.cancer.celllines $DepMap_ID
+liver.cancer.celllines.v <- liver.cancer.celllines $DepMap_ID
+cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.cancer.celllines.v,  breast.cancer.celllines.v,gastric.cancer.celllines.v)
+prism.exp_celllines <- prism.exp[rownames(prism.exp) %in% cancer.celllines.v, ]
+
+#Gastric cancer Dataframe of Prism.exp
+G.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% gastric.cancer.celllines.v, ]
+#Kidney cancer Dataframe of Prism.exp
+K.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% kidney.cancer.celllines.v, ]
+#Bone cancer Dataframe of Prism.exp
+B.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% bone.cancer.celllines.v, ]
+#Breast cancer Dataframe of Prism.exp
+Br.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% breast.cancer.celllines.v, ]
+#Liver cancer Dataframe of Prism.exp
+L.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% liver.cancer.celllines.v, ]
+
+# Transpose the dataframes
+t.G.prism.exp <- t(G.prism.exp)
+t.K.prism.exp<- t(K.prism.exp)
+t.B.prism.exp<- t(B.prism.exp)
+t.Br.prism.exp<-t(Br.prism.exp)
+t.L.prism.exp<-t(L.prism.exp)
+
+G.gene.exp_variances <- apply(t.G.prism.exp, MARGIN = 1, stats::var)
+K.gene.exp_variances <- apply(t.K.prism.exp, MARGIN = 1, stats::var)
+B.gene.exp_variances <- apply(t.B.prism.exp, MARGIN = 1, stats::var)
+Br.gene.exp_variances <- apply(t.Br.prism.exp, MARGIN = 1, stats::var)
+L.gene.exp_variances <- apply(t.L.prism.exp, MARGIN = 1, stats::var)
+
+threshold <- 7
+G.selected_genes_var <- t.G.prism.exp[G.gene.exp_variances > threshold, ]
+threshold <- 7
+K.selected_genes_var <- t.K.prism.exp[K.gene.exp_variances > threshold, ]
+threshold2 <- 8
+L.selected_genes_var <- t.L.prism.exp[L.gene.exp_variances > threshold2, ]
+threshold <- 7
+B.selected_genes_var <- t.B.prism.exp[B.gene.exp_variances > threshold, ]
+threshold <- 7
+Br.selected_genes_var <- t.Br.prism.exp[Br.gene.exp_variances > threshold, ]
+
+G.prism.exp.var<-t(G.selected_genes_var)
+K.prism.exp.var<-t(K.selected_genes_var)
+L.prism.exp.var<-t(L.selected_genes_var)
+B.prism.exp.var<-t(B.selected_genes_var)
+Br.prism.exp.var<-t(Br.selected_genes_var)
+
+G.column_names <- colnames(G.prism.exp.var)
+K.column_names <- colnames(K.prism.exp.var)
+L.column_names <- colnames(L.prism.exp.var)
+B.column_names <- colnames(B.prism.exp.var)
+Br.column_names <- colnames(Br.prism.exp.var)
+
+genes_variance.V <- c(G.column_names,K.column_names,L.column_names,B.column_names,Br.column_names)
+prism.exp_geneshv <- prism.exp_celllines[,colnames( prism.exp_celllines) %in% genes_variance.V ]
+
+pca_result_prism.exp_geneshv <- prcomp(prism.exp_geneshv)
+pca_values <- pca_result_prism.exp_geneshv $x # Principal component scores (transformed data)
+pca_variances <- pca_result_prism.exp_geneshv $sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_prism.exp_geneshv $rotation  # Loadings (coefficients) of each variable on each principal component
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+plot5 <- ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c("Bone cancer"=bone.cancer.celllines.group, "Kidney cancer"=kidney.cancer.celllines.group, "Liver cancer"=liver.cancer.celllines.group, "Gastric cancer"=gastric.cancer.celllines.group,"Breast cancer"= breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot 
+       for the gene expression of five different cancer subtypes")
+
+
+```
+
+```{r include=FALSE}
+library(ggplot2)
+
+library(ggforce)
+library(cluster)
+library(stats)
+breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
+liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
+bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
+
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+kidney.cancer.celllines.v <- kidney.cancer.celllines $DepMap_ID
+bone.cancer.celllines.v <- bone.cancer.celllines $DepMap_ID
+liver.cancer.celllines.v <- liver.cancer.celllines $DepMap_ID
+cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.cancer.celllines.v,  breast.cancer.celllines.v,gastric.cancer.celllines.v)
+prism.exp_celllines <- prism.exp[rownames(prism.exp) %in% cancer.celllines.v, ]
+
+#Gastric cancer Dataframe of Prism.exp
+G.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% gastric.cancer.celllines.v, ]
+#Kidney cancer Dataframe of Prism.exp
+K.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% kidney.cancer.celllines.v, ]
+#Bone cancer Dataframe of Prism.exp
+B.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% bone.cancer.celllines.v, ]
+#Breast cancer Dataframe of Prism.exp
+Br.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% breast.cancer.celllines.v, ]
+#Liver cancer Dataframe of Prism.exp
+L.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% liver.cancer.celllines.v, ]
+
+# Transpose the dataframes
+t.G.prism.exp <- t(G.prism.exp)
+t.K.prism.exp<- t(K.prism.exp)
+t.B.prism.exp<- t(B.prism.exp)
+t.Br.prism.exp<-t(Br.prism.exp)
+t.L.prism.exp<-t(L.prism.exp)
+
+G.gene.exp_variances <- apply(t.G.prism.exp, MARGIN = 1, stats::var)
+K.gene.exp_variances <- apply(t.K.prism.exp, MARGIN = 1, stats::var)
+B.gene.exp_variances <- apply(t.B.prism.exp, MARGIN = 1, stats::var)
+Br.gene.exp_variances <- apply(t.Br.prism.exp, MARGIN = 1, stats::var)
+L.gene.exp_variances <- apply(t.L.prism.exp, MARGIN = 1, stats::var)
+
+threshold <- 7
+G.selected_genes_var <- t.G.prism.exp[G.gene.exp_variances > threshold, ]
+threshold <- 7
+K.selected_genes_var <- t.K.prism.exp[K.gene.exp_variances > threshold, ]
+threshold2 <- 8
+L.selected_genes_var <- t.L.prism.exp[L.gene.exp_variances > threshold2, ]
+threshold <- 7
+B.selected_genes_var <- t.B.prism.exp[B.gene.exp_variances > threshold, ]
+threshold <- 7
+Br.selected_genes_var <- t.Br.prism.exp[Br.gene.exp_variances > threshold, ]
+
+G.prism.exp.var<-t(G.selected_genes_var)
+K.prism.exp.var<-t(K.selected_genes_var)
+L.prism.exp.var<-t(L.selected_genes_var)
+B.prism.exp.var<-t(B.selected_genes_var)
+Br.prism.exp.var<-t(Br.selected_genes_var)
+
+G.column_names <- colnames(G.prism.exp.var)
+K.column_names <- colnames(K.prism.exp.var)
+L.column_names <- colnames(L.prism.exp.var)
+B.column_names <- colnames(B.prism.exp.var)
+Br.column_names <- colnames(Br.prism.exp.var)
+
+genes_variance.V <- c(G.column_names,K.column_names,L.column_names,B.column_names,Br.column_names)
+prism.exp_geneshv <- prism.exp_celllines[,colnames( prism.exp_celllines) %in% genes_variance.V ]
+
+pca_result_prism.exp_geneshv <- prcomp(prism.exp_geneshv)
+pca_values <- pca_result_prism.exp_geneshv $x # Principal component scores (transformed data)
+pca_variances <- pca_result_prism.exp_geneshv $sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_prism.exp_geneshv $rotation  # Loadings (coefficients) of each variable on each principal component
+
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+
+
+# Perform PCA
+pca_result <- prcomp(pca_data[, c("PC1", "PC2")])
+
+# Extract the PC scores
+pc_scores <- as.data.frame(pca_result_prism.exp_geneshv$x[, 1:2])
+# Perform k-means clustering on the PC scores
+kmeans_result <- kmeans(pc_scores[, c("PC1", "PC2")], centers = 5)
+
+# Add cluster labels to the PC scores
+pc_scores$cluster <- as.factor(kmeans_result$cluster)
+
+# Calculate the center and radius of each cluster
+cluster_centers <- aggregate(pc_scores[, c("PC1", "PC2")], list(cluster = pc_scores$cluster), mean)
+cluster_radii <- aggregate(pc_scores[, c("PC1", "PC2")], list(cluster = pc_scores$cluster), function(x) max(dist(rbind(x, c(0, 0)))))
+
+# Plot the clustered data with circles around each cluster
+plot6 <- ggplot(pc_scores, aes(PC1, PC2, color = cluster)) +
+  geom_point() +stat_ellipse(geom = "path", aes(group = cluster, color = cluster), alpha = 0.2)+
+  labs(x = "PC1", y = "PC2", title = "PCA with K-means 
+       Clustering and Circles")
+```
+
+```{r eval=FALSE, include=FALSE, out.height="40%", out.width="65%"}
+
+library(cowplot)
+
+# Arrange the plots side by side using cowplot
+combined_plot3 <- plot_grid(plot4, plot5,
+    
+  labels = c("A", "B"),
+  ncol = 2
+)
+
+combined_plot3 <- plot_grid(plot4, plot5, labels = c("A", "B"), ncol = 2)
+combined_plot3 <- cowplot::plot_grid(plot4, plot5, labels = c("A", "B"), ncol = 2)
+combined_plot3
+                                
+```
+
+```{r echo=FALSE, warning=FALSE, out.height="50%", out.width="50%",fig.cap = "(Left): PCA scatter plot for gene expression of 5 different cancer subtypes. Each subtype is represented by a different color. Each dot corresponds to a cancer cell line. (Right): K - mean clustering applied for identifying different clusters", fig.show='hold' }
+plot5
+plot6
+
+```
+
+## 3.7 Comparative Analysis: Shared Targets and Mechanisms of Action in Gastric and Breast Cancer
+
+In order to validate the observed clustering between gene expression patterns of gastric cancer and breast cancer and their similar drug response, we conducted further analysis to substantiate the significance of this finding. To achieve this, we performed PCA exclusively on the "prism" data set, focusing only on breast cancer cell lines, with the objective of identifying key targets and potential mechanisms of action and to compare them with gastric cancer. The methods applied in this analysis were consistent with the approach explained in the initial sections of the report (see 2.3). Subsequently, we generated two bar plots which visualize the most commonly observed targets and mechanism of actions (Fig. 6). It is important to note that this analysis focused exclusively on drugs that made the most substantial contributions to PC1. Remarkably, our analysis revealed the presence of three specific and noteworthy targets that are shared between gastric cancer and breast cancer subtypes: EGFR, HDAC1, and mTOR. Additionally, upon examining the second histogram, we observed a convergence of mechanisms of action. Specifically, HDAC inhibitors and FLT3 inhibitors emerged as the most frequent mechanisms common in both cancer subtypes. These findings demonstrate that breast and gastric cancer exhibit remarkable similarities in terms of shared targets, as well as common mechanisms of action. The importance of this result will be further observed in the discussion part.
+
+```{r include=FALSE}
+prism_breast <- prism[rownames(prism) %in% breast.cancer.celllines.v, ]
+typeof(prism_breast)
+prism_breast_numeric_2 <- (
+  sapply(prism_breast, as.numeric)
+)
+is.numeric(prism_breast_numeric_2)
+###removing all columns that have only missing values
+prism_breast_matrix_filtered <- prism_breast_numeric_2[, colSums(is.na(prism_breast_numeric_2)) < nrow(prism_breast_numeric_2)]
+###save the names of the rows so we can restore them after that
+original_row_names_breast <- rownames(prism_breast)
+###replacing the NAs by median of the columns
+prism_breast_numeric_2[is.na(prism_breast_numeric_2)] <-median(prism_breast_numeric_2,na.rm =TRUE)
+
+sum(is.na(prism_breast_numeric_2))
+original_row_names_breast <- rownames(prism_breast)
+###restoring the row names
+prism_breast_matrix_filtered1 <- matrix(prism_breast_numeric_2, nrow = nrow(prism_breast), dimnames = list(rownames(prism_breast), colnames(prism_breast)))
+original_row_names_breast <- rownames(prism_breast)
+prism_breast_matrix_filtered1 <- matrix(prism_breast_numeric_2, nrow = nrow(prism_breast), dimnames = list(rownames(prism_breast), colnames(prism_breast)))
+typeof(prism_breast_matrix_filtered1)
+class(prism_breast_matrix_filtered1)
+sum(is.na(prism_breast_matrix_filtered1))###no missing values
+####till here is important####
+
+
+prism_breast_cleaned_treatments <- prism_breast[, colSums(is.na(prism_breast)) == 0]
+
+prism_breast_cleaned_treatments_t<- t(prism_breast_cleaned_treatments)
+sum(is.na(prism_breast_cleaned_treatments_t))
+is.numeric(prism_breast_cleaned_treatments_t)
+pca_result_breast_cleaned_treatments_t<- prcomp(prism_breast_cleaned_treatments_t)
+pca_values_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$x # Principal component scores (transformed data)
+pca_variances_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$sdev^2  # Variance explained by each principal component
+pca_proportions_breast_cleaned_treatment_t <- pca_variances_breast_cleaned_treatments_t / sum(pca_variances_breast_cleaned_treatments_t)  # Proportion of variance explained by each principal component
+pca_loadings_breast_cleaned_treatments_t <- pca_result_breast_cleaned_treatments_t$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_breast_cleaned_treatments_t), pca_variances_breast_cleaned_treatments_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_breast_cleaned_treatments_t[, 1], pca_values_breast_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2")
+
+pc1_positive_drugs_breast <- rownames(pca_values_breast_cleaned_treatments_t)[pca_values_breast_cleaned_treatments_t[, "PC1"] > 0]
+mean(pca_loadings_breast_cleaned_treatments_t[,1]) #very similar to gastric here
+#### There are 678 drugs which contribute positive to the PC1. So lets select a threshold and find selected drugs.
+pc1_selected_drugs_breast <- rownames(pca_values_breast_cleaned_treatments_t)[pca_values_breast_cleaned_treatments_t[, "PC1"] > 20]
+View(pc1_selected_drugs_breast)
+prism_treat_new_breast <- prism.treat[rownames(prism.treat) %in% pc1_selected_drugs_breast, ]
+prism_treat_new_breast <- subset(prism_treat_new_breast, dose > 3 )
+
+bar_chart_breast <- ggplot(data = prism_treat_new_breast, aes(x = target)) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Target Distribution", x = "Target", y = "Count") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 10)  # Adjust the range as needed
+
+# Display the bar chart
+bar_chart_breast
+big_string_breast <- paste(prism_treat_new_breast$target, collapse = ",")
+target_vector_breast <- unlist(strsplit(big_string_breast, ","))
+target_vector_breast <- gsub(" ", "", target_vector_breast)
+target_frequency_breast <- as.data.frame(table(target_vector_breast))
+target_frequency_breast
+View(target_frequency_breast)
+target_freq_dataframe_selected_breast <- subset(target_frequency_breast, Freq > 2)
+
+target_freq_dataframe_selected_breast <- target_freq_dataframe_selected_breast[target_freq_dataframe_selected_breast$target_vector_breast != "NA", ]
+
+bar_plot_breast <- ggplot(target_freq_dataframe_selected_breast, aes(x = reorder(target_vector_breast, -Freq), y = Freq, fill = target_vector_breast)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Target Molecules of Selected Drugs", x = "Target", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+# Adjust the x-axis labels
+bar_plot_breast <- bar_plot_breast + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+
+#The same with moa
+# Seperate the strings of the column target
+big_string_breast <- paste(prism_treat_new_breast$moa, collapse = ",")
+
+moa_vector_breast <- unlist(strsplit(big_string_breast, ","))
+moa_vector_breast <- gsub(" ", "", moa_vector_breast)
+moa_frequency_breast <- as.data.frame(table(moa_vector_breast))
+moa_frequency_breast
+
+# create a new dataframe of target frequency and select those which have more than 1 freq:
+
+moa_freq_dataframe_selected_breast <- subset(moa_frequency_breast, Freq > 2)
+
+
+
+
+#Bar plot of moa
+
+# Create a bar plot of moa
+bar_plot_moa_breast <- ggplot(moa_freq_dataframe_selected_breast, aes(x = reorder(moa_vector_breast, -Freq), y = Freq, fill = moa_vector_breast)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Mechanism of Actions of Selected Drugs", x = "moa", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+  ylim(0, 15)  # Adjust the range as needed
+
+##Adjust the x-axis labels
+bar_plot_moa_breast <- bar_plot_moa_breast + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+
+
+print(bar_plot_moa_breast)
+
+```
+
+```{r include=FALSE}
+
+```
+
+```{r include=FALSE}
+par(mfrow=c(3,3))
+library(cowplot)
+
+# Arrange the plots side by side using cowplot
+combined_plot5 <- plot_grid(bar_plot_breast, bar_plot_moa_breast, labels = c("A", "B"), ncol = 2)
+
+combined_plot5
+
+```
+
+```{r echo=FALSE, out.height="40%", out.width="40%", fig.cap= "Barplot representation of the most frequent targets (left) and mechanism of action (right) in breast cancer cell lines.", fig.show='hold' }
+bar_plot_breast
+bar_plot_moa_breast
+```
+
+## 3.8 Analyzing the correlation between drugs and their targets
+
+Correlations between drug response and gene expression or CNVs of drug targets in gastric cancer cells identified two drug-gene pairs for further analysis: dacinostat(BRD-K56957086-001-06-3)/*HDAC1* and GZD824 (BRD-K35329391-334-01-7)/BCR. These pairs demonstrated strong correlations between the drug response and both the gene expression and CNVs of their respective targets (SM: Fig. 20).
+
+As before mentioned HDAC inhibitors seem to be a promising group of repurposing drugs for gastric cancer as the graphs depicting the drug response of dacinostat against *HDAC1* gene expression or CNVs in gastric cancer cell lines confirm (Fig. 7). The reduction of cell growth is dose-dependent of dacinostat since the dots of lower doses are clustered around zero, meaning no effect, while increasing the dose lead to a reduction of cell growth in all gastric cancer cell lines (Fig. 7). Same can be observed when looking at the scatter plots visualizing the relationship between the drug response of GZD824 and the gene expression or the CNVs of its target BCR (Fig. 8). Compared to HDAC inhibitor a much higher concentration is needed so the effect of GZD824  is guaranteed since in some cell lines the second highest dose of 2.5 mM has nearly no effect on cell growth. 
+
+The correlations between drug response of dacinostat and *HDAC1* gene expression vary when increasing the drug dosage (Fig. 7). In fact, there is no consistent pattern or trend in the correlations as the dose of dacinostat increases. Contrarily, as the drug dose of dacinostat increases, the correlations with *HDAC1* CNVs consistently increase. This finding supports the hypothesis that the drug's effect in gastric cancer cells is indeed linked to the CNVs of its target gene, *HDAC1*. For very low dosages, the overall effect on the cell lines is minimal, likely due to the fact that the effective dose of the drug is not reached, thereby hindering a clear expression of the correlation between drug response and *HDAC1* CNVs. Similar observations can be made when examining the change of the correlation between the drug response of GZD824 and the gene expression or the CNVs of its target BCR when increasing the dosage of the drug (Fig. 8). However the drug response of GZD824 and the CNVs of BCR in gastric cancer cells show a negative correlation for all dosages of the drug. Lower CNVs suggest a weaker reduction in cell growth, while higher CNVs indicate an increased effectiveness of the drug in reducing cell growth in gastric cancer cells. 
+
+```{r include=FALSE}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K56957086-001-06-3::0.00061034::HTS002"
+vector0.00061034 <- prism_gastric[[column_name0]]
+column_name1 <- "BRD-K56957086-001-06-3::0.0024414::HTS002"
+vector0.0024414 <- prism_gastric[[column_name1]]
+column_name2 <- "BRD-K56957086-001-06-3::0.00976562::HTS002"
+vector0.00976562 <- prism_gastric[[column_name2]]
+column_name3<- "BRD-K56957086-001-06-3::0.0390625::HTS002"
+vector0.0390625 <- prism_gastric[[column_name3]]
+column_name4 <- "BRD-K56957086-001-06-3::0.15625::HTS002"
+vector0.15625 <- prism_gastric[[column_name4]]
+column_name5 <- "BRD-K56957086-001-06-3::0.625::HTS002"
+vector0.625 <- prism_gastric[[column_name5]]
+column_name6 <- "BRD-K56957086-001-06-3::2.5::HTS002"
+vector2.5 <- prism_gastric[[column_name6]]
+column_name7 <- "BRD-K56957086-001-06-3::10::HTS002"
+vector10<- prism_gastric[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector0.00061034, vector0.0024414, vector0.00976562 , vector0.0390625, vector0.15625,vector0.625, vector2.5 , vector10)
+par(mar = c(5, 5, 4, 7))
+# Plot the vectors
+matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+        xlab = " CNVs of HDAC1", ylab = "BRD-K56957086-001-06-3")
+# Get the coordinates for the legend
+legend_x <- 1.2 # Adjust the value as needed
+legend_y <- 0.5
+# Add a legend
+legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+
+```
+
+```{r include=FALSE}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines.v, ]
+
+# Get the common row names
+common_rows <- intersect(row.names(prism_gastric), row.names(prism.exp_gastric)) 
+
+# Create new dataframes with common rows
+new_prism.exp.gaaa <- prism.exp_gastric[common_rows, ]
+new_prismgaaa <- prism_gastric[common_rows, ]
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector0 <- new_prism.exp.gaaa[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K56957086-001-06-3::0.00061034::HTS002"
+vector1 <- new_prismgaaa[[column_name0]]
+column_name1 <- "BRD-K56957086-001-06-3::0.0024414::HTS002"
+vector2 <- new_prismgaaa[[column_name1]]
+column_name2 <- "BRD-K56957086-001-06-3::0.00976562::HTS002"
+vector3 <- new_prismgaaa[[column_name2]]
+
+column_name4 <- "BRD-K56957086-001-06-3::0.15625::HTS002"
+vector5 <- new_prismgaaa[[column_name4]]
+column_name5 <- "BRD-K56957086-001-06-3::0.625::HTS002"
+vector6 <- new_prismgaaa[[column_name5]]
+column_name6 <- "BRD-K56957086-001-06-3::2.5::HTS002"
+vector7 <- new_prismgaaa[[column_name6]]
+column_name7 <- "BRD-K56957086-001-06-3::10::HTS002"
+vector8<- new_prismgaaa[[column_name7]]
+# Create a matrix of vectors
+vectors1 <- cbind(vector1, vector2, vector3,  vector5,vector6, vector7, vector8)
+par(mar = c(5, 5, 4, 7))
+# Plot the vectors
+matplot(vector0, vectors1, type = "p", pch = 16, col = c("blue", "red", "green",  "purple", "pink", "brown", "black"),
+        xlab = "TPM values of HDAC1", ylab = "BRD-K56957086-001-06-3")
+# Get the coordinates for the legend
+legend_x <- 9.11  # Adjust the value as needed
+legend_y <- 0.5
+# Add a legend
+legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+
+```
+
+```{r echo=FALSE, out.height="45%", out.width="45%", fig.cap=" Plotting the drug response of dacinostat against the gene expression or CNVs of its target HDAC1", fig.show='hold'}
+library(cowplot)
+library(cowplot)
+
+# Create the first plot
+plot7<-matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "purple", "pink", "brown", "black"),
+        xlab = "CNVs of HDAC1", ylab = "BRD-K56957086-001-06-3")
+
+# Create the second plot
+plot8 <- matplot(vector0, vectors1, type = "p", pch = 16, col = c("blue", "red", "green", "purple", "pink", "brown", "black"),
+                 xlab = "TPM values of HDAC1", ylab = "BRD-K56957086-001-06-3")
+
+
+```
+
+```{r include=FALSE}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "BCR"
+vector <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K35329391-334-01-7::0.00061034::HTS002"
+vector1 <- prism_gastric[[column_name0]]
+column_name1 <- "BRD-K35329391-334-01-7::0.0024414::HTS002"
+vector2 <- prism_gastric[[column_name1]]
+column_name2 <- "BRD-K35329391-334-01-7::0.00976562::HTS002"
+vector3 <- prism_gastric[[column_name2]]
+column_name3<- "BRD-K35329391-334-01-7::0.0390625::HTS002"
+vector4 <- prism_gastric[[column_name3]]
+column_name4 <- "BRD-K35329391-334-01-7::0.15625::HTS002"
+vector5 <- prism_gastric[[column_name4]]
+column_name5 <- "BRD-K35329391-334-01-7::0.625::HTS002"
+vector6 <- prism_gastric[[column_name5]]
+column_name6 <- "BRD-K35329391-334-01-7::2.5::HTS002"
+vector7 <- prism_gastric[[column_name6]]
+column_name7 <- "BRD-K35329391-334-01-7::10::HTS002"
+vector8<- prism_gastric[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector1, vector2, vector3, vector4, vector5,vector6, vector7, vector8)
+par(mar = c(5, 5, 4, 7))
+# Plot the vectors
+matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+        xlab = "CNVs of BCR", ylab = "BRD-K35329391-334-01-7")
+# Get the coordinates for the legend
+legend_x <- 1.31  # Adjust the value as needed
+legend_y <- 0.5
+# Add a legend
+legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines.v, ]
+
+# Get the common row names
+common_rows <- intersect(row.names(prism_gastric), row.names(prism.exp_gastric)) 
+
+# Create new dataframes with common rows
+new_prism.exp.gaaa <- prism.exp_gastric[common_rows, ]
+new_prismgaaa <- prism_gastric[common_rows, ]
+# Select a column by its name and store it in a vector
+column_name <- "BCR"
+vector0 <- new_prism.exp.gaaa[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K35329391-334-01-7::0.00061034::HTS002"
+vector1 <- new_prismgaaa[[column_name0]]
+column_name1 <- "BRD-K35329391-334-01-7::0.0024414::HTS002"
+vector2 <- new_prismgaaa[[column_name1]]
+column_name2 <- "BRD-K35329391-334-01-7::0.00976562::HTS002"
+vector3 <- new_prismgaaa[[column_name2]]
+column_name3<- "BRD-K35329391-334-01-7::0.0390625::HTS002"
+vector4 <- new_prismgaaa[[column_name3]]
+column_name4 <- "BRD-K35329391-334-01-7::0.15625::HTS002"
+vector5 <- new_prismgaaa[[column_name4]]
+column_name5 <- "BRD-K35329391-334-01-7::0.625::HTS002"
+vector6 <- new_prismgaaa[[column_name5]]
+column_name6 <- "BRD-K35329391-334-01-7::2.5::HTS002"
+vector7 <- new_prismgaaa[[column_name6]]
+column_name7 <- "BRD-K35329391-334-01-7::10::HTS002"
+vector8<- new_prismgaaa[[column_name7]]
+# Create a matrix of vectors
+vectors1 <- cbind(vector1, vector2, vector3, vector4, vector5,vector6, vector7, vector8)
+par(mar = c(5, 5, 4, 7))
+# Plot the vectors
+matplot(vector0, vectors1, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+        xlab = "TPM values of BCR", ylab = "BRD-K35329391-334-01-7")
+# Get the coordinates for the legend
+legend_x <- 5.6  # Adjust the value as needed
+legend_y <- 0.5
+# Add a legend
+legend(legend_x, legend_y, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
+       col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16,xpd = TRUE, bty = "n")
+```
+
+```{r echo=FALSE, out.height="45%", out.width="45%", fig.cap = "Plotting the drug response of GZD824 against the gene expression or CNVs of its target BCR.", fig.show='hold'}
+library(cowplot)
+
+
+
+# Create the first plot
+plot9 <- matplot(vector, vectors, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+                 xlab = "CNVs of BCR", ylab = "BRD-K35329391-334-01-7")
+
+
+
+# Create the second plot
+plot10 <- matplot(vector0, vectors1, type = "p", pch = 16, col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"),
+                 xlab = "TPM values of BCR", ylab = "BRD-K35329391-334-01-7")
+
+# Get the coordinates for the legend
+legend_x2 <- 5.6  # Adjust the value as needed
+legend_y2 <- 0.5
+cex.legend<-0.5
+# Add a legend to the second plot
+legend2 <- legend(legend_x2, legend_y2, legend = c("0.00061034", "0.0024414", "0.00976562", "0.0390625", "0.15625", "0.625", "2.5", "10"),
+                  col = c("blue", "red", "green", "orange", "purple", "pink", "brown", "black"), pch = 16, xpd = TRUE, bty = "n", cex=cex.legend)
+
+
+
+```
+
+\newpage
+
+## 3.9 Creating prediction models for the drug response of two specific drugs based on the CNVs of their target gene
+
+Since the correlations of both drugs with their target CNVs were higher compared to the correlation between drug response and target gene expression and also showed a constant increase when increasing the dosage, linear regression was applied to further analyze the relationship between the drug response of dacinostat and GZD824 and the CNVs of *HDAC1* and BCR in gastric cancer cells (SM: Fig.20). The objective is to develop a prediction model for estimating the drug response of a specific drug, using the copy number variations (CNVs) of the drug's target gene as the independent variable and perform linear regression. The models were created only for the highest dosage of the drugs namely 10 mM. The model of dacinostat has a multiple R-squared of 0.2766, indicating that approximately 27.66% of the variance of the drug response is explained by the model (Fig. 9 (right)). The F-statistic (5.736) is significant, indicating that the model as a whole is statistically significant. The residual standard error is 0.8758, which represents the average deviation of the observed values from the predicted values. The model of GZD824 explains approximately 46.77% of the variance of the drug response, as indicated by the multiple R-squared value of 0.4677 (Fig.9(left)). The F-statistic is 13.18, with a corresponding p-value of 0.002468, suggesting that the model as a whole is statistically significant. The residual standard error is 0.5696, representing the average deviation of the observed values from the predicted values. The R-squared values of both prediction models are not close to one, indicating that the CNVs do not have a very strong predictive power since the linear regression models explain just a moderate amount of the variance of the drug responses. When involving other cancer types in the linear regression analysis, the result states for both drug-genes pairs that the relationship between the drug response and CNVs of the drugs target is not significant, indicated by high p-values of the F-statistics (SM: Fig.21).
+
+```{r include=FALSE}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "BCR"
+vector50 <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K35329391-334-01-7::10::HTS002"
+vector51 <- prism_gastric[[column_name]]
+library(ggplot2)
+
+# Create a data frame with the variables
+data1 <- data.frame(KDR = vector50, 
+                   HTS002 = vector51)
+
+# Create the scatter plot using ggplot2
+ggplot(data1, aes(x = KDR, y = HTS002)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(x = "B-cell Domain Receptor (BCR) Expression Level", 
+       y = "BRD-K35329391-334-01-7::10::HTS002",
+       title = "Prediction model of BRD-K35329391-334-01-7::10::HTS002 based on CNVs of BCR") +
+  theme_minimal()
+
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector200 <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K56957086-001-06-3::10::HTS002"
+vector201 <-prism_gastric[[column_name]]
+# Create a data frame with the variables
+data2 <- data.frame(HDAC1 = vector200, 
+                   HTS0022 = vector201)
+
+# Create the scatter plot using ggplot2
+ggplot(data2, aes(x = HDAC1, y = HTS0022)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(x = "HDAC1 Expression Level", 
+       y = "BRD-K56957086-001-06-3::10::HTS002",
+       title = "Scatter Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002") +
+  theme_minimal()
+
+```
+
+```{r include=FALSE, message=FALSE}
+library(cowplot)
+
+# Create the first plot
+plot11 <- ggplot(data1, aes(x = KDR, y = HTS002)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE, show.legend = FALSE) +
+  labs(x = "B-cell Domain Receptor (BCR) Expression Level", 
+       y = "BRD-K35329391-334-01-7::10::HTS002",
+       title = "Prediction model of 
+       BRD-K35329391-334-01-7::10::HTS002 based on CNVs of BCR") +
+  theme_minimal() + theme(legend.position="none")
+
+# Create the second plot
+plot12 <- ggplot(data2, aes(x = HDAC1, y = HTS0022)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE, show.legend = FALSE) +
+  labs(x = "HDAC1 Expression Level", 
+       y = "BRD-K56957086-001-06-3::10::HTS002",
+       title = "Prediction model of 
+       BRD-K56957086-001-06-3::10::HTS002 based on CNVs of HDAC1") +
+  theme_minimal()+ theme(legend.position="none")
+
+
+
+```
+
+```{r echo=FALSE, message=FALSE, out.width = "50%", out.height = "50%", fig.cap= "Prediction models for the drug response of dacinostat and GZD824 in gastric cancer cell lines.(Left)The equation explaining the results of linear regression analysis with the drug response GZD824(Y-dependent variable) and the CNVs of BCR (X- independent variable) in gastric cancer cells is:Y = -4.2900 - 3.6193 X. Both the intercept and the coefficient are statistically significant, indicated by the corresponding p-values (< 0.05). (Right) The equation which describes the created prediction model of dacinostat (Y-dependent variable) and the CNVs of HDAC1 (X- independent variable) in gastric cancer cells states as follows: Y = -10.285 + 4.347X.  Both the intercept and the coefficient are statistically significant, indicated by the corresponding p-values (< 0.05).", fig.show='hold'}
+plot11
+plot12
+```
+
+# **Discussion**
+
+Understanding and analyzing the drug response of existing drugs in cancer cell lines especially in gastric cancer cell lines to identify possible targets and metabolic pathways is important for drug-repurposing and to identify effective treatments for cancer. In our preliminary analysis using fold changes and t-tests, we found that oncological treatments were generally more effective in inhibiting cell growth in all cancer cell lines. This observation highlighted the potential for reusability of oncological drugs in different cancer types and subtypes and different by which they were created. This conclusion led us to the following fold-change analysis, in which we analyzed non-oncology treatments in relation to oncology-treatments, specifically excluding gastric oncological treatments among only gastric cancer cells. Most gastric cancer cell lines responded more effectively to oncological treatments, fact that confirmed our theory. There were also some outlier cases that showed greater efficacy with non-oncology drugs. These results could be used for future research exploring the use of non-oncology treatments and studying the characteristics of these atypical cells. Through our focused analysis performing PCA and Pearson correlation, we selected specific drugs, which inhibit cell growth and gained insights into their potential targets and molecular pathways. According to our results, the majority of the targets of the selected drugs were subtypes of the HDAC enzyme family, followed by MTOR and EGFR. Moreover, the drugs which inhibit HDAC did have a strong negative effect on cell growth of gastric cancer cell lines. This was also verified in the further analysis using the results of the fold change, where it was corroborated that among a gastric cancer cell line that had a response in average ratio of fold change value (best effect with oncology drugs), 4 of the treatments with the best efficiency corresponded to HDAC inhibitors. Furthermore, we wanted to investigate the correlation between drug concentration and drug response in the context of gastric cancer, specifically focusing on HDAC inhibitors. Our analysis revealed a notable negative correlation between drug concentration and cell growth, indicating that higher drug concentrations corresponded to a stronger influence on inhibiting cell growth. This analysis provides valuable insights into the potential efficacy of HDAC inhibitors in gastric cancer and underscores the importance of dosage considerations in developing more effective therapeutic approaches for treating gastric cancer(@rajaselvi2023antineoplastic). Furthermore, our analysis revealed intriguing similarities between gastric cancer and breast cancer, including shared targets (*HDAC1*) and mechanisms of action (HDAC inhibitors). This observation aligns with existing scientific literature, which highlights the potential of HDAC inhibitors to reduce cell growth through their impact on critical processes such as EMT, ER reactivation, and also their ability to induce programmed cell death in breast cancer cells(@pramanik2022potential). This shared mechanism of action highlights the potential for repurposing HDAC inhibitors as targeted therapies that could benefit patients with both gastric and breast cancer. To investigate the relationship between a drug and its target gene in gastric cancer cells, we examined the the drug response and the gene expression or CNVs of its target. This analysis identified several drug-gene pairs, which were then subjected to further analysis using linear regression. By employing linear regression, prediction models were created to estimate the drug response based on the gene expression or the CNVs of the target gene. Since the whole analysis was based on gastric cancer which represents a small group of cell lines with just approximately 17 cell lines in the data set, the limitations of the achieved results should be kept in mind. For example the correlations between dacinostat and GZD824 and the gene expression of their target genes did show inconsistency when increasing the drug doses, which could indicate that the high correlations for some dosages were more or less coincidence and are not proving a relationship between drug response and gene expression. These findings are based on gene expression and CNVs in cancer cells but no control group for this data was given, meaning no insight was given on how gene expression or CNVs differ generally from cells without cancer. The created prediction models for the drug response of dacinostat and GZD824 based on the CNVs of their target gene showed no strong predictive power when looking at the R-squared values. When four additional cancer types were included in the prediction model to increase the sample size for the linear regression analysis, the results yielded even lower explanatory power or R-squared value. Since the amount of data for gastric cancer cells is so little, it was not possible to check if the discrepancy occurred because these genes are only related to the drug response in gastric cancer cells or if this proves that there is no significant correlation. But since all five cancer types have in common that these two drugs reduced their cell growth, it indicates that most probably analyzing the CNVs of their target gene is not a good parameter to predict the drug response. Despite the fact that the created prediction models did not prove to have a strong predictive power, the idea of analyzing the target gene or protein in the cells for which the drug is aimed to be repurposed, could be a benefitial approach to narrow the cancer types. \newpage
+
+# **Supplementary Materials**
+
+```{r include=FALSE}
+library(ggplot2)
+pca_result_gastric_cleaned_treatments<- prcomp(prism_gastric_cleaned_treatments)
+pca_values_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$x # Principal component scores (transformed data)
+pca_variances_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$sdev^2  # Variance explained by each principal component
+pca_proportions_gastric_cleaned_treatment <- pca_variances_gastric_cleaned_treatments / sum(pca_variances_gastric_cleaned_treatments)  # Proportion of variance explained by each principal component
+pca_loadings_gastric_cleaned_treatments <- pca_result_gastric_cleaned_treatments$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(pca_values_gastric_cleaned_treatments[, 1], pca_values_gastric_cleaned_treatments[, 2], xlab = "PC1", ylab = "PC2")
+```
+
+```{r echo=FALSE, out.width= "50%", out.height= "50%", fig.cap=" PCA scatter plot for drug response of gastric cancer cell lines. (Left): each dot represents a cell line. (Right): Each dot corresponds to a specific drug.", fig.show='hold'}
+plot(pca_values_gastric_cleaned_treatments[, 1], pca_values_gastric_cleaned_treatments[, 2], xlab = "PC1", ylab = "PC2", main = "PCA scatter plot for drug response of gastric cancer cell lines ")
+plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2", main = "PCA scatter plot for drug response of gastric cancer cell lines")
+```
+
+```{r echo=FALSE, fig.width = 6, fig.height = 3, fig.cap = "Pearson correlation of Principle components for gastric cancer cell lines. Each color represents different gastric cancer cell line.",fig.show='hold'}
+# Create the bar plot using ggplot
+ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Pearson Correlation of Principal Components of Gastric Cancer Cell Lines",
+       x = "Principal Components",
+       y = "Pearson Correlation") +
+  scale_fill_discrete(name = "Cell Line") +
+  ylim(-1, 1) +
+  theme_minimal() +
+  theme(legend.text = element_text(size = 5),  # Adjust the size of legend text
+        legend.key.size = unit(0.3, "cm"),
+        plot.title = element_text(size = 10))
+
+```
+
+```{r echo=FALSE, warning=FALSE, out.height="50%", out.width="50%", fig.cap = "(Left): PCA scatter plot for drug response of 5 different cancer subtypes. Each subtype is represented by a different color. Each dot corresponds to a cancer cell line. (Right): K - mean clustering applied for identifying different clusters", fig.show='hold'}
+plot3
+plot4
+```
+
+```{r include=FALSE}
+
+#testing the right number of clusters:
+library(cluster)
+library(factoextra)
+library(purrr)
+
+fviz_nbclust(pca_data_prism.filtered1_drugs_variances_PC, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype=2)
+ #it works ith pc_scpres_prism in the same way, so both are correct
+  
+pam.res5 <- pam(pc_scores_prism, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB","#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "40%", out.width= "40%",fig.cap="K-Means clustering of the PCA results for drug response from five cancer types based on the results of silhouette und elbow method", fig.show='hold'}
+fviz_nbclust(pca_data_prism.filtered1_drugs_variances_PC, kmeans, method = "wss") + geom_vline(xintercept = 5, linetype=2)
+avg_sil <- function(k) {
+  km.res <- kmeans(pc_scores_prism, centers = 5, nstart = 25)
+  ss <- silhouette(km.res$cluster, dist(pc_scores_prism))
+  mean(ss[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values <- map_dbl(k.values, avg_sil)
+
+
+#computing with silhouette method
+fviz_nbclust(pc_scores_prism, kmeans, method = "silhouette")
+pam.res5 <- pam(pc_scores_prism, 5,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res5, data = pc_scores_prism, palette = c("#FC4E07", "#00AFBB","#E7B800","#4C8C33", "#8C4599"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point")
+fviz_silhouette(pam.res5, palette = "jco", ggtheme = theme_classic(), print.summary = FALSE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height="50%", out.width="50%",fig.cap="K-Means clustering of the PCA results for gene expression from five cancer types based on the results of silhouette und elbow method", fig.show='hold'}
+library(ggplot2)
+library(stats)
+breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
+liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
+bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
+
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+kidney.cancer.celllines.v <- kidney.cancer.celllines $DepMap_ID
+bone.cancer.celllines.v <- bone.cancer.celllines $DepMap_ID
+liver.cancer.celllines.v <- liver.cancer.celllines $DepMap_ID
+cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.cancer.celllines.v,  breast.cancer.celllines.v,gastric.cancer.celllines.v)
+prism.exp_celllines <- prism.exp[rownames(prism.exp) %in% cancer.celllines.v, ]
+
+#Gastric cancer Dataframe of Prism.exp
+G.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% gastric.cancer.celllines.v, ]
+#Kidney cancer Dataframe of Prism.exp
+K.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% kidney.cancer.celllines.v, ]
+#Bone cancer Dataframe of Prism.exp
+B.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% bone.cancer.celllines.v, ]
+#Breast cancer Dataframe of Prism.exp
+Br.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% breast.cancer.celllines.v, ]
+#Liver cancer Dataframe of Prism.exp
+L.prism.exp<-prism.exp_celllines[rownames(prism.exp_celllines) %in% liver.cancer.celllines.v, ]
+
+# Transpose the dataframes
+t.G.prism.exp <- t(G.prism.exp)
+t.K.prism.exp<- t(K.prism.exp)
+t.B.prism.exp<- t(B.prism.exp)
+t.Br.prism.exp<-t(Br.prism.exp)
+t.L.prism.exp<-t(L.prism.exp)
+
+G.gene.exp_variances <- apply(t.G.prism.exp, MARGIN = 1, stats::var)
+K.gene.exp_variances <- apply(t.K.prism.exp, MARGIN = 1, stats::var)
+B.gene.exp_variances <- apply(t.B.prism.exp, MARGIN = 1, stats::var)
+Br.gene.exp_variances <- apply(t.Br.prism.exp, MARGIN = 1, stats::var)
+L.gene.exp_variances <- apply(t.L.prism.exp, MARGIN = 1, stats::var)
+
+threshold <- 7
+G.selected_genes_var <- t.G.prism.exp[G.gene.exp_variances > threshold, ]
+threshold <- 7
+K.selected_genes_var <- t.K.prism.exp[K.gene.exp_variances > threshold, ]
+threshold2 <- 8
+L.selected_genes_var <- t.L.prism.exp[L.gene.exp_variances > threshold2, ]
+threshold <- 7
+B.selected_genes_var <- t.B.prism.exp[B.gene.exp_variances > threshold, ]
+threshold <- 7
+Br.selected_genes_var <- t.Br.prism.exp[Br.gene.exp_variances > threshold, ]
+
+G.prism.exp.var<-t(G.selected_genes_var)
+K.prism.exp.var<-t(K.selected_genes_var)
+L.prism.exp.var<-t(L.selected_genes_var)
+B.prism.exp.var<-t(B.selected_genes_var)
+Br.prism.exp.var<-t(Br.selected_genes_var)
+
+G.column_names <- colnames(G.prism.exp.var)
+K.column_names <- colnames(K.prism.exp.var)
+L.column_names <- colnames(L.prism.exp.var)
+B.column_names <- colnames(B.prism.exp.var)
+Br.column_names <- colnames(Br.prism.exp.var)
+
+genes_variance.V <- c(G.column_names,K.column_names,L.column_names,B.column_names,Br.column_names)
+prism.exp_geneshv <- prism.exp_celllines[,colnames( prism.exp_celllines) %in% genes_variance.V ]
+
+pca_result_prism.exp_geneshv <- prcomp(prism.exp_geneshv)
+pca_values <- pca_result_prism.exp_geneshv $x # Principal component scores (transformed data)
+pca_variances <- pca_result_prism.exp_geneshv $sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_prism.exp_geneshv $rotation  # Loadings (coefficients) of each variable on each principal component
+ 
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Bone cancer"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Kidney cancer"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Liver cancer"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Gastric cancer"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Breast cancer"
+
+library(cluster)
+library(factoextra)
+
+
+fviz_nbclust(pc_scores, kmeans, method = "wss") + geom_vline(xintercept = 3, linetype=2)
+
+library(purrr)
+library(factoextra)
+library(cluster)
+#higher values indicates a better clustering
+avg_sil <- function(k) {
+  km.res <- kmeans(pc_scores, centers = 5, nstart = 25)
+  ss <- silhouette(km.res$cluster, dist(pc_scores))
+  mean(ss[, 3])
+  }
+#compute and plot wss for k=2 to k=15
+k.values <- 2:15
+
+# extract avg silhouette for 2-15 clusters
+avg_sil_values <- map_dbl(k.values, avg_sil)
+
+
+#computing with silhouette method
+fviz_nbclust(pc_scores, kmeans, method = "silhouette")
+
+pam.res4 <- pam(pc_scores, 3,  metric = "euclidean", stand = FALSE)
+fviz_cluster(pam.res4, data = pc_scores, palette = c("#FC4E07", "#00AFBB", "#E7B800","#4C8C33","green"), ellipse.type = "euclid", 
+star.plot = TRUE, 
+repel = TRUE, 
+ggtheme = theme_minimal(), geom = "point" )
+fviz_silhouette(pam.res4, palette = "jco", ggtheme = theme_classic(), print.summary = FALSE)
+
+```
+
+```{r echo=FALSE, out.height="50%", out.width="50%", fig.cap="Bar Plot Representation of Fold Change Analysis: Comparing Efficiency of Oncology and Non-Oncology Treatments Across Various Cell Lines.", fig.show='hold'}
+# Load the necessary library
+# Using ggplot2
+ggplot(fold_changes_df_0, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
+  geom_bar(stat = "identity", fill = "blue", width = 0.6) +  # Adjust the width to be smaller than 1
+  theme_minimal() +
+  theme(axis.text.x = element_blank()) + # This hides the x-axis labels
+  labs(title = "Fold Changes: Non-Oncology Treatments \n Relative to Oncology Treatments",
+       x = "Cell Lines",
+       y = "Fold Change")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%", fig.cap="(Left):Histogram of Average Oncological Drug Responses for Normality Testing.(Right): Q-Q Plot of Average Oncological Drug Responses for Normality Testing", fig.show='hold'}
+# Load the necessary library
+library(ggplot2)
+
+# Histograms
+# For avg_response_oncology
+ggplot(data=NULL, aes(x=avg_response_oncology_general)) +
+  geom_histogram(bins = 30, color="black", fill="blue") +
+  labs(title="Histogram - avgerage response oncology", x="Values", y="Frequency")
+
+# For avg_response_non_oncology
+ggplot(data=NULL, aes(x=avg_response_non_oncology_general)) +
+  geom_histogram(bins = 30, color="black", fill="red") +
+  labs(title="Histogram - avgerage response non oncology", x="Values", y="Frequency")
+
+# Q-Q plots
+# For avg_response_oncology
+qqnorm(avg_response_oncology_general, main = "Q-Q Plot - avgerage response oncology")
+qqline(avg_response_oncology_general, col = "blue", lwd = 2)
+
+# For avg_response_non_oncology
+qqnorm(avg_response_non_oncology_general, main = "Q-Q Plot - avgerage response non oncology")
+qqline(avg_response_non_oncology_general, col = "red", lwd = 2)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%", fig.cap="Q-Q Plot of Average Responses from Oncological Drugs for Normality Testing Fig X: Q-Q Plot of Average Responses from Non-Oncological Drugs for Normality Testing", fig.show='hold'}
+# Q-Q plots
+# For avg_response_oncology_gastric_2
+qqnorm(avg_response_oncology_gastric_2, main = "Q-Q Plot - Responses oncology (non-gastric) treatments")
+qqline(avg_response_oncology_gastric_2, col = "lightblue", lwd = 2)
+
+# For avg_response_non_oncology_gastric_2
+qqnorm(avg_response_non_oncology_gastric_2, main = "Q-Q Plot - Responses non-oncology treatments")
+qqline(avg_response_non_oncology_gastric_2, col = "pink", lwd = 2)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%", fig.cap="(Left):Boxplot of Average Responses: Comparison Between Non-Oncology and Oncology Treatments.(Right): Boxplot of Average Responses: Comparison Between Non-Oncology and Oncology Treatments in Gastric Cancer Cell Lines", fig.show='hold'}
+# Combine the data into a single dataframe
+all_avg_responses_0 <- data.frame(
+  group = c(rep("Oncology", length(avg_response_oncology_general)), rep("Non-Oncology", length(avg_response_non_oncology_general))),
+  response = c(avg_response_oncology_general, avg_response_non_oncology_general)
+)
+
+# Load the necessary library
+library(ggplot2)
+
+# Create the boxplot
+ggplot(all_avg_responses_0, aes(x = group, y = response, fill = group)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("Non-Oncology" = "red", "Oncology" = "blue")) +
+  theme_minimal() +
+  labs(title = "Boxplot of Average Responses: Oncology vs Non-Oncology",
+       x = "Group",
+       y = "Average Response") 
+# Combine the oncology and non-oncology responses into one data frame
+all_avg_responses_2 <- data.frame(
+  Treatment = c(rep("Oncology", length(avg_response_oncology_gastric_2)), 
+                rep("Non-Oncology", length(avg_response_non_oncology_gastric_2))),
+  Response = c(avg_response_oncology_gastric_2, avg_response_non_oncology_gastric_2)
+)
+
+# Load the necessary library
+library(ggplot2)
+
+# Create the boxplot
+ggplot(all_avg_responses_2, aes(x = Treatment, y = Response, fill = Treatment)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("Oncology" = "pink", "Non-Oncology" = "lightblue")) +
+  theme_minimal() +
+  labs(title = "Comparison of Average Oncology\n and Non-Oncology Gastric Treatment Responses",
+       x = "Treatment Group",
+       y = "Average Response",
+       fill = "Treatment Group") +
+  guides(fill=FALSE) 
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%", fig.cap="Barplot of the correlations between the drug responses of dacinostat and the gene expression or CNVs of its target HDAC1", fig.show='hold'}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K56957086-001-06-3::0.00061034::HTS002"
+vector0.00061034 <- prism_gastric[[column_name0]]
+column_name1 <- "BRD-K56957086-001-06-3::0.0024414::HTS002"
+vector0.0024414 <- prism_gastric[[column_name1]]
+column_name2 <- "BRD-K56957086-001-06-3::0.00976562::HTS002"
+vector0.00976562 <- prism_gastric[[column_name2]]
+column_name3<- "BRD-K56957086-001-06-3::0.0390625::HTS002"
+vector0.0390625 <- prism_gastric[[column_name3]]
+column_name4 <- "BRD-K56957086-001-06-3::0.15625::HTS002"
+vector0.15625 <- prism_gastric[[column_name4]]
+column_name5 <- "BRD-K56957086-001-06-3::0.625::HTS002"
+vector0.625 <- prism_gastric[[column_name5]]
+column_name6 <- "BRD-K56957086-001-06-3::2.5::HTS002"
+vector2.5 <- prism_gastric[[column_name6]]
+column_name7 <- "BRD-K56957086-001-06-3::10::HTS002"
+vector10<- prism_gastric[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector0.00061034, vector0.0024414, vector0.00976562 , vector0.0390625, vector0.15625,vector0.625, vector2.5 , vector10)
+par(mar = c(5, 5, 4, 7))
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976", "0.03906", "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K56957086-001-06-3 '", ylab = "Correlation of drug response and CNVs of HDAC1", cex.names = 0.4)
+
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines.v, ]
+
+# Get the common row names
+common_rows <- intersect(row.names(prism_gastric), row.names(prism.exp_gastric)) 
+
+# Create new dataframes with common rows
+new_prism.exp.gaaa <- prism.exp_gastric[common_rows, ]
+new_prismgaaa <- prism_gastric[common_rows, ]
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector <- new_prism.exp.gaaa[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K56957086-001-06-3::0.00061034::HTS002"
+vector1 <- new_prismgaaa[[column_name0]]
+column_name1 <- "BRD-K56957086-001-06-3::0.0024414::HTS002"
+vector2 <- new_prismgaaa[[column_name1]]
+column_name2 <- "BRD-K56957086-001-06-3::0.00976562::HTS002"
+vector3 <- new_prismgaaa[[column_name2]]
+
+column_name4 <- "BRD-K56957086-001-06-3::0.15625::HTS002"
+vector5 <- new_prismgaaa[[column_name4]]
+column_name5 <- "BRD-K56957086-001-06-3::0.625::HTS002"
+vector6 <- new_prismgaaa[[column_name5]]
+column_name6 <- "BRD-K56957086-001-06-3::2.5::HTS002"
+vector7 <- new_prismgaaa[[column_name6]]
+column_name7 <- "BRD-K56957086-001-06-3::10::HTS002"
+vector8<- new_prismgaaa[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector1, vector2, vector3,  vector5,vector6, vector7, vector8)
+par(mar = c(5, 5, 4, 7))
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976",  "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K56957086-001-06-3 '", ylab = "Correlation of drug response and expression of HDAC1", cex.names = 0.4)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%", fig.cap="Barplot of the correlations between the drug responses of GZD824 and the gene expression or CNVs of its target BCR", fig.show='hold'}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "BCR"
+vector <- prism.cnv_gastric[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K35329391-334-01-7::0.00061034::HTS002"
+vector1 <- prism_gastric[[column_name0]]
+column_name1 <- "BRD-K35329391-334-01-7::0.0024414::HTS002"
+vector2 <- prism_gastric[[column_name1]]
+column_name2 <- "BRD-K35329391-334-01-7::0.00976562::HTS002"
+vector3 <- prism_gastric[[column_name2]]
+column_name3<- "BRD-K35329391-334-01-7::0.0390625::HTS002"
+vector4 <- prism_gastric[[column_name3]]
+column_name4 <- "BRD-K35329391-334-01-7::0.15625::HTS002"
+vector5 <- prism_gastric[[column_name4]]
+column_name5 <- "BRD-K35329391-334-01-7::0.625::HTS002"
+vector6 <- prism_gastric[[column_name5]]
+column_name6 <- "BRD-K35329391-334-01-7::2.5::HTS002"
+vector7 <- prism_gastric[[column_name6]]
+column_name7 <- "BRD-K35329391-334-01-7::10::HTS002"
+vector8<- prism_gastric[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector1, vector2, vector3, vector4, vector5,vector6, vector7, vector8)
+par(mar = c(5, 5, 4, 7))
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976", "0.03906", "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K35329391-334-01-7 '", ylab = "Correlation of drug response and CNVs of BCR", cex.names = 0.4)
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.exp_gastric <- prism.exp[rownames(prism.exp) %in% gastric.cancer.celllines.v, ]
+
+# Get the common row names
+common_rows <- intersect(row.names(prism_gastric), row.names(prism.exp_gastric)) 
+
+# Create new dataframes with common rows
+new_prism.exp.gaaa <- prism.exp_gastric[common_rows, ]
+new_prismgaaa <- prism_gastric[common_rows, ]
+# Select a column by its name and store it in a vector
+column_name <- "BCR"
+vector <- new_prism.exp.gaaa[[column_name]]
+# Select a column by its name and store it in a vector
+column_name0 <- "BRD-K35329391-334-01-7::0.00061034::HTS002"
+vector1 <- new_prismgaaa[[column_name0]]
+column_name1 <- "BRD-K35329391-334-01-7::0.0024414::HTS002"
+vector2 <- new_prismgaaa[[column_name1]]
+column_name2 <- "BRD-K35329391-334-01-7::0.00976562::HTS002"
+vector3 <- new_prismgaaa[[column_name2]]
+column_name3<- "BRD-K35329391-334-01-7::0.0390625::HTS002"
+vector4 <- new_prismgaaa[[column_name3]]
+column_name4 <- "BRD-K35329391-334-01-7::0.15625::HTS002"
+vector5 <- new_prismgaaa[[column_name4]]
+column_name5 <- "BRD-K35329391-334-01-7::0.625::HTS002"
+vector6 <- new_prismgaaa[[column_name5]]
+column_name6 <- "BRD-K35329391-334-01-7::2.5::HTS002"
+vector7 <- new_prismgaaa[[column_name6]]
+column_name7 <- "BRD-K35329391-334-01-7::10::HTS002"
+vector8<- new_prismgaaa[[column_name7]]
+# Create a matrix of vectors
+vectors <- cbind(vector1, vector2, vector3, vector4, vector5,vector6, vector7, vector8)
+par(mar = c(5, 5, 4, 7))
+correlationnn<-cor(vector, vectors)
+# Create a bar plot of correlations
+conc<-data.frame("0.00061", "0.00244", "0.00976", "0.03906", "0.15625", "0.625", "2.5", "10")
+
+barplot(correlationnn, beside = TRUE, names.arg = colnames(conc), 
+        xlab = "Dosage of BRD-K35329391-334-01-7 '", ylab = "Correlation of drug response and expression of BCR", cex.names = 0.4)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%", fig.cap="Prediction models for the drug response of dacinostat and GZD824 based on the CNVs of their target genes HDAC1 and BCR across all cell lines", fig.show='hold'}
+
+library(zoo)
+new_df<-na.aggregate(prism, FUN=mean)
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "BCR"
+vector110 <- prism.cnv[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K35329391-334-01-7::10::HTS002"
+vector111 <- new_df[[column_name]]
+# Create a data frame with the variables
+data <- data.frame(BCR = vector110, 
+                   HTS002 = vector111)
+
+# Create the scatter plot using ggplot2
+ggplot(data, aes(x = BCR, y = HTS002)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(x = "B-cell Domain Receptor (BCR) Expression Level", 
+       y = "BRD-K35329391-334-01-7::10::HTS002",
+       title = "Prediction model of BRD-K35329391-334-01-7::10::HTS002 based on CNVs of BCR") +
+  theme_minimal()
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+prism_gastric <- prism[rownames(prism) %in% gastric.cancer.celllines.v, ]
+prism.cnv_gastric <- prism.cnv[rownames(prism.cnv) %in% gastric.cancer.celllines.v, ]
+# Select a column by its name and store it in a vector
+column_name <- "HDAC1"
+vector330 <- prism.cnv[[column_name]]
+# Select a column by its name and store it in a vector
+column_name <- "BRD-K56957086-001-06-3::10::HTS002"
+vector331 <- new_df[[column_name]]
+# Create a data frame with the variables
+data <- data.frame(KDR = vector330, 
+                   HTS002 = vector331)
+
+# Create the scatter plot using ggplot2
+ggplot(data, aes(x = KDR, y = HTS002)) +
+  geom_point(size = 3, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(x = "HDAC1 Expression Level", 
+       y = "BRD-K56957086-001-06-3::10::HTS002",
+       title = "Scatter Plot of HDAC1 vs BRD-K56957086-001-06-3::10::HTS002") +
+  theme_minimal()
+```
+
+\newpage
+
+# References
