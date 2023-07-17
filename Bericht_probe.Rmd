@@ -114,6 +114,7 @@ fold_changes_df_0 <- data.frame(cell_line = cell_lines, fold_change = fold_chang
 
 ```
 
+
 ```{r include=FALSE}
 
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
@@ -167,7 +168,7 @@ library(ggplot2)
 
 ```
 
-```{r echo=FALSE, out.height= "50%", out.width= "50%"}
+```{r echo=FALSE, out.height= "50%", out.width= "50%", fig.cap= "Figure 1(Left): Bar Plot Representation of Fold Change Analysis: Comparing Efficiency of Oncology and Non-Oncology Treatments Across Various Cell Lines.(Right):Representation of Fold Change Analysis: Comparing Oncology and Non-Oncology Treatment Efficiency Across the 17 gastric  cancer cell lines"}
 # Load the necessary library
 # Using ggplot2
 ggplot(fold_changes_df_0, aes(x = reorder(cell_line, -fold_change), y = fold_change)) +
@@ -264,7 +265,7 @@ pca_loadings_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatmen
 
 ```
 
-```{r echo=FALSE, fig.width = 8, fig.height = 4}
+```{r echo=FALSE, fig.width = 8, fig.height = 4, fig.cap = "Figure 2: Pearson correlation of Principle components for gastric cancer cell lines. Each color represents different gastric cancer cell line."}
 
 #Create a data frame with the correlation values
 library(ggplot2)
@@ -286,8 +287,7 @@ my_theme <- theme_minimal() +
 # Create the bar plot using ggplot
 ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLine))) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Pearson Correlation of Principal Components 
-       of Gastric Cancer Cell Lines",
+  labs(title = "Pearson Correlation of Principal Components of Gastric Cancer Cell Lines",
        x = "Principal Components",
        y = "Pearson Correlation") +
   scale_fill_discrete(name = "Cell Line") +
@@ -299,7 +299,7 @@ ggplot(correlation_data_long, aes(x = PC, y = Correlation, fill = factor(CellLin
 
 ```
 
-Figure 2: Pearson correlation of Principle components for gastric cancer cell lines. Each color represents different gastric cancer cell line.
+
 
 PC1 accounted for a significant portion (86.34%) of the overall variance. We identified  678 drugs as positively contributing to the PC1 and demonstrated a consistent negative effect on cell growth of all gastric cancer cell lines. Therefore, we selected a threshold as 20 for PC values of these drugs and we continued the further analysis with 52 selected drugs.
 
@@ -351,10 +351,9 @@ bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, 
 bar_plot_moa <- bar_plot_moa + scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
 
 
-print(bar_plot_moa)
 ```
 
-```{r echo=FALSE, out.width = "50%", out.height = "50%"}
+```{r echo=FALSE, out.width = "50%", out.height = "50%", fig.cap = "Figure 3: Target molecules and mechanism of actions of selected drugs regarding gastric cancer cell lines."}
 library(ggplot2)
 library(cowplot)
 
@@ -366,6 +365,7 @@ bar_plot_target <- ggplot(target_freq_dataframe_selected, aes(x = reorder(target
         axis.text.x = element_text(angle = 45, hjust = 1)) +
   ylim(0, 15) +
   scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
+print(bar_plot_target)
 
 # Create the second bar plot
 bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, -Freq), y = Freq, fill = moa_vector)) +
@@ -375,11 +375,11 @@ bar_plot_moa <- ggplot(moa_freq_dataframe_selected, aes(x = reorder(moa_vector, 
         axis.text.x = element_text(angle = 45, hjust = 1)) +
   ylim(0, 15) +
   scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 15))
-
+print(bar_plot_moa)
 
 ```
 
-Figure 3: Target molecules and mechanism of actions of selected drugs regarding gastric cancer cell lines.
+
 
 ## **3.4 Exploring the Correlation Between HDAC Inhibitor Concentration and Gastric Cancer Cell Growth**
 
@@ -495,7 +495,7 @@ legend_breaks <- seq(-1, 0, length.out = length(colors) + 1)
 
 ```
 
-```{r echo=FALSE, out.width = "75%", out.height = "50%"}
+```{r echo=FALSE, out.width = "75%", out.height = "50%", fig.cap= "Figure 4: Heatmap of correlation values between drug concentration and drug response,regarding HDAC inhibitors and gastric cancer cell lines."}
 heatmap.2(correlation_matrix,
           col = colors,
           main = "Correlation heatmap",
@@ -514,7 +514,7 @@ heatmap.2(correlation_matrix,
           key.title = "Color key") 
 ```
 
-Figure 4: Heatmap of correlation values between drug concentration and drug response,regarding HDAC inhibitors and gastric cancer cell lines.
+
 
 ## **3.5 Cell lines of different cancer types form different clusters based on their drug response and gene expression**
 
@@ -1560,6 +1560,8 @@ ggplot(cell_line_df_948, aes(x = group, y = response)) +
 
 ```
 
+Fig X:(Left):Representation of Highly Efficient Treatments for ACH-000948
+(Right):Boxplot Comparison of HDAC Inhibitors and Non-HDAC Inhibitors Treatments: Efficiency Analysis in Gastric Cancer Cell Line ACH-000948
 # **Discussion**
 
 Understanding and analyzing the drug response of existing drugs in cancer cell lines especially in gastric cancer cell lines to identify possible targets and metabolic pathways is important for drug-repurposing and to identify effective treatments for cancer. In our preliminary analysis using fold changes and t-tests, we found that oncological treatments were generally more effective in inhibiting cell growth in all cancer cell lines. This observation highlighted the potential for reusability of oncological drugs in different cancer types and subtypes and different by which they were created. This conclusion led us to the following fold-change analysis, in which we analyzed non-oncology treatments in relation to oncology-treatments, specifically excluding gastric oncological treatments among only gastric cancer cells. 
@@ -1768,6 +1770,9 @@ qqnorm(avg_response_non_oncology_general, main = "Q-Q Plot - avgerage response n
 qqline(avg_response_non_oncology_general, col = "red", lwd = 2)
 ```
 
+Fig X(Left):Histogram of Average Oncological Drug Responses for Normality Testing.(Right): Q-Q Plot of Average Oncological Drug Responses for Normality Testing
+
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%"}
 # Q-Q plots
 # For avg_response_oncology_gastric_2
@@ -1779,6 +1784,9 @@ qqnorm(avg_response_non_oncology_gastric_2, main = "Q-Q Plot - Responses non-onc
 qqline(avg_response_non_oncology_gastric_2, col = "pink", lwd = 2)
 
 ```
+Fig X: Q-Q Plot of Average Responses from Oncological Drugs for Normality Testing
+Fig X: Q-Q Plot of Average Responses from Non-Oncological Drugs for Normality Testing
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%"}
 # Combine the data into a single dataframe
 all_avg_responses_0 <- data.frame(
@@ -1818,7 +1826,7 @@ ggplot(all_avg_responses_2, aes(x = Treatment, y = Response, fill = Treatment)) 
        fill = "Treatment Group") +
   guides(fill=FALSE) 
 ```
-
+Fig X(Left):Boxplot of Average Responses: Comparison Between Non-Oncology and Oncology Treatments.(Right): Boxplot of Average Responses: Comparison Between Non-Oncology and Oncology Treatments in Gastric Cancer Cell Lines
 ```{r echo=FALSE, message=FALSE, warning=FALSE, out.height= "50%", out.width= "50%"}
 gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
 gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
