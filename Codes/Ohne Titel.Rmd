@@ -1,0 +1,476 @@
+---
+title: "Evgeniya ideas"
+output: html_document
+date: "2023-05-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Step1 : Remove the NA values from the columns for the data reduction
+median value impute 
+```{r}
+prism_cleaned <- prism
+prism_cleaned[is.na(prism_cleaned)] <- 0
+prism_cleaned <- prism_cleaned[complete.cases(prism_cleaned), ]
+sum(is.na(prism_cleaned))
+dim(prism_cleaned)
+```
+
+```{r}
+View(prism_cleaned)
+```
+
+Step 2: Visualize the data.frame for future data reduction
+
+```{r}
+class(prism_cleaned)
+typeof(prism_cleaned)
+prism_cleaned <- (
+  sapply(prism_cleaned, as.numeric)
+)
+is.numeric(prism_cleaned)
+```
+```{r}
+hist(prism_cleaned)
+```
+
+Step 3: We want to remove the drugs, which have positive effect on the cell growth. We want to create a vector which includes more than 200 positive values as column(200 celllines have a postive growth number)
+
+```{r}
+positive_cols <- colSums(prism_cleaned > 0) > 200
+num_positive_cols <- sum(positive_cols)
+num_positive_cols
+
+```
+Step 4: We want to remove those columns
+```{r}
+prism_cleaned <- prism_cleaned[, !positive_cols]
+positive_values <- colSums(prism_cleaned > 0) > 0
+```
+
+```{r}
+dim(prism_cleaned)
+View(prism_cleaned)
+```
+
+
+```{r}
+heatmap(prism_cleaned)
+```
+
+
+Step 1: Create 5 vectors for the 5 different cancer cell lines
+
+
+Vector of breast cancer cell lines: 
+```{r}
+breast.cancer.celllines <- subset(prism.cl, lineage == "breast")
+
+View(breast.cancer.celllines)
+```
+
+Vector of gastric cancer cell lines:
+```{r}
+gastric.cancer.celllines <- subset(prism.cl, lineage == "gastric")
+
+View(gastric.cancer.celllines)
+```
+
+Vector of kidney cancer cell lines:
+```{r}
+kidney.cancer.celllines <- subset(prism.cl, lineage == "kidney")
+
+View(kidney.cancer.celllines)
+```
+
+Vector of liver cancer cell lines:
+```{r}
+liver.cancer.celllines <- subset(prism.cl, lineage == "liver")
+
+View(liver.cancer.celllines)
+
+```
+
+Vector of bone cancer cell lines:
+```{r}
+bone.cancer.celllines <- subset(prism.cl, lineage == "bone")
+
+View(bone.cancer.celllines)
+```
+
+
+Extract these IDs from prism
+```{r}
+gastric.cancer.celllines.v <- gastric.cancer.celllines $DepMap_ID
+
+View(gastric.cancer.celllines.v)
+```
+
+```{r}
+breast.cancer.celllines.v <- breast.cancer.celllines $DepMap_ID
+
+View(breast.cancer.celllines.v)
+```
+
+```{r}
+kidney.cancer.celllines.v <- kidney.cancer.celllines $DepMap_ID
+
+View(kidney.cancer.celllines.v)
+```
+
+```{r}
+bone.cancer.celllines.v <- bone.cancer.celllines $DepMap_ID
+
+View(bone.cancer.celllines.v)
+```
+
+```{r}
+liver.cancer.celllines.v <- liver.cancer.celllines $DepMap_ID
+
+View(liver.cancer.celllines.v)
+```
+
+```{r}
+cancer.celllines.v <- c(liver.cancer.celllines.v,bone.cancer.celllines.v,kidney.cancer.celllines.v,  breast.cancer.celllines.v,gastric.cancer.celllines.v)
+
+```
+
+
+```{r}
+prism_celllines <- prism[rownames(prism) %in% cancer.celllines.v, ]
+View (prism_celllines)
+
+```
+
+
+
+Step 2 NA values:
+replacing the NA values by the median of the column
+
+```{r}
+#First of all, we have to clean the original matrix from the missing values. There are columns that include only missing values, so we cannot replace them with median value, we have to remove them. 
+typeof(prism_celllines)
+prism_celllines_numeric_2 <- (
+  sapply(prism_celllines, as.numeric)
+)
+is.numeric(prism_celllines_numeric_2)
+###removing all columns that have only missing values
+prism_celllines_matrix_filtered <- prism_celllines_numeric_2[, colSums(is.na(prism_celllines_numeric_2)) < nrow(prism_celllines_numeric_2)]
+###save the names of the rows so we can restore them after that
+original_row_names <- rownames(prism_celllines)
+###replacing the NAs by median of the columns
+prism_celllines_numeric_2[is.na(prism_celllines_numeric_2)] <-median(prism_celllines_numeric_2,na.rm =TRUE)
+
+sum(is.na(prism_celllines_numeric_2))
+original_row_names <- rownames(prism_celllines)
+###restoring the row names
+prism_celllines_matrix_filtered1 <- matrix(prism_celllines_numeric_2, nrow = nrow(prism_celllines), dimnames = list(rownames(prism_celllines), colnames(prism_celllines)))
+original_row_names <- rownames(prism_celllines)
+prism_celllines_matrix_filtered1 <- matrix(prism_celllines_numeric_2, nrow = nrow(prism_celllines), dimnames = list(rownames(prism_celllines), colnames(prism_celllines)))
+typeof(prism_celllines_matrix_filtered1)
+class(prism_celllines_matrix_filtered1)
+sum(is.na(prism_celllines_matrix_filtered1))###no missing values
+####till here is important####
+
+
+```
+2.PCA
+```{r}
+pca_result_matrix_filtrated1 <- prcomp(prism_celllines_matrix_filtered1)
+pca_values <- pca_result_matrix_filtrated1$x # Principal component scores (transformed data)
+pca_variances <- pca_result_matrix_filtrated1$sdev^2  # Variance explained by each principal component
+pca_proportions <- pca_variances / sum(pca_variances)  # Proportion of variance explained by each principal component
+pca_loadings <- pca_result_matrix_filtrated1$rotation  # Loadings (coefficients) of each variable on each principal component
+ plot(1:length(pca_variances), pca_variances, type = "b", xlab = "Principal Component", ylab = "Variance Explained",
+     main = "Scree Plot")
+plot(pca_values[, 1], pca_values[, 2], xlab = "PC1", ylab = "PC2")
+
+
+###
+pca_data <- data.frame(PC1 = pca_values[, 1], PC2 = pca_values[, 2],CellLine = rownames(pca_values) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data$Group <- NA
+pca_data$Group[pca_data$CellLine %in% bone.cancer.celllines.v] <- "Group 1"
+pca_data$Group[pca_data$CellLine %in% kidney.cancer.celllines.v] <- "Group 2"
+pca_data$Group[pca_data$CellLine %in% liver.cancer.celllines.v] <- "Group 3"
+pca_data$Group[pca_data$CellLine %in% gastric.cancer.celllines.v] <- "Group 4"
+pca_data$Group[pca_data$CellLine %in% breast.cancer.celllines.v]<-"Group 5"
+
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+
+```
+
+```{r}
+typeof(prism_celllines)
+prism_celllines_numeric <- (
+  sapply(prism_celllines, as.numeric)
+)
+is.numeric(prism_celllines_numeric)
+
+prism_celllines_numeric[is.na(prism_celllines_numeric)] <-median(prism_celllines_numeric,na.rm =TRUE)
+
+sum(is.na(prism_celllines_numeric))
+View(prism_celllines_numeric)
+```
+PCA of drug response with Seurat
+1.Install "Seurat"
+```{r}
+#install three more thing in terminal on MacOS
+#install igraph: answer to the question is no
+#install deldir: answer is no
+install.packages('Seurat') #the answer is yes
+install.packages("igraph")
+library(Seurat)
+
+```
+2.Creat a Seurat Object (transposed)each drug is a variable for the PCA
+```{r}
+seurat_object_prism_celllines<- CreateSeuratObject(counts = prism_celllines_matrix_filtered1)
+seurat_object_prism_celllines <- NormalizeData(seurat_object_prism_celllines)
+sum(is.na(seurat_object_prism_celllines_t))
+seurat_object_prism_celllines <- FindVariableFeatures(seurat_object_prism_celllines)
+seurat_object_prism_celllines <- ScaleData(seurat_object_prism_celllines)
+seurat_object_prism_celllines <- RunPCA(seurat_object_prism_celllines, svd.method = "standard")
+seurat_object_prism_celllines <- FindNeighbors(seurat_object_prism_celllines, dims = 1:30)
+seurat_object_prism_celllines <- FindClusters(seurat_object_prism_celllines, resolution = 0.8, verbose = FALSE)
+seurat_object_prism_celllines <- RunUMAP(seurat_object_prism_celllines, dims = 1:30)
+DimPlot(seurat_object_prism_celllines, label = TRUE)
+```
+
+
+```{r}
+##lets create a transposed matrix:
+prism_celllines_matrix_transposed<- t(prism_celllines_matrix_filtered1)
+sum(is.na(prism_celllines_matrix_filtered1))##there are no missing values, I am so proud
+class(prism_celllines_matrix_transposed)
+###do not do the following code:
+prism_celllines_matrix_transposed <- as.matrix(prism_celllines_matrix_transposed)
+prism_celllines_matrix_transposed_copy <- prism_celllines_matrix_transposed
+medians <- apply(prism_celllines_matrix_transposed, 1, median, na.rm = TRUE)
+prism_celllines_matrix_transposed_copy[is.na(prism_celllines_matrix_transposed)] <- medians[is.na(prism_celllines_matrix_transposed)]
+prism_celllines_matrix_transposed[is.na(prism_celllines_matrix_transposed)] <- medians[is.na(prism_celllines_matrix_transposed)]
+for (i in 1:nrow(prism_celllines_matrix_transposed)) {
+  row_values <- prism_celllines_matrix_transposed[i, ]
+row_median <- median(row_values, na.rm = TRUE)
+prism_celllines_matrix_transposed_copy[i, is.na(prism_celllines_matrix_transposed[i, ])] <- row_median
+}
+sum(is.na(prism_celllines_matrix_transposed_copy))
+sum(is.na(prism_celllines_matrix_transposed))
+is.numeric(prism_celllines_matrix_transposed)
+
+#PCA of transposed matrix:
+pca_result_matrix_transposed <- prcomp(prism_celllines_matrix_transposed)
+pca_values_t <- pca_result_matrix_transposed$x # Principal component scores (transformed data)
+pca_variances_t <- pca_result_matrix_transposed$sdev^2  # Variance explained by each principal component
+pca_proportions_t <- pca_variances_t / sum(pca_variances_t)  # Proportion of variance explained by each principal component
+pca_loadings_t <- pca_result_matrix_transposed$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_t), pca_variances_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_t[, 1], pca_values_t[, 2], xlab = "PC1", ylab = "PC2")
+
+###lets create a seurat object:
+seurat_object_prism_celllines_t <- CreateSeuratObject(counts = prism_celllines_matrix_transposed)
+```
+PCA for drugs for our gastric cancer cellline:
+```{r}
+prism_gastric_cleaned_treatments_t<- t(prism_gastric_cleaned_treatments)
+sum(is.na(prism_gastric_cleaned_treatments_t))
+is.numeric(prism_gastric_cleaned_treatments_t)
+pca_result_gastric_cleaned_treatments_t<- prcomp(prism_gastric_cleaned_treatments_t)
+pca_values_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$x # Principal component scores (transformed data)
+pca_variances_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$sdev^2  # Variance explained by each principal component
+pca_proportions_gastric_cleaned_treatment_t <- pca_variances_gastric_cleaned_treatments_t / sum(pca_variances_gastric_cleaned_treatments_t)  # Proportion of variance explained by each principal component
+pca_loadings_gastric_cleaned_treatments_t <- pca_result_gastric_cleaned_treatments_t$rotation  # Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_gastric_cleaned_treatments_t), pca_variances_gastric_cleaned_treatments_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_gastric_cleaned_treatments_t[, 1], pca_values_gastric_cleaned_treatments_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+
+```
+
+Examining the correlation between drug concentration and drug response
+```{r}
+treatment_names <- colnames(prism_gastric_cleaned_treatments)
+concentration <- sub(".*::(\\d+\\.\\d+)::.*", "\\1", treatment_names)
+concentration <- as.numeric(concentration)
+
+
+
+Just testing:
+3.Perform visualization and clustering steps
+```{r}
+seurat_object_prism_celllines_t <- NormalizeData(seurat_object_prism_celllines_t)
+sum(is.na(seurat_object_prism_celllines_t))
+seurat_object_prism_celllines_t <- FindVariableFeatures(seurat_object_prism_celllines_t)
+seurat_object_prism_celllines_t <- ScaleData(seurat_object_prism_celllines_t)
+seurat_object_prism_celllines_t <- RunPCA(seurat_object_prism_celllines_t, verbose = FALSE)
+cbmc <- FindNeighbors(cbmc, dims = 1:30)
+cbmc <- FindClusters(cbmc, resolution = 0.8, verbose = FALSE)
+cbmc <- RunUMAP(cbmc, dims = 1:30)
+DimPlot(cbmc, label = TRUE)
+```
+4.Calculating the variance:
+```{r}
+drug_variances <- apply(prism_celllines_matrix_transposed, 1, var)
+#lets creat a histogram:
+hist(drug_variances, main = "Distribution of Drug Variances", xlab = "Variance", ylab = "Frequency")
+#extracting drugs with var higher than 1
+selected_drugs_1 <- rownames(prism_celllines_matrix_transposed)[drug_variances > 1]
+#just to prove the code
+drug_variance <- drug_variances[which(rownames(prism_celllines_matrix_transposed) == "BRD-A00758722-001-04-9::10::HTS002")]
+print(drug_variance)
+#extracting only those drugs from the data frame:
+prism_celllines_matrix_drugvariances1 <- prism_celllines_matrix_transposed[rownames(prism_celllines_matrix_transposed) %in% selected_drugs_1, ]
+View (prism_celllines_matrix_drugvariances1)
+#just to prove the code
+drug_variances11<-apply(prism_celllines_matrix_drugvariances1, 1, var)
+hist(drug_variances11, main = "Distribution of Drug Variances 1", xlab = "Variance", ylab = "Frequency")
+##Now doing PCA only with these drugs:
+pca_result_drugvariances1<- prcomp(prism_celllines_matrix_drugvariances1)
+pca_values_drugvariances1 <- pca_result_drugvariances1$x # Principal component scores (transformed data)
+pca_variances_drugvariances1 <- pca_result_drugvariances1$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances1<- pca_variances_drugvariances1/ sum(pca_variances_drugvariances1)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances1 <- pca_result_drugvariances1$rotation  
+# Loadings (coefficients) of each variable on each principal component
+
+plot(1:length(pca_variances_drugvariances1), pca_variances_drugvariances1, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+
+plot(pca_values_drugvariances1[, 1], pca_values_drugvariances1[, 2], xlab = "PC1", ylab = "PC2")
+
+##now for the transposed matrix:
+prism_celllines_matrix_drugvariances1_t <- t(prism_celllines_matrix_drugvariances1)
+pca_result_drugvariances1_t<- prcomp(prism_celllines_matrix_drugvariances1_t)
+pca_values_drugvariances1_t <- pca_result_drugvariances1_t$x # Principal component scores (transformed data)
+pca_variances_drugvariances1_t <- pca_result_drugvariances1_t$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances1_t<- pca_variances_drugvariances1_t/ sum(pca_variances_drugvariances1_t)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances1_t <- pca_result_drugvariances1_t$rotation  
+# Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_drugvariances1_t), pca_variances_drugvariances1_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_drugvariances1_t[, 1], pca_values_drugvariances1_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+pca_data_drugvariances1_t <- data.frame(PC1 = pca_values_drugvariances1_t[, 1], PC2 = pca_values_drugvariances1_t[, 2],CellLine = rownames(pca_values_drugvariances1_t) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data_drugvariances1_t$Group <- NA
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% bone.cancer.celllines.v] <- "Group 1"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% kidney.cancer.celllines.v] <- "Group 2"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% liver.cancer.celllines.v] <- "Group 3"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% gastric.cancer.celllines.v] <- "Group 4"
+pca_data_drugvariances1_t$Group[pca_data_drugvariances1_t$CellLine %in% breast.cancer.celllines.v]<-"Group 5"
+
+
+ggplot(pca_data_drugvariances1_t, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+Lets try with drugs with variance higher than 2:
+```{r}
+#extracting drugs with var higher than 1
+selected_drugs_2 <- rownames(prism_celllines_matrix_transposed)[drug_variances > 2]
+#just to prove the code
+drug_variance <- drug_variances[which(rownames(prism_celllines_matrix_transposed) == "BRD-A00758722-001-04-9::10::HTS002")]
+print(drug_variance)
+#extracting only those drugs from the data frame:
+prism_celllines_matrix_drugvariances2 <- prism_celllines_matrix_transposed[rownames(prism_celllines_matrix_transposed) %in% selected_drugs_2, ]
+View (prism_celllines_matrix_drugvariances2)
+#just to prove the code
+drug_variances22<-apply(prism_celllines_matrix_drugvariances2, 1, var)
+hist(drug_variances22, main = "Distribution of Drug Variances 1", xlab = "Variance", ylab = "Frequency")
+##Now doing PCA only with these drugs:
+pca_result_drugvariances2<- prcomp(prism_celllines_matrix_drugvariances2)
+pca_values_drugvariances2 <- pca_result_drugvariances2$x # Principal component scores (transformed data)
+pca_variances_drugvariances2 <- pca_result_drugvariances2$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances2<- pca_variances_drugvariances2/ sum(pca_variances_drugvariances2)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances2 <- pca_result_drugvariances2$rotation  
+# Loadings (coefficients) of each variable on each principal component
+
+plot(1:length(pca_variances_drugvariances2), pca_variances_drugvariances2, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+
+plot(pca_values_drugvariances2[, 1], pca_values_drugvariances2[, 2], xlab = "PC1", ylab = "PC2")
+
+##now for the transposed matrix:
+prism_celllines_matrix_drugvariances2_t <- t(prism_celllines_matrix_drugvariances2)
+pca_result_drugvariances2_t<- prcomp(prism_celllines_matrix_drugvariances2_t)
+pca_values_drugvariances2_t <- pca_result_drugvariances2_t$x # Principal component scores (transformed data)
+pca_variances_drugvariances2_t <- pca_result_drugvariances2_t$sdev^2  # Variance explained by each principal component
+pca_proportions_drugvariances2_t<- pca_variances_drugvariances2_t/ sum(pca_variances_drugvariances2_t)  # Proportion of variance explained by each principal component
+pca_loadings_drugvariances2_t <- pca_result_drugvariances2_t$rotation  
+# Loadings (coefficients) of each variable on each principal component
+plot(1:length(pca_variances_drugvariances2_t), pca_variances_drugvariances2_t, type = "b", xlab = "Principal Component", ylab = "Variance Explained",main = "Scree Plot")
+plot(pca_values_drugvariances2_t[, 1], pca_values_drugvariances2_t[, 2], xlab = "PC1", ylab = "PC2")
+
+
+pca_data_drugvariances2_t <- data.frame(PC1 = pca_values_drugvariances2_t[, 1], PC2 = pca_values_drugvariances2_t[, 2],CellLine = rownames(pca_values_drugvariances2_t) )
+
+bone.cancer.celllines.group<- "red"
+kidney.cancer.celllines.group <- "blue"
+liver.cancer.celllines.group <- "green"
+gastric.cancer.celllines.group<- "purple"
+breast.cancer.celllines.group <- "orange"
+
+pca_data_drugvariances2_t$Group <- NA
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% bone.cancer.celllines.v] <- "Group 1"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% kidney.cancer.celllines.v] <- "Group 2"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% liver.cancer.celllines.v] <- "Group 3"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% gastric.cancer.celllines.v] <- "Group 4"
+pca_data_drugvariances2_t$Group[pca_data_drugvariances2_t$CellLine %in% breast.cancer.celllines.v]<-"Group 5"
+
+
+ggplot(pca_data_drugvariances2_t, aes(x = PC1, y = PC2, color = Group)) +
+  geom_point() +
+  scale_color_manual(values = c(bone.cancer.celllines.group, kidney.cancer.celllines.group, liver.cancer.celllines.group, gastric.cancer.celllines.group, breast.cancer.celllines.group)) +
+  labs(x = "PC1", y = "PC2", title = "PCA Scatter Plot")
+```
+```
+
+
+
+
+
+PCA of this reduced data frame: 
+```{r}
+standardized_data.p <- scale(prism_cleaned)
+pca_result.p <- prcomp(standardized_data.p, scale. = FALSE)
+View(pca_result.p)
+pcs <- pca_result.p$x
+variance_explained <- pca_result.p$sdev^2 / sum(pca_result.p$sdev^2)
+
+loadings <- pca_result.p$rotation
+scree_plot <- plot(1:length(variance_explained), variance_explained, type = "b",  xlab = "Principal Component", ylab = "Variance Explained")
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -1,0 +1,5 @@
+
+.RDataTmp 
+.RData 
+$ git rm --cached .RData
+$ git rm --cached .RDataTmp
